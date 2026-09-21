@@ -3,8 +3,7 @@
 Website rental motor. Tugas Bootcamp Programming Eduwork, tim 3 orang. UI mengikuti Figma "ED.RENT (Eduwork)" dengan brand/warna/logo diganti ke EduwGo.
 
 - Spesifikasi lengkap: [`docs/SPEC.md`](docs/SPEC.md)
-- Aturan kerja & konvensi: [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md)
-- Backlog: Linear team **EduwGO** (prefix `EG-`)
+- Backlog & detail tiap task: Linear team **EduwGO** (prefix `EG-`)
 
 ## Stack
 
