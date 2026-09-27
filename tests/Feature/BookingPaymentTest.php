@@ -44,7 +44,7 @@ class BookingPaymentTest extends TestCase
             'https://api.xendit.co/v2/invoices' => Http::response([
                 'id' => 'inv_123',
                 'invoice_url' => 'https://checkout.xendit.co/web/inv_123',
-                'expiry_date' => now()->addHour()->toIso8601String(),
+                'expiry_date' => now()->addHour()->toISOString(),
             ], 200),
         ]);
 
@@ -95,5 +95,40 @@ class BookingPaymentTest extends TestCase
             ->get(route('booking.waiting', $this->booking->code));
 
         $response->assertRedirect(route('booking.success', $this->booking->code));
+    }
+
+    public function test_expiry_date_utc_is_stored_in_app_timezone()
+    {
+        // API Xendit asli mengirim expiry_date dalam format UTC (Z), bukan offset lokal
+        $expiryUtc = now()->addHour()->startOfSecond();
+
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_utc_001',
+                'invoice_url' => 'https://checkout.xendit.co/web/inv_utc_001',
+                'expiry_date' => $expiryUtc->toISOString(),
+            ], 200),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('booking.waiting', $this->booking->code))
+            ->assertStatus(200);
+
+        $payment = Payment::where('booking_id', $this->booking->id)->firstOrFail();
+
+        // Instan yang sama dengan respons API — tidak boleh miring timezone
+        $this->assertSame(
+            $expiryUtc->getTimestamp(),
+            $payment->expires_at->getTimestamp(),
+            'expires_at ('.$payment->expires_at->toIso8601String().') harus sama dengan expiry_date API ('.$expiryUtc->toIso8601String().')'
+        );
+
+        // Karena tidak dianggap kedaluwarsa, invoice tidak dibuat ulang saat halaman dibuka lagi
+        $this->actingAs($this->user)
+            ->get(route('booking.waiting', $this->booking->code))
+            ->assertStatus(200);
+
+        Http::assertSentCount(1);
+        $this->assertSame(1, Payment::where('booking_id', $this->booking->id)->count());
     }
 }

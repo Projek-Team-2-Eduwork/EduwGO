@@ -61,7 +61,7 @@ class XenditService
             'status' => 'pending',
             'gateway_reference' => $data['id'],
             'gateway_url' => $data['invoice_url'],
-            'expires_at' => Carbon::parse($data['expiry_date']),
+            'expires_at' => Carbon::parse($data['expiry_date'])->setTimezone(config('app.timezone')),
             'gateway_payload' => json_encode($data),
             'amount' => $booking->total_amount,
         ]);
