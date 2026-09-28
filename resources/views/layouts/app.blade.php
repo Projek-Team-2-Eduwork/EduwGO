@@ -7,20 +7,40 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <!-- Fonts (self-host agar tetap jalan offline) -->
+        <link rel="stylesheet" href="{{ asset('fonts/fonts.css') }}">
+
+        <!-- Anti-flash: set class dark sebelum render (SPEC bagian 8) -->
+        <script>
+            (function () {
+                var preference = @json(auth()->check() ? auth()->user()->preferredTheme() : null);
+                var stored = null;
+
+                try {
+                    stored = localStorage.getItem('theme');
+                } catch (e) {}
+
+                // Prioritas: preferensi user login > localStorage > prefers-color-scheme
+                var choice = preference || stored || 'system';
+                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = choice === 'dark' || (choice === 'system' && systemDark);
+
+                if (dark) {
+                    document.documentElement.classList.add('dark');
+                }
+            })();
+        </script>
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+        <div class="min-h-screen">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white shadow">
+                <header class="border-b border-[var(--border)]" style="background-color: var(--surface);">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -32,5 +52,7 @@
                 {{ $slot }}
             </main>
         </div>
+
+        @stack('scripts')
     </body>
 </html>

@@ -1,3 +1,164 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * EduwGo design tokens — docs/SPEC.md bagian 8.
+ * Palet dipetakan ke CSS variable; dark mode memakai class strategy (html.dark).
+ */
+:root {
+    --bg:              #E4E7EC;
+    --bg-gradient:     linear-gradient(180deg, #F2F4F7 0%, #D9DEE6 100%);
+    --surface:         #FFFFFF;
+    --navy-900:        #0F1A2E;
+    --navy-700:        #1C2942;
+    --ink-muted:       #4B5563;
+    --orange-500:      #F26A1B;
+    --accent-gradient: linear-gradient(135deg, #FF8A3D 0%, #F2571C 100%);
+    --coral-300:       #FFB27A;
+    --border:          #C9D0DA;
+    --gold-tan:        #C78A5A;
+}
+
+.dark {
+    --bg:              #0B1220;
+    --bg-gradient:     linear-gradient(180deg, #111A2B 0%, #0B1220 100%);
+    --surface:         #141E31;
+    --navy-900:        #F2F4F7;
+    --navy-700:        #D9DEE6;
+    --ink-muted:       #A3ADBD;
+    --orange-500:      #FF8A3D;
+    --accent-gradient: linear-gradient(135deg, #FF8A3D 0%, #F2571C 100%);
+    --coral-300:       #FFB27A;
+    --border:          #263248;
+    --gold-tan:        #D9A377;
+}
+
+@layer base {
+    html {
+        font-family: 'Inter', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body {
+        background-color: var(--bg);
+        background-image: var(--bg-gradient);
+        background-attachment: fixed;
+        color: var(--ink-muted);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: 'Instrument Serif', 'Playfair Display', ui-serif, Georgia, serif;
+        color: var(--navy-900);
+    }
+}
+
+@layer components {
+    /* Kartu / panel permukaan */
+    .card-surface {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 2px rgb(15 26 46 / 0.06);
+    }
+
+    /* Tombol utama: navy, sudut miring (chamfered) — bukan rounded */
+    .btn-primary-edu {
+        clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+        background-color: var(--navy-900);
+        color: var(--surface);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        transition: background-color 150ms ease-in-out;
+    }
+
+    .btn-primary-edu:hover,
+    .btn-primary-edu:focus-visible {
+        background-color: var(--navy-700);
+    }
+
+    /* Tombol sekunder: kecil, oranye */
+    .btn-secondary-edu {
+        clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+        background-color: transparent;
+        color: var(--orange-500);
+        border: 1px solid var(--orange-500);
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+    }
+
+    .btn-secondary-edu:hover,
+    .btn-secondary-edu:focus-visible {
+        background-color: var(--orange-500);
+        color: #FFFFFF;
+    }
+
+    /* Ikon aksen oranye (hanya untuk ikon/kecil, sesuai spesifikasi) */
+    .icon-accent {
+        color: var(--orange-500);
+    }
+
+    /* Tombol theme-toggle */
+    .theme-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        color: var(--ink-muted);
+        transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+    }
+
+    .theme-btn:hover {
+        background-color: var(--bg);
+        color: var(--navy-900);
+    }
+
+    .theme-btn.is-active {
+        background-color: var(--navy-900);
+        color: var(--surface);
+    }
+
+    /* Badge netral dengan aksen oranye tipis */
+    .badge-accent {
+        background-color: var(--coral-300);
+        color: var(--navy-900);
+        border-radius: 9999px;
+        padding: 0.125rem 0.625rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+}
+
+/*
+ * Override kontrol form agar ikut token (di luar @layer supaya menang
+ * terhadap utility Tailwind bawaan Breeze seperti border-gray-300).
+ */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='tel'],
+input[type='search'],
+select,
+textarea {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--navy-900);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--ink-muted);
+}
+
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+input[type='tel']:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--navy-700);
+    box-shadow: 0 0 0 1px var(--navy-700);
+}
