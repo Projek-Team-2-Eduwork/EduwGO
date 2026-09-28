@@ -22,6 +22,7 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6 sm:gap-3">
                 <x-theme-toggle />
 
+                @auth
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium text-[var(--ink-muted)] hover:text-[var(--navy-900)] focus:outline-none transition ease-in-out duration-150">
@@ -52,6 +53,11 @@
                         </form>
                     </x-slot>
                 </x-dropdown>
+                @else
+                <a href="{{ route('login') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium text-[var(--ink-muted)] hover:text-[var(--navy-900)] focus:outline-none transition ease-in-out duration-150">
+                    Masuk
+                </a>
+                @endauth
             </div>
 
             <!-- Hamburger -->
@@ -78,6 +84,7 @@
 
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-[var(--border)]">
+            @auth
             <div class="px-4">
                 <div class="font-medium text-base text-[var(--navy-900)]">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-[var(--ink-muted)]">{{ Auth::user()->email }}</div>
@@ -99,6 +106,13 @@
                     </x-responsive-nav-link>
                 </form>
             </div>
+            @else
+            <div class="mt-1 space-y-1">
+                <x-responsive-nav-link :href="route('login')">
+                    Masuk
+                </x-responsive-nav-link>
+            </div>
+            @endauth
         </div>
     </div>
 </nav>
