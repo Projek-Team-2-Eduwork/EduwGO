@@ -77,4 +77,12 @@ class Booking extends Model
     {
         return $this->status === BookingStatus::Rented && now()->greaterThan($this->end_at);
     }
+
+    /**
+     * Mendapatkan key untuk route model binding (digunakan di URL checkout redirect).
+     */
+    public function getRouteKey()
+    {
+        return $this->code;
+    }
 }

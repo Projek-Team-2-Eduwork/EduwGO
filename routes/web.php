@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\BookingPaymentController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,5 +58,12 @@ Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'dura
 // Webhook Xendit (EG-14): di luar auth, diverifikasi via x-callback-token, dikecualikan CSRF
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
+
+Route::get('/kendaraan/{vehicle}', [VehicleController::class, 'show'])->name('kendaraan.detail');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/checkout/{vehicle}', [CheckoutController::class, 'show'])->name('checkout.show');
+    Route::post('/checkout/{vehicle}', [CheckoutController::class, 'store'])->name('checkout.store');
+});
 
 require __DIR__.'/auth.php';
