@@ -27,7 +27,7 @@ class XenditWebhookTest extends TestCase
     {
         parent::setUp();
 
-        config(['services.xendit.webhook_token' => self::TOKEN]);
+        config(['services.xendit.callback_token' => self::TOKEN]);
 
         $this->user = User::factory()->create();
         $vehicle = Vehicle::factory()->create();
@@ -81,8 +81,8 @@ class XenditWebhookTest extends TestCase
 
     public function test_webhook_rejects_invalid_token()
     {
-        $this->webhook($this->invoicePayload(), 'token-salah')->assertStatus(401);
-        $this->webhook($this->invoicePayload(), null)->assertStatus(401);
+        $this->webhook($this->invoicePayload(), 'token-salah')->assertStatus(403);
+        $this->webhook($this->invoicePayload(), null)->assertStatus(403);
 
         $this->assertSame('pending', $this->payment->refresh()->status);
         $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);
@@ -185,14 +185,14 @@ class XenditWebhookTest extends TestCase
         $this->assertSame(0, $this->booking->histories()->count());
     }
 
-    public function test_unknown_invoice_returns_ok_and_changes_nothing()
+    public function test_unknown_invoice_returns_404_and_changes_nothing()
     {
         $this->webhook([
             'id' => 'inv_tidak_dikenal',
             'external_id' => 'BOOK-LAIN-999',
             'status' => 'PAID',
             'paid_at' => '2026-09-27T12:00:00.000Z',
-        ])->assertStatus(200);
+        ])->assertStatus(404);
 
         $this->assertSame('pending', $this->payment->refresh()->status);
         $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);

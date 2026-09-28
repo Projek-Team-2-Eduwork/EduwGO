@@ -2,19 +2,17 @@
 
 namespace App\Services;
 
-use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class XenditService
 {
     public function __construct(
-        private BookingService $bookingService
+        private PaymentService $paymentService
     ) {}
 
     /**
@@ -75,91 +73,26 @@ class XenditService
     }
 
     /**
-     * Memproses payload webhook dari Xendit secara idempotent.
+     * Memproses payload webhook dari Xendit: cari payment lalu terapkan status invoice.
      */
     public function handleWebhook(array $payload): void
     {
         $invoiceId = $payload['id'] ?? null;
         $externalId = $payload['external_id'] ?? null;
-        $status = strtoupper($payload['status'] ?? '');
 
-        DB::transaction(function () use ($invoiceId, $externalId, $status, $payload) {
-            $payment = null;
+        // Cari payment berdasarkan gateway_reference (id invoice)
+        $payment = $invoiceId ? Payment::where('gateway_reference', $invoiceId)->first() : null;
 
-            // 1. Cari berdasarkan gateway_reference (id invoice)
-            if ($invoiceId) {
-                $payment = Payment::where('gateway_reference', $invoiceId)
-                    ->lockForUpdate()
-                    ->first();
-            }
+        if (! $payment) {
+            Log::channel('xendit')->warning('Webhook Xendit: invoice tidak dikenal.', [
+                'invoice_id' => $invoiceId,
+                'external_id' => $externalId,
+            ]);
 
-            // 2. Fallback cari melalui kode booking (external_id) jika by ID invoice tidak ketemu
-            if (! $payment && $externalId) {
-                $booking = Booking::where('code', $externalId)->first();
-                if ($booking) {
-                    $payment = $booking->payments()
-                        ->where('method', 'xendit_invoice')
-                        ->latest()
-                        ->lockForUpdate()
-                        ->first();
-                }
-            }
+            abort(404, 'Invoice Xendit tidak dikenal.');
+        }
 
-            // 3. Jika tetap tidak ada, log warning dan hentikan eksekusi (tetap return 200 nantinya)
-            if (! $payment) {
-                Log::warning('Webhook Xendit diterima untuk invoice yang tidak dikenal.', [
-                    'invoice_id' => $invoiceId,
-                    'external_id' => $externalId,
-                ]);
-
-                return;
-            }
-
-            // 4. Selalu simpan raw payload
-            $payment->gateway_payload = $payload;
-
-            // 5. Evaluasi status dengan pendekatan idempotent
-            if (in_array($status, ['PAID', 'SETTLED'])) {
-                if ($payment->status !== 'paid') {
-                    $payment->status = 'paid';
-                    $payment->paid_at = isset($payload['paid_at'])
-                        ? Carbon::parse($payload['paid_at'])->setTimezone(config('app.timezone'))
-                        : now();
-                    $payment->save();
-
-                    $booking = $payment->booking;
-                    if ($booking->status === BookingStatus::Pending) {
-                        $this->bookingService->transition(
-                            $booking,
-                            BookingStatus::Paid,
-                            null,
-                            'Pembayaran via Xendit (webhook)'
-                        );
-                    }
-                } else {
-                    $payment->save(); // Status sudah paid, cukup simpan update payload
-                }
-            } elseif ($status === 'EXPIRED') {
-                if ($payment->status !== 'expired') {
-                    $payment->status = 'expired';
-                    $payment->save();
-
-                    $booking = $payment->booking;
-                    if ($booking->status === BookingStatus::Pending) {
-                        $this->bookingService->transition(
-                            $booking,
-                            BookingStatus::Expired,
-                            null,
-                            'Invoice kedaluwarsa (webhook Xendit)'
-                        );
-                    }
-                } else {
-                    $payment->save(); // Status sudah expired, cukup simpan update payload
-                }
-            } else {
-                // PENDING atau status lainnya, cukup simpan payload tanpa mengubah status pembayaran/booking
-                $payment->save();
-            }
-        });
+        // Logika status dikumpulkan di PaymentService agar bisa dipakai EG-26
+        $this->paymentService->applyInvoiceStatus($payment, $payload);
     }
 }
