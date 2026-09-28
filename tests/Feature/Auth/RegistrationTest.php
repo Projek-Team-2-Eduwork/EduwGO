@@ -3,11 +3,20 @@
 namespace Tests\Feature\Auth;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Registrasi butuh role 'user' sudah ada (lihat EG-6).
+        Role::firstOrCreate(['name' => 'user']);
+    }
 
     public function test_registration_screen_can_be_rendered(): void
     {
