@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,5 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/pesanan/{code}/sukses', [BookingPaymentController::class, 'success'])->name('booking.success');
     Route::get('/pesanan/{code}/gagal', [BookingPaymentController::class, 'failed'])->name('booking.failed');
 });
+
+// Webhook Xendit (EG-14): di luar auth, diverifikasi via x-callback-token, dikecualikan CSRF
+Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
+    ->name('xendit.webhook');
 
 require __DIR__.'/auth.php';
