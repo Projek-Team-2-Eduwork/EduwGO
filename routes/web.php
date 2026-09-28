@@ -14,6 +14,13 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Referensi visual token/komponen EduwGo, hanya aktif di lokal (EG-7).
+if (app()->environment('local')) {
+    Route::get('/styleguide', function () {
+        return view('styleguide');
+    })->name('styleguide');
+}
+
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Placeholder, dashboard admin sebenarnya dibuat di EG-8 (F-7) / Alur B
     Route::get('/dashboard', function () {

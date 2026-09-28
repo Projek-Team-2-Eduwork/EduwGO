@@ -7,7 +7,7 @@
 --}}
 <div
     x-data="{
-        theme: '{{ auth()->check() ? auth()->user()->preferredTheme() : 'system' }}',
+        theme: {{ auth()->check() ? "'".auth()->user()->preferredTheme()."'" : "(function () { try { return localStorage.getItem('theme') || 'system'; } catch (e) { return 'system'; } })()" }},
         loggedIn: {{ auth()->check() ? 'true' : 'false' }},
         apply() {
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
