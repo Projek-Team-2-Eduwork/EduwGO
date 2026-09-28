@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            RoleSeeder::class,
             VehicleTypeSeeder::class,
             VehicleSeeder::class,
             BookingSeeder::class,
@@ -24,8 +25,17 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::factory()->create([
+            'name' => 'Admin EduwGo',
+            'email' => 'admin@eduwgo.test',
+        ])->assignRole('admin');
+
+        User::factory(2)->create()->each(
+            fn (User $user) => $user->assignRole('user'),
+        );
+
+        User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-        ]);
+        ])->assignRole('user');
     }
 }
