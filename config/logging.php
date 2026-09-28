@@ -73,6 +73,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Log khusus integrasi Xendit (webhook & sinkronisasi invoice) — EG-14
+        'xendit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/xendit.log'),
+            'level' => 'info',
+            'max_files' => 14,
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),
