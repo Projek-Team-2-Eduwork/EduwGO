@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BookingPaymentController;
+use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/pesanan/{code}/sukses', [BookingPaymentController::class, 'success'])->name('booking.success');
     Route::get('/pesanan/{code}/gagal', [BookingPaymentController::class, 'failed'])->name('booking.failed');
 });
+
+// Opsi durasi sewa per unit untuk modal pilih durasi (EG-11)
+Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'durasi'])
+    ->name('kendaraan.durasi');
 
 // Webhook Xendit (EG-14): di luar auth, diverifikasi via x-callback-token, dikecualikan CSRF
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
