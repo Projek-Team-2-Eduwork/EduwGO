@@ -42,7 +42,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profil/tema', [ProfileController::class, 'theme'])->name('profile.theme');
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
+// Pesanan & pembayaran wajib email terverifikasi (EG-22)
+Route::middleware(['auth', 'verified'])->group(function () {
     // Alur pembayaran Xendit
     Route::get('/pesanan/{code}/menunggu', [BookingPaymentController::class, 'waiting'])->name('booking.waiting');
 
