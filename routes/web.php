@@ -67,6 +67,10 @@ Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'dura
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
 
+// Katalog kendaraan + filter (EG-24)
+Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
+Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
+
 Route::get('/kendaraan/{vehicle}', [VehicleController::class, 'show'])->name('kendaraan.detail');
 
 Route::middleware(['auth', 'verified'])->group(function () {
