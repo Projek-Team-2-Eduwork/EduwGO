@@ -1,9 +1,11 @@
 @props(['vehicle'])
 
-<div x-data="bookingDurationModal({{ $vehicle->id }}, '{{ session('booking.start_at', request('start', '')) }}', {{$vehicle->price_per_day }})">
+<div x-data="bookingDurationModal({{ $vehicle->id }}, '{{ session()->pull('booking.start_at', request('start', '')) }}', {{$vehicle->price_per_day }}, '{{ session()->pull('booking.days', '') }}', {{ request()->boolean('ulang') ? 'true' : 'false' }})"
+     @if(request()->boolean('ulang')) x-init="fetchDurations()" @endif>
+    
     <x-primary-button type="button" @click="openModal">Booking</x-primary-button>
 
-    <x-modal name="booking-modal-{{ $vehicle->id }}" focusable>
+    <x-modal name="booking-modal-{{ $vehicle->id }}" :show="request()->boolean('ulang')" focusable>
         <div class="p-6">
             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
                 Pilih Durasi Sewa
@@ -61,8 +63,10 @@
 
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('bookingDurationModal', (vehicleId, initialStart, pricePerDay) => ({
+        Alpine.data('bookingDurationModal', (vehicleId, initialStart, pricePerDay, initialDays, autoOpen) => ({
             startAt: initialStart,
+            initialDays: initialDays,
+            autoOpen: autoOpen,
             durations: null,
             selectedDays: null,
             isLoading: false,
@@ -86,6 +90,11 @@
                     const response = await fetch(`/api/kendaraan/${vehicleId}/durasi?start=${this.startAt}`);
                     if (!response.ok) throw new Error('Gagal memuat ketersediaan.');
                     this.durations = await response.json();
+                    
+                    // Pre-select durasi lama jika unit masih available di durasi tersebut
+                    if (this.initialDays && this.durations[this.initialDays] && this.durations[this.initialDays].available) {
+                        this.selectedDays = String(this.initialDays);
+                    }
                 } catch (err) {
                     this.error = err.message;
                 } finally {
