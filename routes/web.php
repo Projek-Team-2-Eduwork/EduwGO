@@ -72,7 +72,7 @@ Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
 Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
 Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
 
-Route::get('/kendaraan/{vehicle}', [VehicleController::class, 'show'])->name('kendaraan.detail');
+Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->name('kendaraan.detail');
 
 // Halaman pendukung (EG-36)
 Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('terms');
