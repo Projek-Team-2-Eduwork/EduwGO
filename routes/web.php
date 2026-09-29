@@ -67,7 +67,7 @@ Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'dura
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
 
-Route::get('/kendaraan/{vehicle}', [VehicleController::class, 'show'])->name('kendaraan.detail');
+Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->name('kendaraan.detail');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout/{vehicle}', [CheckoutController::class, 'show'])->name('checkout.show');
