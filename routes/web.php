@@ -16,8 +16,8 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Referensi visual token/komponen EduwGo, hanya aktif di lokal (EG-7).
-if (app()->environment('local')) {
+// Referensi visual token/komponen EduwGo (EG-7, EG-8), tidak tersedia di production.
+if (! app()->isProduction()) {
     Route::get('/styleguide', function () {
         return view('styleguide');
     })->name('styleguide');

@@ -6,11 +6,16 @@ use Tests\TestCase;
 
 class StyleguideTest extends TestCase
 {
-    public function test_styleguide_tidak_muncul_di_luar_local(): void
+    public function test_styleguide_menampilkan_semua_komponen(): void
     {
-        // phpunit.xml set APP_ENV=testing, jadi route ini seharusnya tidak terdaftar.
         $response = $this->get('/styleguide');
 
-        $response->assertNotFound();
+        $response->assertOk();
+        $response->assertSee('badge-status');
+        $response->assertSee('Lunas');
+        $response->assertSee('Sedang disewa');
+        $response->assertSee('Honda Vario 160');
+        $response->assertSee('Belum ada pesanan');
+        $response->assertSee('Halaman 2', false);
     }
 }
