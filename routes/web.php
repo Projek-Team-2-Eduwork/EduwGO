@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\KendaraanController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\XenditWebhookController;
@@ -67,7 +68,15 @@ Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'dura
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
 
+// Katalog kendaraan + filter (EG-24)
+Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
+Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
+
 Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->name('kendaraan.detail');
+
+// Halaman pendukung (EG-36)
+Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('terms');
+Route::get('/tentang', [PageController::class, 'about'])->name('about');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout/{vehicle}', [CheckoutController::class, 'show'])->name('checkout.show');
