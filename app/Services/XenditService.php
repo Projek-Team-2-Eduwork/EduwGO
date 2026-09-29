@@ -95,4 +95,21 @@ class XenditService
         // Logika status dikumpulkan di PaymentService agar bisa dipakai EG-26
         $this->paymentService->applyInvoiceStatus($payment, $payload);
     }
+
+    /**
+     * Mendapatkan detail invoice dari API Xendit berdasarkan reference ID.
+     */
+    public function getInvoice(string $reference): array
+    {
+        $secretKey = config('services.xendit.secret_key', env('XENDIT_SECRET_KEY'));
+
+        $response = Http::withBasicAuth($secretKey, '')
+            ->get('https://api.xendit.co/v2/invoices/'.$reference);
+
+        if (! $response->successful()) {
+            throw new Exception('Gagal mengambil status invoice Xendit: '.$response->body());
+        }
+
+        return $response->json();
+    }
 }
