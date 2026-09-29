@@ -49,4 +49,36 @@ class BookingPaymentController extends Controller
 
         return view('booking.failed', compact('booking'));
     }
+
+    /**
+     * Menyimpan data booking lama ke session untuk form booking ulang (rebook)
+     * dan mengarahkan pengguna ke halaman detail kendaraan dengan modal terbuka otomatis.
+     */
+    public function ulang(Request $request, $code)
+    {
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        // Pastikan hanya pemilik yang bisa booking ulang pesanannya sendiri
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak diizinkan mengakses pesanan ini.');
+        }
+
+        $start = $booking->start_at;
+
+        // Jika waktu sewa lama sudah berlalu, bulatkan ke 1 jam ke depan dari sekarang
+        if ($start->isPast()) {
+            $start = now()->startOfHour()->addHour();
+        }
+
+        // Simpan ke session untuk di-consume (pull) oleh modal di halaman detail
+        session([
+            'booking.start_at' => $start->format('Y-m-d\TH:i'),
+            'booking.days' => $booking->duration_days,
+        ]);
+
+        return redirect()->route('kendaraan.detail', [
+            'vehicle' => $booking->vehicle,
+            'ulang' => 1,
+        ]);
+    }
 }
