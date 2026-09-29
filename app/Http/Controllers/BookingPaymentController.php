@@ -36,18 +36,58 @@ class BookingPaymentController extends Controller
         return view('booking.waiting', compact('booking', 'payment'));
     }
 
-    public function success($code)
+    public function success(Request $request, $code)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
-        return view('booking.success', compact('booking'));
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        $lunas = [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned];
+
+        if (in_array($booking->status, $lunas, true)) {
+            return view('booking.success', ['booking' => $booking, 'isPaid' => true]);
+        }
+
+        if ($booking->status === BookingStatus::Pending) {
+            return view('booking.success', ['booking' => $booking, 'isPaid' => false]);
+        }
+
+        return redirect()->route('booking.failed', $code);
     }
 
-    public function failed($code)
+    public function failed(Request $request, $code)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
-        return view('booking.failed', compact('booking'));
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        $lunas = [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned];
+
+        if (in_array($booking->status, $lunas, true)) {
+            return redirect()->route('booking.success', $code);
+        }
+
+        return view('booking.failed', ['booking' => $booking]);
+    }
+
+    public function status(Request $request, $code)
+    {
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        $lunas = [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned];
+
+        return response()->json([
+            'status' => $booking->status->value,
+            'paid' => in_array($booking->status, $lunas, true),
+        ]);
     }
 
     /**
