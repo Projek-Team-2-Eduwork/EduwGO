@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-
-        <title>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- Fonts (self-host agar tetap jalan offline) -->
-        <link rel="stylesheet" href="{{ asset('fonts/fonts.css') }}">
-
-        <!-- Anti-flash: set class dark sebelum render (SPEC bagian 8) -->
-        <script>
-            (function () {
-                var stored = null;
-
-                try {
-                    stored = localStorage.getItem('theme');
-                } catch (e) {}
-
-                var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var dark = stored === 'dark' || ((stored === null || stored === 'system') && systemDark);
-
-                if (dark) {
-                    document.documentElement.classList.add('dark');
-                }
-            })();
-        </script>
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('layouts.partials.head', ['title' => $title ?? null])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-[var(--ink-muted)]" />
+        <div class="grid min-h-screen lg:grid-cols-2">
+            <!-- Banner kiri (desktop): accent-gradient -->
+            <aside class="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12" style="background-image: var(--accent-gradient);">
+                <a href="{{ url('/') }}" class="inline-flex" aria-label="{{ setting('brand.name', 'EduwGo') }}">
+                    <span class="font-serif text-3xl leading-none text-white">{{ setting('brand.name', 'EduwGo') }}</span>
                 </a>
-            </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 card-surface overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+                <div>
+                    <h2 class="max-w-md font-serif text-5xl leading-tight !text-white">
+                        {{ setting('brand.tagline', 'Rental Motor Cepat & Aman') }}
+                    </h2>
+                    <p class="mt-4 max-w-md text-white/90">
+                        Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.
+                    </p>
+                </div>
+
+                <p class="text-sm text-white/80">&copy; {{ now()->year }} {{ setting('brand.name', 'EduwGo') }}</p>
+            </aside>
+
+            <!-- Form kanan -->
+            <div class="flex flex-col">
+                <div class="flex items-center justify-between px-4 py-4 sm:px-8">
+                    <a href="{{ url('/') }}" class="lg:invisible" aria-label="{{ setting('brand.name', 'EduwGo') }}">
+                        <x-brand-logo class="h-9 w-auto" />
+                    </a>
+
+                    <x-theme-toggle />
+                </div>
+
+                <div class="flex flex-1 items-center justify-center px-4 pb-10 sm:px-8">
+                    <div class="card-surface w-full max-w-md px-6 py-8 sm:px-8">
+                        {{ $slot }}
+                    </div>
+                </div>
             </div>
         </div>
     </body>
