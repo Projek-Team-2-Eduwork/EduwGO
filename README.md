@@ -66,6 +66,23 @@ ngrok http 80
 
 Salin URL `https://xxxx.ngrok-free.app`, daftarkan `https://xxxx.ngrok-free.app/webhooks/xendit` di dashboard Xendit → **Settings → Developers → Webhooks** (Invoices). Detail lengkap: `docs/SPEC.md` bagian 3.
 
+## Scheduler auto-expire (EG-26)
+
+Booking Pending yang invoice Xendit-nya lewat waktu di-expire otomatis tiap 5 menit (`bookings:expire`) — fallback kalau webhook Xendit tidak masuk. Scheduler harus dijalankan terpisah:
+
+```bash
+# lokal — biarkan jalan di terminal terpisah (Ctrl+C untuk berhenti)
+./vendor/bin/sail artisan schedule:work
+```
+
+Untuk produksi, daftarkan cron ini:
+
+```cron
+* * * * * cd /path/ke/EduwGO && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Admin juga bisa memaksa sinkronisasi status invoice lewat tombol "Cek Status Xendit" di halaman `/admin/pesanan/{kode}`.
+
 ## Image Docker kustom
 
 Container `laravel.test` **tidak** memakai image bawaan Laravel Sail (berat: mongodb, postgres, playwright, swoole, dsb — tidak dipakai project ini). Dockerfile-nya ada di `docker/8.3/`, hanya berisi ekstensi yang dipakai: `pdo_mysql`, `mbstring`, `zip`, `exif`, `pcntl`, `bcmath`, `gd`, `redis`. Perintah `sail` tetap sama seperti Sail resmi.

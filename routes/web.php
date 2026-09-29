@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\KendaraanController;
@@ -28,6 +29,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('dashboard');
+
+    // Detail pesanan + sinkronisasi manual status invoice Xendit (EG-26)
+    Route::get('/pesanan/{code}', [PesananController::class, 'show'])->name('pesanan.show');
+    Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
 });
 
 Route::middleware('auth')->group(function () {
