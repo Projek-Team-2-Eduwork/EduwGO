@@ -23,9 +23,9 @@
         <div>
             <h3 class="font-sans text-sm font-semibold uppercase tracking-wider">About</h3>
             <ul class="mt-4 space-y-2 text-sm">
-                <li><a href="{{ url('/#tentang') }}" class="hover:text-[var(--orange-500)]">Tentang Kami</a></li>
+                <li><a href="{{ route('about') }}" class="hover:text-[var(--orange-500)]">Tentang Kami</a></li>
                 <li><a href="{{ url('/#cara-sewa') }}" class="hover:text-[var(--orange-500)]">Cara Sewa</a></li>
-                <li><a href="{{ url('/#syarat-ketentuan') }}" class="hover:text-[var(--orange-500)]">Syarat &amp; Ketentuan</a></li>
+                <li><a href="{{ route('terms') }}" class="hover:text-[var(--orange-500)]">Syarat &amp; Ketentuan</a></li>
             </ul>
         </div>
 

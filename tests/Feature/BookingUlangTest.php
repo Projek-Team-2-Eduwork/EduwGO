@@ -45,7 +45,7 @@ class BookingUlangTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('booking.rebook', $booking->code));
 
-        $response->assertRedirect(route('kendaraan.detail', ['vehicle' => $booking->vehicle_id, 'ulang' => 1]));
+        $response->assertRedirect(route('kendaraan.detail', ['vehicle' => $booking->vehicle, 'ulang' => 1]));
         $response->assertSessionHas('booking.start_at', $start->format('Y-m-d\TH:i'));
         $response->assertSessionHas('booking.days', 2);
     }

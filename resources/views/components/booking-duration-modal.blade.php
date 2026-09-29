@@ -1,6 +1,6 @@
 @props(['vehicle'])
 
-<div x-data="bookingDurationModal({{ $vehicle->id }}, '{{ session()->pull('booking.start_at', request('start', '')) }}', {{$vehicle->price_per_day }}, '{{ session()->pull('booking.days', '') }}', {{ request()->boolean('ulang') ? 'true' : 'false' }})"
+<div x-data="bookingDurationModal({{ $vehicle->id }}, '{{ session()->pull('booking.start_at', request('start', '')) }}', {{$vehicle->price_per_day }}, '{{ session()->pull('booking.days', request('days', '')) }}', {{ request()->boolean('ulang') ? 'true' : 'false' }})"
      @if(request()->boolean('ulang')) x-init="fetchDurations()" @endif>
     
     <x-primary-button type="button" @click="openModal">Booking</x-primary-button>

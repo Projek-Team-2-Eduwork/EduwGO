@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KendaraanController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\XenditWebhookController;
@@ -13,12 +15,14 @@ use Illuminate\Support\Facades\Route;
 // Rute Publik Terbuka
 // ==========================================
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Halaman Publik: Detail Kendaraan
-Route::get('/kendaraan/{vehicle}', [VehicleController::class, 'show'])->name('kendaraan.detail');
+// Katalog kendaraan + filter (EG-24)
+Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
+Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
+
+// Halaman Publik: Detail Kendaraan — binding slug (EG-25)
+Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->name('kendaraan.detail');
 
 // API Internal: Opsi durasi sewa per unit untuk modal pilih durasi (EG-11)
 Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'durasi'])
@@ -96,6 +100,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/pesanan/{code}', [PesananController::class, 'show'])->name('pesanan.show');
     Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
 });
+
+// ==========================================
+// Halaman Pendukung (EG-36)
+// ==========================================
+Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('terms');
+Route::get('/tentang', [PageController::class, 'about'])->name('about');
 
 // Memuat rute-rute bawaan Laravel Breeze
 require __DIR__.'/auth.php';

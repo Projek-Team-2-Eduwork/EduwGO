@@ -77,7 +77,7 @@ class BookingPaymentController extends Controller
         ]);
 
         return redirect()->route('kendaraan.detail', [
-            'vehicle' => $booking->vehicle_id,
+            'vehicle' => $booking->vehicle,
             'ulang' => 1,
         ]);
     }

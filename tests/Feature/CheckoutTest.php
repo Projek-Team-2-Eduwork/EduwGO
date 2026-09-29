@@ -138,7 +138,8 @@ class CheckoutTest extends TestCase
         $user = User::factory()->create();
         $vehicle = Vehicle::factory()->create();
 
-        $responseDetail = $this->get(route('kendaraan.detail', $vehicle->id));
+        // Detail memakai slug (EG-25); modal durasi hanya dirender untuk user login.
+        $responseDetail = $this->actingAs($user)->get(route('kendaraan.detail', $vehicle));
         $responseDetail->assertOk();
         $responseDetail->assertSee('Pilih Durasi Sewa');
 
