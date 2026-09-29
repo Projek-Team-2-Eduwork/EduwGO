@@ -54,9 +54,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Alur pembayaran Xendit
     Route::get('/pesanan/{code}/menunggu', [BookingPaymentController::class, 'waiting'])->name('booking.waiting');
 
-    // Placeholder route untuk EG-15
-    Route::get('/pesanan/{code}/sukses', [BookingPaymentController::class, 'success'])->name('booking.success');
+    // Halaman pesanan sukses, gagal, dan polling status pembayaran (EG-15)
+    Route::get('/pesanan/{code}/berhasil', [BookingPaymentController::class, 'success'])->name('booking.success');
     Route::get('/pesanan/{code}/gagal', [BookingPaymentController::class, 'failed'])->name('booking.failed');
+    Route::get('/pesanan/{code}/status', [BookingPaymentController::class, 'status'])->name('booking.status');
+
+    // Fitur Booking Ulang satu klik untuk pesanan expired (EG-27)
+    Route::get('/pesanan/{code}/ulang', [BookingPaymentController::class, 'ulang'])->name('booking.rebook');
 });
 
 // Opsi durasi sewa per unit untuk modal pilih durasi (EG-11)
