@@ -14,8 +14,11 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'Manrope', ...defaultTheme.fontFamily.sans],
-                serif: ['Instrument Serif', 'Playfair Display', ...defaultTheme.fontFamily.serif],
+                // Tipografi mengikuti Figma ED.RENT: Plus Jakarta Sans untuk body & heading.
+                sans: ['Plus Jakarta Sans', 'Inter', ...defaultTheme.fontFamily.sans],
+                // Nama utility `font-serif` dipertahankan supaya view lama tidak perlu diubah,
+                // tetapi sekarang memakai Plus Jakarta Sans (bukan serif).
+                serif: ['Plus Jakarta Sans', 'Inter', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 // Palet EduwGo dipetakan ke CSS variable (docs/SPEC.md bagian 8)

@@ -4,15 +4,15 @@
         @include('layouts.partials.head', ['title' => $title ?? null])
     </head>
     <body class="font-sans antialiased">
-        <div class="grid min-h-screen lg:grid-cols-2">
+        <div class="grid min-h-screen lg:grid-cols-[58fr_42fr]">
             <!-- Banner kiri (desktop): accent-gradient -->
             <aside class="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12" style="background-image: var(--accent-gradient);">
                 <a href="{{ url('/') }}" class="inline-flex" aria-label="{{ setting('brand.name', 'EduwGo') }}">
-                    <span class="font-serif text-3xl leading-none text-white">{{ setting('brand.name', 'EduwGo') }}</span>
+                    <span class="text-2xl font-extrabold leading-none tracking-tight text-white">{{ setting('brand.name', 'EduwGo') }}</span>
                 </a>
 
                 <div>
-                    <h2 class="max-w-md font-serif text-5xl leading-tight !text-white">
+                    <h2 class="max-w-md text-5xl !text-white lg:leading-[1.2]">
                         {{ setting('brand.tagline', 'Rental Motor Cepat & Aman') }}
                     </h2>
                     <p class="mt-4 max-w-md text-white/90">
@@ -34,7 +34,7 @@
                 </div>
 
                 <div class="flex flex-1 items-center justify-center px-4 pb-10 sm:px-8">
-                    <div class="card-surface w-full max-w-md px-6 py-8 sm:px-8">
+                    <div class="w-full max-w-md">
                         {{ $slot }}
                     </div>
                 </div>

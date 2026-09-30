@@ -6,17 +6,20 @@
     ];
 @endphp
 
-<section id="cara-sewa" class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8 lg:pt-24">
-    <h2 class="text-center font-serif text-3xl sm:text-4xl">Mulai Perjalanan Anda dalam 3 Langkah</h2>
+<section id="cara-sewa" class="mx-auto max-w-[1320px] px-4 pt-12 sm:px-6 lg:pt-20 xl:px-0">
+    <h2 class="text-2xl">Mulai Perjalanan Anda dalam 3 Langkah</h2>
+    <p class="mt-2 text-sm">Tidak perlu repot! Proses penyewaan motor tercepat, paling aman, dan transparan.</p>
 
-    <ol class="mt-10 grid gap-6 md:grid-cols-3">
+    <ol class="mt-6 grid gap-4 md:grid-cols-3">
         @foreach ($steps as $i => $step)
-            <li class="card-surface flex flex-col items-center px-6 py-8 text-center">
-                <span class="inline-flex h-16 w-16 items-center justify-center rounded-full text-white" style="background-color: var(--orange-500);" aria-hidden="true">
-                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $step['icon'] }}"/></svg>
+            <li class="card-surface flex items-start gap-4 p-5">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white" style="background-color: var(--orange-500);" aria-hidden="true">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $step['icon'] }}"/></svg>
                 </span>
-                <h3 class="mt-5 font-serif text-2xl">{{ $i + 1 }}. {{ $step['title'] }}</h3>
-                <p class="mt-2 text-sm leading-relaxed">{{ $step['text'] }}</p>
+                <div>
+                    <h3 class="text-sm">{{ $i + 1 }}. {{ $step['title'] }}</h3>
+                    <p class="mt-1 text-xs leading-relaxed">{{ $step['text'] }}</p>
+                </div>
             </li>
         @endforeach
     </ol>

@@ -36,7 +36,7 @@
 
 @layer base {
     html {
-        font-family: 'Inter', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+        font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
     }
 
     body {
@@ -50,7 +50,9 @@
     h2,
     h3,
     h4 {
-        font-family: 'Instrument Serif', 'Playfair Display', ui-serif, Georgia, serif;
+        font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
         color: var(--navy-900);
     }
 }
@@ -64,13 +66,12 @@
         box-shadow: 0 1px 2px rgb(15 26 46 / 0.06);
     }
 
-    /* Tombol utama: navy, sudut miring (chamfered) — bukan rounded */
+    /* Tombol utama: navy, sudut membulat sesuai Figma */
     .btn-primary-edu {
-        clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+        border-radius: 0.5rem;
         background-color: var(--navy-900);
         color: var(--surface);
         font-weight: 600;
-        letter-spacing: 0.05em;
         transition: background-color 150ms ease-in-out;
     }
 
@@ -81,7 +82,7 @@
 
     /* Tombol sekunder: kecil, oranye */
     .btn-secondary-edu {
-        clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+        border-radius: 0.5rem;
         background-color: transparent;
         color: var(--orange-500);
         border: 1px solid var(--orange-500);
@@ -145,6 +146,7 @@ select,
 textarea {
     background-color: var(--surface);
     border-color: var(--border);
+    border-radius: 0.5rem;
     color: var(--navy-900);
 }
 

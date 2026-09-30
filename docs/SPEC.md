@@ -10,22 +10,22 @@
 ## 1. Halaman Public & User (Penyewa)
 
 ### Home / Beranda [Figma: General > Home]
-- Hero: banner motor di atas accent-gradient oranye + tagline serif ("Rental Motor Cepat & Aman, Mulai Rp75.000/hari"), tombol Pilih Kendaraan (navy, chamfered)
-- "Mulai Perjalanan Anda dalam 3 Langkah": pilih motor → pilih durasi & bayar → ambil di lokasi (ikon bulat oranye)
-- Katalog ringkas: card motor (foto, nama, tipe, plat, badge Tersedia/Disewa, harga/hari, tombol Booking) + "Lihat semua"
-- Syarat & Ketentuan Rental Motor (6 poin sesuai desain: minimal 1×24 jam, konfirmasi via WhatsApp/datang, bawa 2 identitas, sertakan sosmed & WA aktif, cek kondisi saat serah terima, penyedia berhak batalkan/ganti unit)
-- Footer: brand, deskripsi, About, Community, Socials, Kontak (Chat Admin), toggle dark mode
+- Hero full-width: foto pengendara + overlay gelap di Figma; di EduwGo sementara accent-gradient oranye (foto menunggu aset). Judul "Rental Motor Cepat & Aman, Mulai Rp75.000/hari" (Plus Jakarta Sans Bold 50px) + subjudul, tanpa tombol. Di mobile ada kartu "Cari kendaraan" (tipe, tanggal & jam, durasi, tombol "Ayo Cari") menimpa bawah hero
+- "Mulai Perjalanan Anda dalam 3 Langkah" + subjudul: 3 kartu horizontal (ikon kotak oranye di kiri, judul + teks di kanan): pilih motor → pilih durasi & bayar → ambil di lokasi
+- Katalog ringkas: judul + subjudul, tautan "Lihat semua" di kanan judul, grid 4 kolom card motor (nama + tipe, foto, plat + status titik hijau Tersedia/Disewa, harga/hari, tombol Booking)
+- Syarat & Ketentuan Rental Motor: judul + kalimat pengantar + daftar bernomor polos, tanpa kartu (6 poin sesuai desain: minimal 1×24 jam, konfirmasi via WhatsApp/datang, bawa 2 identitas, sertakan sosmed & WA aktif, cek kondisi saat serah terima, penyedia berhak batalkan/ganti unit)
+- Footer: logo + deskripsi, About, Socials, Kontak (Chat Admin), hak cipta; toggle dark mode (tambahan EduwGo, tidak ada di Figma)
 - Nama brand (default EduwGo), logo, warna diambil dari Pengaturan Toko
 
 ### Pilih Kendaraan / Daftar Kendaraan [Figma: User > Daftar Kendaraan]
-- Filter bar: Tipe kendaraan (Matic / Cub — daftar tipe dikelola admin), Tanggal & jam mulai sewa, Durasi (hari), Status (Tersedia), Cari nama motor
+- Judul "Daftar Kendaraan" + subjudul rata kiri, lalu filter bar dalam satu kartu: Tipe kendaraan (Matic / Cub — daftar tipe dikelola admin), Tanggal & jam mulai sewa, Durasi (hari), Cari nama motor; filter Status (Tersedia) adalah tambahan EduwGo (tidak ada di Figma)
 - Ketersediaan dihitung per unit berdasarkan overlap tanggal-jam + buffer 1 jam: unit "Tersedia" hanya jika tidak ada booking aktif yang bentrok di rentang [mulai − 1 jam, mulai + durasi×24 jam + 1 jam]
 - Filter tanggal+durasi tersimpan di session/query string, dibawa ke halaman detail & modal durasi
-- Grid card, pagination, responsive (mobile: 1 kolom)
+- Grid card 4 kolom, pagination, lalu blok Syarat & Ketentuan Rental Motor di bawah grid (sama dengan Home); responsive (mobile: 1 kolom, filter jadi bottom sheet)
 
 ### Detail Kendaraan [Figma: User > Deskripsi Kendaraan]
-- Foto utama, nama, tipe, spesifikasi: Brand, Tipe, Kapasitas Tangki, No. Plat (+ field custom opsional: tahun, transmisi, CC)
-- Deskripsi, harga/hari, badge status, tombol Booking
+- Dua kartu berdampingan. Kiri: foto utama + spesifikasi (Brand, Tipe, Kapasitas Tangki, No. Plat; field custom opsional: tahun, transmisi, CC). Kanan: nama, status (titik hijau), deskripsi, "Perlengkapan" (daftar poin 3 kolom, mis. helm SNI, jas hujan), harga/hari + tombol Booking
+- "Perlengkapan" ada di Figma tetapi tabel `vehicles` belum punya kolomnya: butuh kolom `equipment` (json, daftar teks) di migration (EG-3) dan input di form admin kendaraan (EG-18), keduanya Alur B; tampilan di detail menyusul setelah data ada
 - Rekomendasi Kendaraan: motor lain tipe sama yang tersedia di rentang tanggal yang dipilih
 - Modal "Pilih Durasi Sewa": satuan 24 jam/hari, pilihan 1–5 hari (maksimal dari settings), tiap opsi tampilkan tanggal & jam selesai otomatis, total = harga/hari × hari, tombol Checkout
 - Style input durasi bisa custom (catatan tugas): default list 1–5 hari ala desain; alternatif stepper/date-range boleh
@@ -134,12 +134,12 @@ Layout: sidebar (Dashboard, Daftar Pesanan, Kendaraan, Tipe Kendaraan, Pengatura
 
 ## 5. Halaman Autentikasi [Figma: General > Buat Akun, Masuk]
 
-- Masuk: split layout (banner motor kiri dengan accent-gradient, form kanan), email + password, "Lupa kata sandi", link ke Buat Akun
+- Masuk: split layout 58/42 (banner kiri: foto pengendara di Figma, sementara accent-gradient, dengan logo kiri atas dan judul tengah; form kanan tanpa kartu), email + password, "Lupa kata sandi", link ke Buat Akun
 - Buat Akun: nama, email, nomor WhatsApp, password + konfirmasi, checkbox setuju S&K
 - Verifikasi Email: wajib sebelum checkout (cegah akun spam kunci unit)
 - Lupa & Reset Password (Breeze)
 - Redirect setelah login: admin → /admin/dashboard, user → halaman sebelumnya / home
-- Google login: tidak ada di desain, skip
+- Google login: tombol "Masuk dengan Google" ada di Figma, tetapi Google login di luar scope (lihat bagian 9), jadi tidak dibuat
 
 ## 6. Alur Status Booking (State Machine)
 
@@ -160,7 +160,7 @@ pending ──bayar (webhook)──> paid ──admin serah terima──> rented
 
 - users: name, email, phone (WA), social_account, password, email_verified_at, theme_preference (light|dark|system); role via spatie (admin|user)
 - vehicle_types: name, slug (Matic, Cub, ...)
-- vehicles: vehicle_type_id, name, slug, brand, plate_number (unique), tank_capacity, price_per_day, image, description, is_active, deleted_at
+- vehicles: vehicle_type_id, name, slug, brand, plate_number (unique), tank_capacity, price_per_day, image, description, is_active, deleted_at; usulan: equipment (json, daftar teks perlengkapan, untuk detail motor di Figma; belum ada di migration)
 - bookings: code (EG.000001), user_id, vehicle_id, start_at (datetime), end_at (datetime), duration_days, price_per_day (snapshot), total_amount, status, customer_name, customer_phone, notes, cancel_reason
 - booking_status_histories: booking_id, from_status, to_status, changed_by (null = sistem), note
 - payments: booking_id, method, gateway_reference, gateway_url, gateway_payload, amount, status, paid_at, expires_at
@@ -169,7 +169,7 @@ pending ──bayar (webhook)──> paid ──admin serah terima──> rented
 
 ## 8. Desain & Frontend
 
-- Layout & struktur halaman ikuti Figma; warna, tipografi, bentuk tombol diganti ke identitas EduwGo di bawah
+- Layout, struktur, tipografi, dan bentuk komponen halaman ikuti Figma (diselaraskan di branch UI Polish); **hanya palet warna** yang diganti ke identitas EduwGo di bawah (warna biru Figma → navy/oranye EduwGo)
 - Palet EduwGo (light), dipetakan ke Tailwind via CSS variable:
 
 ```css
@@ -211,9 +211,15 @@ pending ──bayar (webhook)──> paid ──admin serah terima──> rented
   - Script anti-flash di `<head>` (set class dark sebelum render)
   - Logo terang & gelap dari settings; foto motor pakai background surface, bukan putih hardcode
   - Chart.js: warna grid/label ikut token; badge status: kontras dicek di kedua tema (WCAG AA)
-- Tipografi: heading serif (Instrument Serif, fallback Playfair Display), body sans (Inter atau Manrope) — Google Fonts, self-host di public/fonts untuk offline
-- Tombol utama: navy, sudut miring (chamfered) via clip-path polygon, bukan rounded; tombol sekunder oranye kecil; hover navy-700
+- Tipografi: **Plus Jakarta Sans** untuk heading dan body (sesuai Figma; heading Bold, letter-spacing −2%, hero 50px/line-height 120%) — self-host di `public/fonts` untuk offline. Utility `font-serif` di Tailwind dipetakan ke Plus Jakarta Sans agar view lama tidak berubah
+- Tombol utama: navy, sudut membulat (rounded-lg, 8px) sesuai Figma; tombol sekunder oranye kecil; hover navy-700
 - Aksen oranye hanya untuk ikon, tombol sekunder, badge, satu hero image; sisanya netral
+- Pola layout Figma (desktop 1440px): container konten maks 1320px, navbar tinggi 100px (logo teks, menu Home / Pilih Kendaraan / Daftar Pesanan, tombol "Butuh bantuan?" dengan ikon WhatsApp, tombol Masuk atau avatar)
+  - Home: hero full-width (accent-gradient) berisi judul + subjudul tanpa tombol; di mobile ada kartu "Cari kendaraan" (tipe, tanggal & jam, durasi, tombol "Ayo Cari") menimpa bawah hero; 3 langkah sebagai 3 kartu horizontal (ikon kiri, teks kanan); grid motor 4 kolom; S&K berupa daftar bernomor polos
+  - Daftar Kendaraan: judul + subjudul rata kiri, filter bar dalam satu kartu, grid 4 kolom
+  - Kartu motor: nama (bold) + tipe, foto di tengah, baris plat nomor + status (titik hijau "Tersedia"), baris harga + tombol Booking
+  - Detail Kendaraan: dua kartu berdampingan (kiri foto + spesifikasi, kanan nama, status, deskripsi, harga + Booking), lalu "Rekomendasi Kendaraan" grid 4 kolom. Blok "Perlengkapan" menunggu kolom `equipment` di tabel `vehicles` (lihat bagian Detail Kendaraan)
+  - Masuk / Buat Akun: layar terbagi 58% banner (accent-gradient, logo kiri atas, judul di tengah) dan 42% form tanpa kartu; tombol "Masuk dengan Google" di Figma tidak dibuat (Google login di luar scope)
 - Background halaman: --bg-gradient, bukan flat
 - Komponen Blade: navbar (user/admin), sidebar admin, card motor, badge status, filter bar, modal durasi, countdown (Alpine), footer, empty state, pagination, theme-toggle
 - Semua halaman ada versi mobile di Figma → responsive wajib (dinilai)

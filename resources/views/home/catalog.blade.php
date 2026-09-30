@@ -1,13 +1,16 @@
-<section id="katalog" class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8 lg:pt-24">
+<section id="katalog" class="mx-auto max-w-[1320px] px-4 pt-12 sm:px-6 lg:pt-20 xl:px-0">
     <div class="flex items-end justify-between gap-4">
-        <h2 class="font-serif text-3xl sm:text-4xl">Pilihan Motor Kami</h2>
-        <a href="{{ url('/kendaraan') }}" class="btn-secondary-edu inline-flex shrink-0 items-center px-4 py-2 text-sm">Lihat semua</a>
+        <div>
+            <h2 class="text-2xl">Pilihan Motor Kami</h2>
+            <p class="mt-2 text-sm">Pilih kendaraan yang paling sesuai dengan gaya perjalanan dan budget Anda. Semua motor terawat, siap jalan!</p>
+        </div>
+        <a href="{{ url('/kendaraan') }}" class="shrink-0 text-sm font-semibold text-[var(--navy-900)] underline-offset-4 hover:underline">Lihat semua</a>
     </div>
 
     @if ($vehicles->isEmpty())
-        <x-empty-state class="mt-8" title="Belum ada motor tersedia" description="Katalog motor akan segera diperbarui. Silakan kembali lagi nanti." />
+        <x-empty-state class="mt-6" title="Belum ada motor tersedia" description="Katalog motor akan segera diperbarui. Silakan kembali lagi nanti." />
     @else
-        <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($vehicles as $vehicle)
                 <x-vehicle-card :vehicle="$vehicle" :available="in_array($vehicle->id, $availableIds)" />
             @endforeach
