@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\PesananController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
@@ -68,6 +69,11 @@ Route::middleware('auth')->group(function () {
 
 // Pesanan & Pembayaran (Wajib login dan email terverifikasi) (EG-22)
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Daftar Pesanan (EG-16)
+    Route::get('/pesanan', [BookingController::class, 'index'])->name('booking.index');
+    Route::get('/pesanan/{code}', [BookingController::class, 'show'])->name('booking.show');
+    Route::post('/pesanan/{code}/batal', [BookingController::class, 'cancel'])->name('booking.cancel');
+
     // Alur pembayaran Xendit
     Route::get('/pesanan/{code}/menunggu', [BookingPaymentController::class, 'waiting'])->name('booking.waiting');
 
