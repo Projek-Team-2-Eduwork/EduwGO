@@ -6,6 +6,7 @@ use App\Http\Requests\VehicleFilterRequest;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
+use App\Support\RentalTerms;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -72,6 +73,7 @@ class VehicleController extends Controller
                 'q' => $search,
             ],
             'timeFiltered' => $timeFiltered,
+            'terms' => RentalTerms::list(),
         ]);
     }
 

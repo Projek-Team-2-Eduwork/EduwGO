@@ -10,7 +10,7 @@
         {{ $slot }}
 
         @isset($actions)
-            <div class="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+            <div {{ $actions->attributes->class(['flex items-center gap-2 sm:col-span-2 lg:col-span-1']) }}>
                 {{ $actions }}
             </div>
         @endisset

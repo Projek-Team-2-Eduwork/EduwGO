@@ -10,10 +10,7 @@
     <img src="{{ $logoLight }}" alt="{{ $name }}" class="{{ $imgClass }} dark:hidden">
     <img src="{{ $logoDark }}" alt="{{ $name }}" class="{{ $imgClass }} hidden dark:block">
 @else
-    <span {{ $attributes->merge(['class' => 'inline-flex items-center gap-2']) }}>
-        <span class="inline-flex h-8 w-8 items-center justify-center text-white" style="background-image: var(--accent-gradient); clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);" aria-hidden="true">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </span>
-        <span class="font-serif text-2xl leading-none" style="color: var(--navy-900);">{{ $name }}</span>
+    <span {{ $attributes->merge(['class' => 'inline-flex items-center']) }}>
+        <span class="text-2xl font-extrabold leading-none tracking-tight" style="color: var(--navy-900);">Eduw<span style="color: var(--orange-500);">Go</span></span>
     </span>
 @endif

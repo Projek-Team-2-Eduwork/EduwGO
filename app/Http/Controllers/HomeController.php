@@ -2,21 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\VehicleFilterRequest;
 use App\Models\Vehicle;
+use App\Models\VehicleType;
 use App\Services\AvailabilityService;
+use App\Support\RentalTerms;
 
 class HomeController extends Controller
 {
     private const DEFAULT_TAGLINE = 'Rental Motor Cepat & Aman, Mulai Rp75.000/hari';
-
-    private const DEFAULT_TERMS = [
-        'Sewa minimal 1x24 jam.',
-        'Konfirmasi pemesanan via WhatsApp atau datang langsung ke lokasi.',
-        'Wajib membawa 2 identitas asli (KTP dan SIM C) saat pengambilan.',
-        'Sertakan akun sosial media dan nomor WhatsApp yang aktif.',
-        'Cek kondisi motor bersama petugas saat serah terima.',
-        'Penyedia berhak membatalkan pesanan atau mengganti unit motor.',
-    ];
 
     public function index(AvailabilityService $availability)
     {
@@ -36,9 +30,13 @@ class HomeController extends Controller
 
         return view('home', [
             'tagline' => $this->textSetting('brand.tagline', self::DEFAULT_TAGLINE),
-            'terms' => $this->terms(),
+            'terms' => RentalTerms::list(),
             'vehicles' => $vehicles,
             'availableIds' => $availableIds->all(),
+            // Data kartu "Cari kendaraan" (mobile)
+            'types' => VehicleType::query()->orderBy('name')->pluck('name', 'id'),
+            'maxDays' => $availability->maxDays(),
+            'minStart' => VehicleFilterRequest::earliestStart(),
         ]);
     }
 
@@ -55,22 +53,5 @@ class HomeController extends Controller
         }
 
         return is_string($value) && trim($value) !== '' ? trim($value) : $default;
-    }
-
-    /**
-     * Poin S&K: array JSON atau teks per baris; jatuh ke default bila kosong.
-     *
-     * @return list<string>
-     */
-    private function terms(): array
-    {
-        $value = setting('content.terms');
-        $items = is_string($value) ? (json_decode($value, true) ?? preg_split('/\R/', $value)) : $value;
-
-        $items = is_array($items)
-            ? array_values(array_filter(array_map(fn ($item) => is_string($item) ? trim($item) : '', $items)))
-            : [];
-
-        return $items ?: self::DEFAULT_TERMS;
     }
 }
