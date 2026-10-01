@@ -80,6 +80,7 @@ class BookingService
             ]);
 
             app(XenditService::class)->createInvoice($booking);
+            BookingStatusChanged::dispatch($booking, BookingStatus::Pending, BookingStatus::Pending);
 
             return $booking;
         });
