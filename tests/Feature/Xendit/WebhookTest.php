@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Xendit;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class XenditWebhookTest extends TestCase
+class WebhookTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -32,7 +32,7 @@ class XenditWebhookTest extends TestCase
         $this->user = User::factory()->create();
         $vehicle = Vehicle::factory()->create();
 
-        $this->booking = Booking::factory()->create([
+        $this->booking = Booking::factory()->pending()->create([
             'code' => 'BOOK-TEST-001',
             'user_id' => $this->user->id,
             'vehicle_id' => $vehicle->id,
@@ -40,7 +40,6 @@ class XenditWebhookTest extends TestCase
             'end_at' => now()->addDays(3),
             'duration_days' => 2,
             'total_amount' => 150000,
-            'status' => BookingStatus::Pending,
         ]);
 
         $this->payment = Payment::create([
@@ -79,7 +78,7 @@ class XenditWebhookTest extends TestCase
         ];
     }
 
-    public function test_webhook_rejects_invalid_token()
+    public function test_webhook_ditolak_403_jika_token_salah()
     {
         $this->webhook($this->invoicePayload(), 'token-salah')->assertStatus(403);
         $this->webhook($this->invoicePayload(), null)->assertStatus(403);
@@ -89,7 +88,7 @@ class XenditWebhookTest extends TestCase
         $this->assertSame(0, $this->booking->histories()->count());
     }
 
-    public function test_paid_webhook_marks_payment_and_booking_paid()
+    public function test_paid_webhook_menandai_payment_dan_booking_paid()
     {
         $this->webhook($this->invoicePayload('PAID'))
             ->assertStatus(200)
@@ -116,7 +115,7 @@ class XenditWebhookTest extends TestCase
         $this->assertSame('PAID', $payment->gateway_payload['status']);
     }
 
-    public function test_settled_webhook_also_marks_paid()
+    public function test_settled_webhook_juga_menandai_paid()
     {
         $this->webhook($this->invoicePayload('SETTLED'))->assertStatus(200);
 
@@ -128,7 +127,7 @@ class XenditWebhookTest extends TestCase
         ]);
     }
 
-    public function test_expired_webhook_marks_payment_and_booking_expired()
+    public function test_expired_webhook_menandai_payment_dan_booking_expired()
     {
         $this->webhook($this->invoicePayload('EXPIRED'))
             ->assertStatus(200)
@@ -146,7 +145,7 @@ class XenditWebhookTest extends TestCase
         $this->assertSame('EXPIRED', $payment->gateway_payload['status']);
     }
 
-    public function test_duplicate_paid_webhook_is_idempotent()
+    public function test_webhook_paid_duplikat_idempoten()
     {
         $this->webhook($this->invoicePayload('PAID'))->assertStatus(200);
         $paidAt = $this->payment->refresh()->paid_at->getTimestamp();
@@ -162,7 +161,7 @@ class XenditWebhookTest extends TestCase
         $this->assertSame(BookingStatus::Paid, $this->booking->refresh()->status);
     }
 
-    public function test_duplicate_expired_webhook_is_idempotent()
+    public function test_webhook_expired_duplikat_idempoten()
     {
         $this->webhook($this->invoicePayload('EXPIRED'))->assertStatus(200);
         $this->webhook($this->invoicePayload('EXPIRED'))->assertStatus(200);
@@ -172,7 +171,7 @@ class XenditWebhookTest extends TestCase
         $this->assertSame(1, $this->booking->histories()->count(), 'riwayat status tidak boleh dobel');
     }
 
-    public function test_paid_webhook_when_booking_not_pending_does_not_force_transition()
+    public function test_paid_webhook_saat_booking_tidak_pending_tidak_memaksa_transisi()
     {
         // Booking sudah dibatalkan lebih dulu (pending → cancelled)
         $this->booking->update(['status' => BookingStatus::Cancelled]);
@@ -185,7 +184,7 @@ class XenditWebhookTest extends TestCase
         $this->assertSame(0, $this->booking->histories()->count());
     }
 
-    public function test_unknown_invoice_returns_404_and_changes_nothing()
+    public function test_invoice_tidak_dikenal_404_dan_tidak_mengubah_apapun()
     {
         $this->webhook([
             'id' => 'inv_tidak_dikenal',

@@ -1,17 +1,17 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Xendit;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\XenditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class AdminCekStatusTest extends TestCase
+class SyncInvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -26,7 +26,7 @@ class AdminCekStatusTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $booking = Booking::factory()->create(['status' => BookingStatus::Pending]);
+        $booking = Booking::factory()->pending()->create();
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'pending',
@@ -34,13 +34,14 @@ class AdminCekStatusTest extends TestCase
             'expires_at' => now()->addHour(),
         ]);
 
-        Http::fake([
-            'https://api.xendit.co/v2/invoices/*' => Http::response([
+        // Mock XenditService supaya test tidak memanggil API asli
+        $this->mock(XenditService::class, function ($mock) {
+            $mock->shouldReceive('getInvoice')->once()->andReturn([
                 'id' => 'inv_999',
                 'status' => 'PAID',
                 'paid_at' => now()->toISOString(),
-            ], 200),
-        ]);
+            ]);
+        });
 
         $response = $this->actingAs($admin)->get(route('admin.pesanan.cek-status', $booking->code));
 
@@ -63,7 +64,7 @@ class AdminCekStatusTest extends TestCase
     public function test_user_biasa_ditolak()
     {
         $user = User::factory()->create();
-        $booking = Booking::factory()->create(['status' => BookingStatus::Pending]);
+        $booking = Booking::factory()->pending()->create();
 
         $response = $this->actingAs($user)->get(route('admin.pesanan.cek-status', $booking->code));
 
@@ -75,7 +76,7 @@ class AdminCekStatusTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $booking = Booking::factory()->create(['status' => BookingStatus::Pending]);
+        $booking = Booking::factory()->pending()->create();
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'pending',
@@ -94,7 +95,7 @@ class AdminCekStatusTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $booking = Booking::factory()->create(['status' => BookingStatus::Paid]);
+        $booking = Booking::factory()->paid()->create();
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'paid',
