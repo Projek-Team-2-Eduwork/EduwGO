@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Xendit;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
@@ -8,13 +8,13 @@ use App\Models\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ExpireBookingsTest extends TestCase
+class ExpireCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_expired_booking_pending_ubah_status_dan_history_sistem()
+    public function test_booking_pending_lewat_waktu_diubah_ke_expired_dan_history_sistem()
     {
-        $booking = Booking::factory()->create(['status' => BookingStatus::Pending]);
+        $booking = Booking::factory()->pending()->create();
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'pending',
@@ -39,7 +39,7 @@ class ExpireBookingsTest extends TestCase
 
     public function test_booking_belum_expired_tetap_pending()
     {
-        $booking = Booking::factory()->create(['status' => BookingStatus::Pending]);
+        $booking = Booking::factory()->pending()->create();
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'pending',
@@ -59,7 +59,7 @@ class ExpireBookingsTest extends TestCase
 
     public function test_booking_sudah_paid_tidak_disentuh()
     {
-        $booking = Booking::factory()->create(['status' => BookingStatus::Paid]);
+        $booking = Booking::factory()->paid()->create();
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'paid',

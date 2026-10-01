@@ -1,8 +1,7 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Booking;
 
-use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
@@ -14,7 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class AvailabilityServiceTest extends TestCase
+class AvailabilityTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -23,20 +22,26 @@ class AvailabilityServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AvailabilityService;
+        $this->service = app(AvailabilityService::class);
     }
 
-    private function bookingAktif(Vehicle $vehicle, string $mulai, string $selesai, BookingStatus $status = BookingStatus::Paid): Booking
+    private function bookingAktif(Vehicle $vehicle, string $mulai, string $selesai, string $state = 'paid'): Booking
     {
-        return Booking::factory()->create([
+        return Booking::factory()->{$state}()->create([
             'vehicle_id' => $vehicle->id,
-            'status' => $status,
             'start_at' => $mulai,
             'end_at' => $selesai,
         ]);
     }
 
     // ===== isAvailable =====
+
+    public function test_kendaraan_tanpa_booking_tersedia(): void
+    {
+        $vehicle = Vehicle::factory()->create(['is_active' => true]);
+
+        $this->assertTrue($this->service->isAvailable($vehicle, Carbon::parse('2026-10-10 10:00:00'), 1));
+    }
 
     public function test_tidak_overlap_menjadi_tersedia(): void
     {
@@ -80,12 +85,24 @@ class AvailabilityServiceTest extends TestCase
         $this->assertTrue($this->service->isAvailable($vehicle, Carbon::parse('2026-10-10 18:01:00'), 1));
     }
 
+    public function test_boundary_buffer_persis_60_menit(): void
+    {
+        $vehicle = Vehicle::factory()->create(['is_active' => true]);
+        $this->bookingAktif($vehicle, '2026-10-10 10:00:00', '2026-10-10 17:00:00');
+
+        // Mulai 17:30 → masih dalam buffer → bentrok
+        $this->assertFalse($this->service->isAvailable($vehicle, Carbon::parse('2026-10-10 17:30:00'), 1));
+
+        // Mulai tepat 18:00 (buffer berakhir) → lolos (konflik strict: end_at + buffer > start)
+        $this->assertTrue($this->service->isAvailable($vehicle, Carbon::parse('2026-10-10 18:00:00'), 1));
+    }
+
     public function test_booking_cancelled_dan_expired_diabaikan(): void
     {
         $vehicle = Vehicle::factory()->create(['is_active' => true]);
 
-        $this->bookingAktif($vehicle, '2026-10-10 12:00:00', '2026-10-10 15:00:00', BookingStatus::Cancelled);
-        $this->bookingAktif($vehicle, '2026-10-10 12:00:00', '2026-10-10 15:00:00', BookingStatus::Expired);
+        $this->bookingAktif($vehicle, '2026-10-10 12:00:00', '2026-10-10 15:00:00', 'cancelled');
+        $this->bookingAktif($vehicle, '2026-10-10 12:00:00', '2026-10-10 15:00:00', 'expired');
 
         $this->assertTrue($this->service->isAvailable($vehicle, Carbon::parse('2026-10-10 13:00:00'), 1));
     }
@@ -94,12 +111,12 @@ class AvailabilityServiceTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create(['is_active' => true]);
 
-        foreach ([BookingStatus::Pending, BookingStatus::Paid, BookingStatus::Rented] as $status) {
-            $booking = $this->bookingAktif($vehicle, '2026-10-10 12:00:00', '2026-10-10 15:00:00', $status);
+        foreach (['pending', 'paid', 'rented'] as $state) {
+            $booking = $this->bookingAktif($vehicle, '2026-10-10 12:00:00', '2026-10-10 15:00:00', $state);
 
             $this->assertFalse(
                 $this->service->isAvailable($vehicle, Carbon::parse('2026-10-10 13:00:00'), 1),
-                "Status {$status->value} gagal memblokir"
+                "Status {$state} gagal memblokir"
             );
 
             $booking->delete(); // bersihkan untuk iterasi berikutnya
@@ -231,13 +248,13 @@ class AvailabilityServiceTest extends TestCase
 
     public function test_scope_active_dan_overlapping_dipakai_ulang(): void
     {
-        $this->bookingAktif(Vehicle::factory()->create(), '2026-10-10 10:00:00', '2026-10-10 12:00:00', BookingStatus::Paid);
-        $this->bookingAktif(Vehicle::factory()->create(), '2026-10-10 10:00:00', '2026-10-10 12:00:00', BookingStatus::Cancelled);
+        $this->bookingAktif(Vehicle::factory()->create(), '2026-10-10 10:00:00', '2026-10-10 12:00:00', 'paid');
+        $this->bookingAktif(Vehicle::factory()->create(), '2026-10-10 10:00:00', '2026-10-10 12:00:00', 'cancelled');
 
         // active(): hanya pending/paid/rented yang masuk
         $this->assertSame(1, Booking::active()->count());
 
-        // overlapping + buffer 60 menit: rentang12:30–13:30 menyentuh ekor buffer booking (selesai 12:00)
+        // overlapping + buffer 60 menit: rentang 12:30–13:30 menyentuh ekor buffer booking (selesai 12:00)
         $this->assertSame(1, Booking::active()->overlapping(
             Carbon::parse('2026-10-10 12:30:00'),
             Carbon::parse('2026-10-10 13:30:00'),

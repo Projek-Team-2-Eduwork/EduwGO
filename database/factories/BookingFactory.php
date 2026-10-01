@@ -5,28 +5,53 @@ namespace Database\Factories;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
 class BookingFactory extends Factory
 {
     public function definition(): array
     {
-        $startDate = Carbon::now()->addDays($this->faker->numberBetween(1, 10));
-        $duration = $this->faker->numberBetween(1, 7);
-        $endDate = (clone $startDate)->addDays($duration);
-
         return [
-            'code' => 'EG.'.str_pad($this->faker->unique()->numberBetween(1, 999999), 6, '0', STR_PAD_LEFT),
+            'code' => 'EG.'.$this->faker->unique()->numerify('######'),
             'user_id' => User::factory(),
-            'vehicle_id' => Vehicle::factory(), // Asumsi tabel vehicles ada
-            'start_at' => $startDate,
-            'end_at' => $endDate,
-            'duration_days' => $duration,
+            'vehicle_id' => Vehicle::factory(),
+            'start_at' => now(),
+            'end_at' => now()->addDays(1),
+            'duration_days' => 1,
             'price_per_day' => 100000,
-            'total_amount' => 100000 * $duration,
+            'total_amount' => 100000,
             'status' => 'pending',
             'customer_name' => $this->faker->name(),
             'customer_phone' => $this->faker->phoneNumber(),
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn () => ['status' => 'pending']);
+    }
+
+    public function paid(): static
+    {
+        return $this->state(fn () => ['status' => 'paid']);
+    }
+
+    public function rented(): static
+    {
+        return $this->state(fn () => ['status' => 'rented']);
+    }
+
+    public function returned(): static
+    {
+        return $this->state(fn () => ['status' => 'returned']);
+    }
+
+    public function expired(): static
+    {
+        return $this->state(fn () => ['status' => 'expired']);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn () => ['status' => 'cancelled']);
     }
 }

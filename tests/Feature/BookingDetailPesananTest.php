@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\User;
-use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,7 +22,7 @@ class BookingDetailPesananTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('booking.show', $booking->code));
-        
+
         $response->assertOk();
         $response->assertSee($booking->code);
     }
@@ -39,7 +38,7 @@ class BookingDetailPesananTest extends TestCase
         ]);
 
         $response = $this->actingAs($attacker)->get(route('booking.show', $booking->code));
-        
+
         $response->assertForbidden();
     }
 
@@ -54,7 +53,7 @@ class BookingDetailPesananTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('booking.show', $booking->code));
-        
+
         $response->assertOk();
         $response->assertSee(route('booking.waiting', $booking->code));
         $response->assertSee('Batalkan');
@@ -71,7 +70,7 @@ class BookingDetailPesananTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('booking.show', $booking->code));
-        
+
         $response->assertOk();
         $response->assertDontSee(route('booking.waiting', $booking->code));
         $response->assertDontSee('Batalkan pesanan');
@@ -81,7 +80,7 @@ class BookingDetailPesananTest extends TestCase
     public function test_banner_overdue_tampil_jika_rented_dan_lewat_batas_waktu()
     {
         $user = User::factory()->create();
-        
+
         $bookingOverdue = Booking::factory()->create([
             'user_id' => $user->id,
             'status' => BookingStatus::Rented,
@@ -123,7 +122,7 @@ class BookingDetailPesananTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('booking.show', $booking->code));
-        
+
         $response->assertOk();
         $response->assertSee('Sistem');
         $response->assertSee('Dibuat otomatis oleh worker');
@@ -140,7 +139,7 @@ class BookingDetailPesananTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('booking.show', $booking->code));
-        
+
         $response->assertOk();
         $response->assertSee('Chat Admin');
     }
