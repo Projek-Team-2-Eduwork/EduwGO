@@ -33,7 +33,9 @@ class BookingController extends Controller
      */
     public function show(Request $request, $code)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)
+            ->with(['vehicle.type', 'histories.changer', 'user'])
+            ->firstOrFail();
 
         Gate::authorize('view', $booking);
 
