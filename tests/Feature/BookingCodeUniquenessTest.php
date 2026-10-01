@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Booking;
+use App\Models\Sequence;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\BookingCodeGenerator;
 use App\Services\BookingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +15,18 @@ use Tests\TestCase;
 class BookingCodeUniquenessTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_generator_melewati_kode_yang_sudah_terpakai()
+    {
+        // Sequence di 0, tapi kode EG.000001 sudah dipakai booking lain
+        Sequence::query()->where('key', 'booking')->update(['value' => 0]);
+        Booking::factory()->create(['code' => 'EG.000001']);
+
+        $code = app(BookingCodeGenerator::class)->next();
+
+        // Generator loncat ke kode berikutnya yang kosong (retry loop)
+        $this->assertSame('EG.000002', $code);
+    }
 
     public function test_20_checkout_paralel_menghasilkan_20_kode_unik_berurutan()
     {
