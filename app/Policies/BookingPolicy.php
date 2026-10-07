@@ -23,4 +23,19 @@ class BookingPolicy
     {
         return $user->id === $booking->user_id && $booking->status === BookingStatus::Pending;
     }
+
+    public function viewAny(User $user): bool
+    {
+        return $user->hasRole('admin');
+    }
+
+    public function adminView(User $user, Booking $booking): bool
+    {
+        return $user->hasRole('admin');
+    }
+
+    public function adminUpdate(User $user, Booking $booking): bool
+    {
+        return $user->hasRole('admin');
+    }
 }

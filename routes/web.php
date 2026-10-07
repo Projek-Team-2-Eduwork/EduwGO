@@ -104,8 +104,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         return view('admin.dashboard');
     })->name('dashboard');
 
-    // Detail pesanan + sinkronisasi manual status invoice Xendit (EG-26)
+    // Daftar pesanan admin, detail, catatan, dan sinkronisasi status (EG-19, EG-26)
+    Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
     Route::get('/pesanan/{code}', [PesananController::class, 'show'])->name('pesanan.show');
+    Route::post('/pesanan/{code}/catatan', [PesananController::class, 'updateNotes'])->name('pesanan.notes');
     Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
 
     // CRUD Kendaraan Admin (EG-18)
