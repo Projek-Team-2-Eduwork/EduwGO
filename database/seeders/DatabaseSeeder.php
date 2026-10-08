@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             VehicleTypeSeeder::class,
             VehicleSeeder::class,
-            // SettingSeeder dilewati: tabel/model settings belum ada (EG-3). Sambungkan di sini setelah EG-3 merge.
+            SettingSeeder::class,
             BookingSeeder::class,
         ]);
     }
