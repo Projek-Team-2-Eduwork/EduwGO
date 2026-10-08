@@ -100,10 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Grup Admin (Wajib login, terverifikasi, dan memiliki role admin)
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Placeholder, dashboard admin sebenarnya dibuat di EG-8 (F-7) / Alur B
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
     // Daftar pesanan admin, detail, catatan, dan sinkronisasi status (EG-19, EG-26)
     Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
