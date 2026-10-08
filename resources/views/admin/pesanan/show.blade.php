@@ -1,8 +1,15 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Detail Pesanan: <span class="font-mono text-indigo-600 dark:text-indigo-400">{{ $booking->code }}</span>
-        </h2>
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                Detail Pesanan: <span class="font-mono text-indigo-600 dark:text-indigo-400">{{ $booking->code }}</span>
+            </h2>
+            <div class="flex gap-3">
+                @if(Route::has('admin.pesanan.update') && in_array($booking->status->value, ['pending', 'paid', 'rented']))
+                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase shadow-sm hover:bg-indigo-700 transition">Update Status</button>
+                @endif
+            </div>
+        </div>
     </x-slot>
 
     <div class="py-12">
@@ -181,4 +188,7 @@
             </div>
         </div>
     </div>
+    
+    <!-- Render Partial Modal Update Status -->
+    @include('admin.partials.update-status-modal', ['booking' => $booking])
 </x-admin-layout>

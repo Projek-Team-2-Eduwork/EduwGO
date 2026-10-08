@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingStatus;
+use App\Exceptions\InvalidTransitionException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateBookingStatusRequest;
 use App\Models\Booking;
 use App\Models\VehicleType;
+use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Http\RedirectResponse;
@@ -76,6 +79,32 @@ class PesananController extends Controller
             'booking' => $booking,
             'payment' => $booking->latestPayment,
         ]);
+    }
+
+    public function updateStatus(UpdateBookingStatusRequest $request, string $code): RedirectResponse
+    {
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        Gate::authorize('adminUpdate', $booking);
+
+        $v = $request->validated();
+
+        try {
+            app(BookingService::class)->transition(
+                $booking,
+                BookingStatus::from($v['to']),
+                auth()->user(),
+                $v['note'] ?? $v['reason'] ?? null
+            );
+
+            if ($v['to'] === 'cancelled') {
+                $booking->update(['cancel_reason' => $v['reason']]);
+            }
+
+            return back()->with('success', 'Status pesanan berhasil diperbarui.');
+        } catch (InvalidTransitionException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function updateNotes(Request $request, string $code): RedirectResponse

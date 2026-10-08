@@ -13,6 +13,12 @@
                     {{ session('success') }}
                 </div>
             @endif
+            
+            @if(session('error'))
+                <div class="p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
 
             <!-- Filter -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
@@ -107,8 +113,8 @@
                                             Rp {{ number_format($b->total_amount, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-3 text-right">
-                                            @if(Route::has('admin.pesanan.update'))
-                                                <a href="#" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium" onclick="event.stopPropagation()">Update</a>
+                                            @if(Route::has('admin.pesanan.update') && in_array($b->status->value, ['pending', 'paid', 'rented']))
+                                                <button type="button" x-data @click.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">Update</button>
                                             @else
                                                 <button disabled class="text-gray-400 font-medium cursor-not-allowed">Update</button>
                                             @endif
@@ -137,7 +143,8 @@
                                         <img src="{{ asset($b->vehicle->image) }}" class="w-16 h-16 rounded object-cover">
                                     @else
                                         <div class="w-16 h-16 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                            </svg>
                                         </div>
                                     @endif
                                     <div>
@@ -148,8 +155,8 @@
                                 </div>
                                 <div class="flex justify-between items-center mt-2">
                                     <div class="font-bold text-gray-900 dark:text-gray-100">Rp {{ number_format($b->total_amount, 0, ',', '.') }}</div>
-                                    @if(Route::has('admin.pesanan.update'))
-                                        <span class="text-indigo-600 dark:text-indigo-400 text-sm font-medium">Update</span>
+                                    @if(Route::has('admin.pesanan.update') && in_array($b->status->value, ['pending', 'paid', 'rented']))
+                                        <span role="button" tabindex="0" x-data @click.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="text-indigo-600 dark:text-indigo-400 text-sm font-medium cursor-pointer">Update</span>
                                     @else
                                         <span class="text-gray-400 text-sm font-medium">Update</span>
                                     @endif
@@ -163,6 +170,12 @@
                     {{ $bookings->links() }}
                 </div>
             </div>
+
+            <!-- Modals (Diletakkan di luar container tabel/list utama) -->
+            @foreach($bookings as $booking)
+                @include('admin.partials.update-status-modal', ['booking' => $booking])
+            @endforeach
+
         </div>
     </div>
 </x-admin-layout>
