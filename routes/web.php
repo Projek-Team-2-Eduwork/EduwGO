@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\PesananController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPaymentController;
@@ -110,6 +111,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/pesanan/{code}', [PesananController::class, 'show'])->name('pesanan.show');
     Route::post('/pesanan/{code}/catatan', [PesananController::class, 'updateNotes'])->name('pesanan.notes');
     Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
+
+    // Pengaturan Toko (EG-30)
+    Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
+    Route::put('/pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
 
     // CRUD Kendaraan Admin (EG-18)
     Route::resource('kendaraan', AdminVehicleController::class);

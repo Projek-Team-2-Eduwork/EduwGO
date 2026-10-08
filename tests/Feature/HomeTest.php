@@ -58,6 +58,10 @@ class HomeTest extends TestCase
 
     public function test_jumlah_query_katalog_tidak_bertambah_per_motor(): void
     {
+        // Panaskan cache settings dulu: GET pertama saat cache dingin menambah
+        // 2 query (hasTable + pluck) dan membuat hitungan kedua GET tidak setara.
+        setting('brand.name');
+
         Vehicle::factory()->count(2)->create();
         DB::flushQueryLog();
         DB::enableQueryLog();
