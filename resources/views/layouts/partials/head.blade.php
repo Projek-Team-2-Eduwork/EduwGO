@@ -34,3 +34,17 @@
 
 <!-- Scripts -->
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+{{-- Override warna brand dari Pengaturan Toko (EG-30) --}}
+@php
+    $brandPrimaryColor = setting('brand.primary_color');
+    $brandAccentColor = setting('brand.accent_color');
+@endphp
+@if($brandPrimaryColor || $brandAccentColor)
+    <style>
+        :root {
+            @if($brandPrimaryColor)--navy-900: {{ $brandPrimaryColor }};@endif
+            @if($brandAccentColor)--orange-500: {{ $brandAccentColor }};@endif
+        }
+    </style>
+@endif
