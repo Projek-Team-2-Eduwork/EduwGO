@@ -8,32 +8,23 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class PenggunaTest extends TestCase
+class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'user']);
-    }
-
-    private function getAdmin()
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        return $admin;
     }
 
     public function test_halaman_tampil_dengan_data_dan_jumlah_booking()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $user = User::factory()->create(['name' => 'Sutrisno']);
         Booking::factory()->count(3)->create(['user_id' => $user->id]);
 
-        $response = $this->actingAs($admin)->get(route('admin.pengguna.index'));
+        $response = $this->get(route('admin.pengguna.index'));
         $response->assertOk();
         $response->assertSee('Sutrisno');
         $response->assertSee('3'); // Jumlah booking via withCount
@@ -41,39 +32,39 @@ class PenggunaTest extends TestCase
 
     public function test_pencarian_memfilter_pengguna()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         User::factory()->create(['name' => 'Joko', 'email' => 'joko@gmail.com']);
         User::factory()->create(['name' => 'Siti']);
 
-        $response = $this->actingAs($admin)->get(route('admin.pengguna.index', ['q' => 'joko']));
+        $response = $this->get(route('admin.pengguna.index', ['q' => 'joko']));
         $response->assertSee('Joko');
         $response->assertDontSee('Siti');
     }
 
     public function test_admin_bisa_mengubah_role_pengguna()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $user = User::factory()->create();
 
-        $this->actingAs($admin)->post(route('admin.pengguna.role', $user->id), ['role' => 'admin']);
+        $this->post(route('admin.pengguna.role', $user->id), ['role' => 'admin']);
         $this->assertTrue($user->fresh()->hasRole('admin'));
     }
 
     public function test_admin_tidak_bisa_mencabut_role_sendiri()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
-        $response = $this->actingAs($admin)->post(route('admin.pengguna.role', $admin->id), ['role' => 'user']);
+        $response = $this->post(route('admin.pengguna.role', $admin->id), ['role' => 'user']);
         $response->assertForbidden();
         $this->assertTrue($admin->fresh()->hasRole('admin'));
     }
 
     public function test_admin_bisa_toggle_active_pengguna()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $user = User::factory()->create(['is_active' => true]);
 
-        $this->actingAs($admin)->post(route('admin.pengguna.toggle', $user->id));
+        $this->post(route('admin.pengguna.toggle', $user->id));
         $this->assertFalse((bool) $user->fresh()->is_active);
     }
 

@@ -92,6 +92,6 @@ class Booking extends Model
     public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('status', BookingStatus::Rented->value)
-                     ->where('end_at', '<', now());
+            ->where('end_at', '<', now());
     }
 }

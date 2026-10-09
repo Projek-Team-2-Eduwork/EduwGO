@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class FlagOverdueBookings extends Command
 {
     protected $signature = 'bookings:flag-overdue';
+
     protected $description = 'Menandai pesanan yang terlambat dikembalikan ke dalam riwayat';
 
     public function handle()
@@ -20,15 +21,15 @@ class FlagOverdueBookings extends Command
         foreach ($bookings as $booking) {
             $booking->histories()->create([
                 'from_status' => 'rented',
-                'to_status'   => 'rented',
-                'changed_by'  => null,
-                'note'        => 'Terlambat dikembalikan',
+                'to_status' => 'rented',
+                'changed_by' => null,
+                'note' => 'Terlambat dikembalikan',
             ]);
             $count++;
         }
 
         $this->info("Berhasil menandai {$count} pesanan terlambat.");
-        
+
         return Command::SUCCESS;
     }
 }

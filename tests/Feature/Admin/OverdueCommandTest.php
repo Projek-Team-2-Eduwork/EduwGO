@@ -3,26 +3,16 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Booking;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class OverdueTest extends TestCase
+class OverdueCommandTest extends TestCase
 {
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'admin']);
-    }
-
-    private function getAdmin()
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-        return $admin;
     }
 
     public function test_command_menandai_satu_kali()
@@ -32,7 +22,7 @@ class OverdueTest extends TestCase
         ]);
 
         $this->artisan('bookings:flag-overdue')->assertSuccessful();
-        
+
         // Dijalankan 2 kali, seharusnya history tetap 1 untuk menghindari duplikasi flag
         $this->artisan('bookings:flag-overdue')->assertSuccessful();
 
@@ -66,7 +56,7 @@ class OverdueTest extends TestCase
 
     public function test_filter_terlambat_admin()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         $overdue = Booking::factory()->rented()->create([
             'code' => 'OVERDUE123',
@@ -78,22 +68,22 @@ class OverdueTest extends TestCase
             'end_at' => now()->addHour(),
         ]);
 
-        $response = $this->actingAs($admin)->get(route('admin.pesanan.index', ['status' => 'terlambat']));
+        $response = $this->get(route('admin.pesanan.index', ['status' => 'terlambat']));
 
         $response->assertOk();
         $response->assertSee('OVERDUE123');
         $response->assertDontSee('OKAY456');
-        
+
         // Assert label diffForHumans muncul
-        $response->assertSee('Terlambat ' . $overdue->end_at->diffForHumans());
+        $response->assertSee('Terlambat '.$overdue->end_at->diffForHumans());
     }
 
     public function test_badge_dashboard()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         // Tanpa overdue (assertDontSee)
-        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $response = $this->get(route('admin.dashboard'));
         $response->assertDontSee('unit terlambat');
 
         // Tambah overdue
@@ -102,7 +92,7 @@ class OverdueTest extends TestCase
         ]);
 
         // Cek jika muncul (assertSee)
-        $responseWithOverdue = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $responseWithOverdue = $this->get(route('admin.dashboard'));
         $responseWithOverdue->assertSee('unit terlambat');
         $responseWithOverdue->assertSee('status=terlambat');
     }

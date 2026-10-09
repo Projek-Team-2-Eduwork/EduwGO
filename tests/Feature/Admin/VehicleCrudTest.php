@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class KendaraanAdminTest extends TestCase
+class VehicleCrudTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -20,7 +20,6 @@ class KendaraanAdminTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'user']);
 
         Storage::fake('public');
@@ -28,10 +27,8 @@ class KendaraanAdminTest extends TestCase
 
     private function admin(): User
     {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        return $admin;
+        // Delegasi ke helper induk: membuat role admin bila belum ada + actingAs sesi admin.
+        return $this->actingAsAdmin();
     }
 
     private function user(): User
@@ -70,10 +67,10 @@ class KendaraanAdminTest extends TestCase
         $admin = $this->admin();
         $vehicle = Vehicle::factory()->create();
 
-        $this->actingAs($admin)->get(route('admin.kendaraan.index'))->assertOk();
-        $this->actingAs($admin)->get(route('admin.kendaraan.create'))->assertOk();
-        $this->actingAs($admin)->get(route('admin.kendaraan.show', $vehicle))->assertOk();
-        $this->actingAs($admin)->get(route('admin.kendaraan.edit', $vehicle))->assertOk();
+        $this->get(route('admin.kendaraan.index'))->assertOk();
+        $this->get(route('admin.kendaraan.create'))->assertOk();
+        $this->get(route('admin.kendaraan.show', $vehicle))->assertOk();
+        $this->get(route('admin.kendaraan.edit', $vehicle))->assertOk();
     }
 
     public function test_admin_dapat_menambah_kendaraan_dengan_foto_terresize(): void
@@ -115,7 +112,7 @@ class KendaraanAdminTest extends TestCase
         $vehicle = Vehicle::factory()->create(['is_active' => true]);
 
         // Form edit selalu mengirim is_active (hidden field value 0 saat checkbox mati).
-        $this->actingAs($admin)->put(route('admin.kendaraan.update', $vehicle), [
+        $this->put(route('admin.kendaraan.update', $vehicle), [
             'name' => 'Unit Diubah',
             'brand' => 'Honda',
             'vehicle_type_id' => $this->tipeMatic()->id,
@@ -130,7 +127,7 @@ class KendaraanAdminTest extends TestCase
         $this->assertFalse((bool) $vehicle->is_active, 'Checkbox mati harus menonaktifkan unit');
         $this->assertSame('Unit Diubah', $vehicle->name);
 
-        $this->actingAs($admin)->put(route('admin.kendaraan.update', $vehicle), [
+        $this->put(route('admin.kendaraan.update', $vehicle), [
             'name' => 'Unit Diubah',
             'brand' => 'Honda',
             'vehicle_type_id' => $this->tipeMatic()->id,
@@ -150,7 +147,7 @@ class KendaraanAdminTest extends TestCase
         $a = Vehicle::factory()->create(['plate_number' => 'B 2222 BB']);
         Vehicle::factory()->create(['plate_number' => 'B 3333 CC']);
 
-        $this->actingAs($admin)->put(route('admin.kendaraan.update', $a), [
+        $this->put(route('admin.kendaraan.update', $a), [
             'name' => $a->name,
             'brand' => $a->brand,
             'vehicle_type_id' => $this->tipeMatic()->id,
@@ -254,7 +251,7 @@ class KendaraanAdminTest extends TestCase
         Vehicle::factory()->create(['name' => 'Unit Sport', 'is_active' => true, 'plate_number' => 'B 1004 DD', 'vehicle_type_id' => $sport->id]);
 
         // Status: tersedia → hanya unit aktif tanpa booking berjalan.
-        $this->actingAs($admin)->get(route('admin.kendaraan.index', ['status' => 'tersedia']))
+        $this->get(route('admin.kendaraan.index', ['status' => 'tersedia']))
             ->assertOk()
             ->assertSee('Unit Tersedia')
             ->assertSee('Unit Sport')
@@ -263,7 +260,7 @@ class KendaraanAdminTest extends TestCase
             ->assertDontSee('Unit Arsip');
 
         // Status: disewa → hanya unit AKTIF yang sedang disewa.
-        $this->actingAs($admin)->get(route('admin.kendaraan.index', ['status' => 'disewa']))
+        $this->get(route('admin.kendaraan.index', ['status' => 'disewa']))
             ->assertOk()
             ->assertSee('Unit Disewa')
             ->assertDontSee('Unit Arsip')
@@ -271,27 +268,27 @@ class KendaraanAdminTest extends TestCase
             ->assertDontSee('Unit Nonaktif');
 
         // Status: nonaktif.
-        $this->actingAs($admin)->get(route('admin.kendaraan.index', ['status' => 'nonaktif']))
+        $this->get(route('admin.kendaraan.index', ['status' => 'nonaktif']))
             ->assertOk()
             ->assertSee('Unit Nonaktif')
             ->assertSee('Unit Arsip')
             ->assertDontSee('Unit Tersedia');
 
         // Filter tipe.
-        $this->actingAs($admin)->get(route('admin.kendaraan.index', ['tipe' => $sport->id]))
+        $this->get(route('admin.kendaraan.index', ['tipe' => $sport->id]))
             ->assertOk()
             ->assertSee('Unit Sport')
             ->assertDontSee('Unit Tersedia')
             ->assertDontSee('Unit Disewa');
 
         // Pencarian nama.
-        $this->actingAs($admin)->get(route('admin.kendaraan.index', ['q' => 'Arsip']))
+        $this->get(route('admin.kendaraan.index', ['q' => 'Arsip']))
             ->assertOk()
             ->assertSee('Unit Arsip')
             ->assertDontSee('Unit Tersedia');
 
         // Pencarian plat.
-        $this->actingAs($admin)->get(route('admin.kendaraan.index', ['q' => '4321']))
+        $this->get(route('admin.kendaraan.index', ['q' => '4321']))
             ->assertOk()
             ->assertSee('Unit Tersedia')
             ->assertDontSee('Unit Sport')
@@ -312,7 +309,7 @@ class KendaraanAdminTest extends TestCase
 
         // Slug baru = slug('Honda Vario') . '-' . slug('160 B 1234 XYZ')
         //           = 'honda-vario-160-b-1234-xyz' → bentrok dengan unit soft-deleted.
-        $response = $this->actingAs($admin)->post(route('admin.kendaraan.store'), $this->payload([
+        $response = $this->post(route('admin.kendaraan.store'), $this->payload([
             'name' => 'Honda Vario',
             'plate_number' => '160 b 1234 xyz',
         ]));
@@ -330,7 +327,7 @@ class KendaraanAdminTest extends TestCase
         $vehicle = Vehicle::factory()->create(['image' => 'storage/vehicles/foto-lama.jpg']);
         Storage::disk('public')->put('vehicles/foto-lama.jpg', 'LAMA');
 
-        $this->actingAs($admin)->put(route('admin.kendaraan.update', $vehicle), [
+        $this->put(route('admin.kendaraan.update', $vehicle), [
             'name' => $vehicle->name,
             'brand' => $vehicle->brand,
             'vehicle_type_id' => $this->tipeMatic()->id,
