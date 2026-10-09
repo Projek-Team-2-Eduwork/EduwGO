@@ -7,12 +7,14 @@ use App\Exceptions\InvalidTransitionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Models\VehicleType;
 use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -146,5 +148,41 @@ class PesananController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function payCash(Request $request, string $code)
+    {
+        $booking = Booking::where('code', $code)->firstOrFail();
+        Gate::authorize('adminUpdate', $booking);
+
+        $request->validate([
+            'amount' => 'required|integer|min:1',
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        if ($booking->status !== BookingStatus::Pending) {
+            return back()->with('error', 'Hanya booking pending yang bisa dibayar tunai.');
+        }
+
+        try {
+            DB::transaction(function () use ($request, $booking) {
+                Payment::create([
+                    'booking_id' => $booking->id,
+                    'method' => 'cash',
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'amount' => (int) $request->amount,
+                    'gateway_reference' => null,
+                    'gateway_url' => null,
+                ]);
+
+                $note = trim('Bayar tunai'.($request->filled('note') ? ': '.$request->note : ''));
+                app(BookingService::class)->transition($booking, BookingStatus::Paid, auth()->user(), $note);
+            });
+        } catch (InvalidTransitionException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.pesanan.show', $code)->with('success', 'Pembayaran tunai berhasil dicatat.');
     }
 }

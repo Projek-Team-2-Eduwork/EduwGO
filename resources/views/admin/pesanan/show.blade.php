@@ -8,6 +8,11 @@
                 @if(Route::has('admin.pesanan.update') && in_array($booking->status->value, ['pending', 'paid', 'rented']))
                     <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase shadow-sm hover:bg-indigo-700 transition">Update Status</button>
                 @endif
+                @if($booking->status === App\Enums\BookingStatus::Pending)
+                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 active:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                        Catat Bayar Tunai
+                    </button>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -191,4 +196,5 @@
     
     <!-- Render Partial Modal Update Status -->
     @include('admin.partials.update-status-modal', ['booking' => $booking])
+    @include('admin.partials.cash-payment-modal', ['booking' => $booking])
 </x-admin-layout>
