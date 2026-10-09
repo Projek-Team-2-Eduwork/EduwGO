@@ -24,7 +24,7 @@ class DashboardService
     public function stats()
     {
         $activeVehicles = Vehicle::where('is_active', true)->count();
-        
+
         $bookingStats = Booking::selectRaw('
             SUM(CASE WHEN status IN ("pending", "paid", "rented") THEN 1 ELSE 0 END) as active_bookings,
             SUM(CASE WHEN status = "rented" THEN 1 ELSE 0 END) as rented_bookings
@@ -52,7 +52,7 @@ class DashboardService
 
         if ($typeId) {
             $query->join('vehicles', 'bookings.vehicle_id', '=', 'vehicles.id')
-                  ->where('vehicles.vehicle_type_id', $typeId);
+                ->where('vehicles.vehicle_type_id', $typeId);
         }
 
         return (float) $query->sum('payments.amount');

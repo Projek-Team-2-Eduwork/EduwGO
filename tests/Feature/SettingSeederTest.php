@@ -31,8 +31,8 @@ class SettingSeederTest extends TestCase
 
         // Verifikasi 6 poin terms
         $terms = setting('content.terms');
-        $points = array_filter(explode("\n", str_replace("\r", "", $terms)));
-        
+        $points = array_filter(explode("\n", str_replace("\r", '', $terms)));
+
         $this->assertCount(6, $points);
     }
 }

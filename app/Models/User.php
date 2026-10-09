@@ -7,11 +7,12 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'social_account', 'theme_preference'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'phone', 'social_account', 'theme_preference'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -28,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
             'social_account' => 'array',
             'theme_preference' => 'string',
         ];
@@ -41,5 +43,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return in_array($this->theme_preference, ['light', 'dark'], true)
             ? $this->theme_preference
             : 'system';
+    }
+
+    /**
+     * Pesanan milik pengguna ini.
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 }

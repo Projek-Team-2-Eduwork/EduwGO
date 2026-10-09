@@ -24,7 +24,7 @@ class VehicleDatabaseTest extends TestCase
         Vehicle::factory()->create(['plate_number' => 'B 1234 XYZ']);
 
         $this->expectException(QueryException::class);
-        
+
         // Memaksa insert duplikat di level database, mengabaikan validasi HTTP
         Vehicle::factory()->create(['plate_number' => 'B 1234 XYZ']);
     }
