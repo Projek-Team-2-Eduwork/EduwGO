@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\TipeKendaraanController;
 use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPaymentController;
@@ -100,7 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Grup Admin (Wajib login, terverifikasi, dan memiliki role admin)
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Daftar pesanan admin, detail, catatan, dan sinkronisasi status (EG-19, EG-26)
     Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
@@ -112,6 +115,12 @@ Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class
     // Pengaturan Toko (EG-30)
     Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
     Route::put('/pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
+
+    // Kelola Tipe Kendaraan & Pengguna (EG-31)
+    Route::resource('tipe-kendaraan', TipeKendaraanController::class)->except(['create', 'show', 'edit']);
+    Route::get('/pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
+    Route::post('/pengguna/{pengguna}/role', [PenggunaController::class, 'setRole'])->name('pengguna.role');
+    Route::post('/pengguna/{pengguna}/toggle', [PenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
 
     // CRUD Kendaraan Admin (EG-18)
     Route::resource('kendaraan', AdminVehicleController::class);

@@ -10,12 +10,12 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $terms = implode("\n", [
-            "Penyewa wajib memiliki SIM yang masih berlaku dan sesuai dengan jenis kendaraan.",
-            "Keterlambatan pengembalian melebihi batas waktu akan dikenakan denda sesuai tarif harian.",
-            "Segala bentuk kerusakan atau kehilangan akibat kelalaian menjadi tanggung jawab penuh penyewa.",
-            "Kendaraan tidak diperkenankan untuk dipindahtangankan atau disewakan kembali kepada pihak ketiga.",
-            "Penggunaan kendaraan dibatasi hanya di dalam wilayah yang telah disepakati bersama.",
-            "Kondisi bahan bakar saat pengembalian harus sama volumenya dengan saat awal pengambilan."
+            'Penyewa wajib memiliki SIM yang masih berlaku dan sesuai dengan jenis kendaraan.',
+            'Keterlambatan pengembalian melebihi batas waktu akan dikenakan denda sesuai tarif harian.',
+            'Segala bentuk kerusakan atau kehilangan akibat kelalaian menjadi tanggung jawab penuh penyewa.',
+            'Kendaraan tidak diperkenankan untuk dipindahtangankan atau disewakan kembali kepada pihak ketiga.',
+            'Penggunaan kendaraan dibatasi hanya di dalam wilayah yang telah disepakati bersama.',
+            'Kondisi bahan bakar saat pengembalian harus sama volumenya dengan saat awal pengambilan.',
         ]);
 
         $settings = [

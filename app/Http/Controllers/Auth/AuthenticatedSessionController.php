@@ -26,6 +26,16 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        if (! $request->user()->is_active) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun dinonaktifkan hubungi admin.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
         // Admin diarahkan ke dashboard admin, user biasa ke dashboard (home belum ada, dibuat di EG-23).
