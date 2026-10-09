@@ -39,6 +39,7 @@ class DashboardService
             'available_vehicles' => $availableVehicles,
             'active_bookings' => $activeBookings,
             'rented_bookings' => $rentedBookings,
+            'overdue_vehicles' => Booking::overdue()->count(),
         ];
     }
 

@@ -85,4 +85,13 @@ class Booking extends Model
     {
         return $this->code;
     }
+
+    /**
+     * Scope query untuk pesanan yang terlambat (status rented, end_at lewat).
+     */
+    public function scopeOverdue(Builder $query): Builder
+    {
+        return $query->where('status', BookingStatus::Rented->value)
+                     ->where('end_at', '<', now());
+    }
 }
