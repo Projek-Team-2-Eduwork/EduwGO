@@ -29,13 +29,12 @@
                     </div>
                     <div class="md:col-span-1">
                         <x-input-label for="status" value="Status" />
-                        <select id="status" name="status" class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                            <option value="semua">Semua Status</option>
-                            @foreach(App\Enums\BookingStatus::cases() as $status)
-                                <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
-                                    {{ $status->label() }}
-                                </option>
+                        <select name="status" id="status" class="w-full sm:w-auto border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
+                                @foreach(App\Enums\BookingStatus::cases() as $s)
+                            <option value="{{ $s->value }}" {{ request('status') === $s->value ? 'selected' : '' }}>{{ $s->label() }}</option>
                             @endforeach
+                            <option value="terlambat" {{ request('status') === 'terlambat' ? 'selected' : '' }}>Terlambat</option>
                         </select>
                     </div>
                     <div class="md:col-span-1">
@@ -106,7 +105,7 @@
                                         <td class="px-4 py-3">
                                             <x-badge-status :status="$b->status" />
                                             @if($b->isOverdue())
-                                                <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200">Terlambat</span>
+                                                <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200">Terlambat {{ $b->end_at->diffForHumans() }}</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">
@@ -134,7 +133,7 @@
                                     <div class="flex flex-col items-end gap-1">
                                         <x-badge-status :status="$b->status" />
                                         @if($b->isOverdue())
-                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200">Terlambat</span>
+                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200">Terlambat {{ $b->end_at->diffForHumans() }}</span>
                                         @endif
                                     </div>
                                 </div>

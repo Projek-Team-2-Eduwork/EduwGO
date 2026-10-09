@@ -30,9 +30,14 @@ class PesananController extends Controller
         $query = Booking::with(['user', 'vehicle.type', 'payments', 'histories.changer']);
 
         // Filter Status
-        if ($request->filled('status') && $request->status !== 'semua') {
-            if ($statusEnum = BookingStatus::tryFrom($request->status)) {
-                $query->where('status', $statusEnum->value);
+if ($request->filled('status')) {
+            if ($request->status === 'terlambat') {
+                $query->overdue();
+            } else {
+                $statusEnum = \App\Enums\BookingStatus::tryFrom($request->status);
+                if ($statusEnum) {
+                    $query->where('status', $statusEnum->value);
+                }
             }
         }
 

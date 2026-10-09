@@ -27,6 +27,11 @@
                         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Sedang Disewa</div>
                         <div class="text-3xl font-bold text-orange-500 dark:text-orange-400 mt-2">{{ $stats['rented_bookings'] }}</div>
                     </div>
+                    @if($stats['overdue_vehicles'] > 0)
+                        <a href="{{ route('admin.pesanan.index', ['status' => 'terlambat']) }}" class="col-span-2 bg-rose-600 hover:bg-rose-700 transition text-white p-4 rounded-lg shadow-sm font-bold flex justify-center text-center">
+                            {{ $stats['overdue_vehicles'] }} unit terlambat
+                        </a>
+                    @endif
                 </div>
 
                 <!-- Widget: Top 5 Orderan Rental -->
