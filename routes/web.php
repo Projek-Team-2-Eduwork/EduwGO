@@ -104,6 +104,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Grup Admin (Wajib login, terverifikasi, dan memiliki role admin)
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
 
     // Daftar pesanan admin, detail, catatan, dan sinkronisasi status (EG-19, EG-26)
     Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
@@ -111,6 +112,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/pesanan/{code}', [PesananController::class, 'show'])->name('pesanan.show');
     Route::post('/pesanan/{code}/catatan', [PesananController::class, 'updateNotes'])->name('pesanan.notes');
     Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
+    Route::post('/pesanan/{code}/bayar-tunai', [PesananController::class, 'payCash'])->name('pesanan.pay-cash');
 
     // Pengaturan Toko (EG-30)
     Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
