@@ -93,6 +93,7 @@ class AvailabilityService
             ->orderBy('start_at')
             ->get()
             ->map(fn (Booking $booking) => [
+                'booking' => $booking,
                 'mulai' => $booking->start_at->copy()->subMinutes($buffer),
                 'selesai' => $booking->end_at->copy()->addMinutes($buffer),
             ]);

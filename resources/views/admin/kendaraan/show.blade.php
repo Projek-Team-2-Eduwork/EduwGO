@@ -62,34 +62,55 @@
                 </div>
             </div>
 
-            <!-- Riwayat Pesanan Kendaraan -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Jadwal Pesanan Unit</h3>
+<!-- Jadwal Booking -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden mt-6 p-6">
+                <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-4">Jadwal Booking</h3>
+                
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-900 dark:text-gray-300">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
                             <tr>
-                                <th class="px-4 py-3 rounded-l-lg">Kode Booking</th>
+                                <th class="px-4 py-3">Kode Booking</th>
                                 <th class="px-4 py-3">Penyewa</th>
                                 <th class="px-4 py-3">Jadwal Sewa</th>
                                 <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3 rounded-r-lg text-right">Aksi</th>
+                                <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($kendaraan->bookings as $booking)
-                                <tr class="border-b dark:border-gray-700">
-                                    <td class="px-4 py-3 font-mono text-gray-900 dark:text-white">{{ $booking->code }}</td>
-                                    <td class="px-4 py-3">{{ $booking->customer_name }}</td>
-                                    <td class="px-4 py-3">{{ $booking->start_at->format('d M Y H:i') }} - {{ $booking->end_at->format('d M Y H:i') }}</td>
-                                    <td class="px-4 py-3 capitalize">{{ $booking->status->value }}</td>
+                            @php
+                                // Helper untuk memformat string buffer
+                                $h = floor($bufferMenit / 60);
+                                $m = $bufferMenit % 60;
+                                $bufferText = '';
+                                if ($h > 0) $bufferText .= $h . ' jam ';
+                                if ($m > 0) $bufferText .= $m . ' menit';
+                                $bufferText = trim($bufferText);
+                            @endphp
+
+                             @forelse($jadwal as $range)
+                                @php $booking = $range['booking']; @endphp
+                                <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                                    <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">{{ $booking->code }}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $booking->customer_name }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">
+                                            {{ $booking->start_at->format('d M Y H:i') }} - {{ $booking->end_at->format('d M Y H:i') }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            {{ $range['mulai']->format('d M Y H:i') }} - {{ $range['selesai']->format('d M Y H:i') }} (+{{ $bufferText }} buffer)
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <x-badge-status :status="$booking->status" />
+                                    </td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('admin.pesanan.show', $booking->code) }}" class="text-indigo-600 hover:underline">Detail</a>
+                                        <a href="{{ route('admin.pesanan.show', $booking->code) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 font-medium">Detail</a>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">Belum ada riwayat pesanan untuk unit ini.</td>
+                                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">Belum ada booking aktif dalam 30 hari ke depan.</td>
                                 </tr>
                             @endforelse
                         </tbody>

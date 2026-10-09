@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\VehicleRequest;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
+use App\Services\AvailabilityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -80,16 +81,16 @@ class VehicleController extends Controller
         return redirect()->route('admin.kendaraan.index')->with('success', 'Kendaraan berhasil ditambahkan.');
     }
 
-    public function show(Vehicle $kendaraan)
+    public function show(Vehicle $kendaraan, AvailabilityService $availabilityService)
     {
         Gate::authorize('view', $kendaraan);
 
-        $kendaraan->load([
-            'type',
-            'bookings' => fn ($q) => $q->latest('start_at'),
-        ]);
+        $kendaraan->load('type');
 
-        return view('admin.kendaraan.show', compact('kendaraan'));
+        $jadwal = $availabilityService->bookedRanges($kendaraan, now()->subDay(), now()->addDays(30));
+        $bufferMenit = (int) setting('booking.buffer_minutes', 60);
+
+        return view('admin.kendaraan.show', compact('kendaraan', 'jadwal', 'bufferMenit'));
     }
 
     public function edit(Vehicle $kendaraan)
