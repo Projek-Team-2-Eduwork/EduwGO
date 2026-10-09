@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class PesananAdminTest extends TestCase
@@ -17,20 +16,11 @@ class PesananAdminTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'admin']);
-    }
-
-    private function getAdmin()
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        return $admin;
     }
 
     public function test_admin_melihat_index_pesanan_dengan_filter_dan_cari()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $type = VehicleType::factory()->create(['name' => 'Matic']);
         $vehicle = Vehicle::factory()->create(['name' => 'NMAX', 'vehicle_type_id' => $type->id]);
 
@@ -46,57 +36,57 @@ class PesananAdminTest extends TestCase
         ]);
 
         // Tes Index Dasar
-        $response = $this->actingAs($admin)->get(route('admin.pesanan.index'));
+        $response = $this->get(route('admin.pesanan.index'));
         $response->assertOk();
         $response->assertSee('EG.999999');
         $response->assertSee('EG.111111');
 
         // Tes Filter Status Paid
-        $responseFilter = $this->actingAs($admin)->get(route('admin.pesanan.index', ['status' => 'paid']));
+        $responseFilter = $this->get(route('admin.pesanan.index', ['status' => 'paid']));
         $responseFilter->assertSee('EG.999999');
         $responseFilter->assertDontSee('EG.111111');
 
         // Tes Pencarian Nama Penyewa
-        $responseSearch = $this->actingAs($admin)->get(route('admin.pesanan.index', ['q' => 'Budi']));
+        $responseSearch = $this->get(route('admin.pesanan.index', ['q' => 'Budi']));
         $responseSearch->assertSee('EG.999999');
         $responseSearch->assertDontSee('EG.111111');
 
         // Tes Pencarian Kode
-        $responseCode = $this->actingAs($admin)->get(route('admin.pesanan.index', ['q' => 'EG.1111']));
+        $responseCode = $this->get(route('admin.pesanan.index', ['q' => 'EG.1111']));
         $responseCode->assertSee('EG.111111');
         $responseCode->assertDontSee('EG.999999');
 
         // Tes Pencarian Nama Motor
-        $responseMotor = $this->actingAs($admin)->get(route('admin.pesanan.index', ['q' => 'NMAX']));
+        $responseMotor = $this->get(route('admin.pesanan.index', ['q' => 'NMAX']));
         $responseMotor->assertSee('EG.999999');
     }
 
     public function test_pesanan_terlambat_ditandai_dengan_badge_terlambat_di_index()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $booking = Booking::factory()->rented()->create([
             'end_at' => now()->subHour(),
         ]);
 
-        $response = $this->actingAs($admin)->get(route('admin.pesanan.index'));
+        $response = $this->get(route('admin.pesanan.index'));
         $response->assertOk();
         $response->assertSee('Terlambat');
     }
 
     public function test_admin_bisa_melihat_detail_pesanan_dan_update_catatan()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $booking = Booking::factory()->pending()->create([
             'notes' => 'Catatan awal',
         ]);
 
-        $responseShow = $this->actingAs($admin)->get(route('admin.pesanan.show', $booking->code));
+        $responseShow = $this->get(route('admin.pesanan.show', $booking->code));
         $responseShow->assertOk();
         $responseShow->assertSee($booking->customer_name);
         $responseShow->assertSee('Catatan awal');
 
         // Post notes
-        $responseNotes = $this->actingAs($admin)->post(route('admin.pesanan.notes', $booking->code), [
+        $responseNotes = $this->post(route('admin.pesanan.notes', $booking->code), [
             'notes' => 'Catatan tambahan dari admin',
         ]);
 

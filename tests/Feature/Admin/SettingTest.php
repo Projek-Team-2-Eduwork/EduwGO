@@ -9,25 +9,15 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class PengaturanTest extends TestCase
+class SettingTest extends TestCase
 {
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'admin']);
-    }
-
-    private function getAdmin(): User
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        return $admin;
     }
 
     private function validPayload(array $overrides = []): array
@@ -43,20 +33,20 @@ class PengaturanTest extends TestCase
 
     public function test_admin_dapat_melihat_halaman_pengaturan(): void
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
-        $this->actingAs($admin)->get(route('admin.pengaturan.edit'))->assertOk();
+        $this->get(route('admin.pengaturan.edit'))->assertOk();
     }
 
     public function test_update_pengaturan_tersimpan_dan_mereset_cache(): void
     {
         Storage::fake('public');
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         // Isi dulu cache settings agar membuktikan Cache::forget berjalan
         $this->assertEquals('EduwGo', setting('brand.name', 'EduwGo'));
 
-        $response = $this->actingAs($admin)->put(route('admin.pengaturan.update'), [
+        $response = $this->put(route('admin.pengaturan.update'), [
             'brand_name' => 'Toko Mantap',
             'contact_whatsapp' => '6281122334455',
             'booking_max_days' => 10,
@@ -79,7 +69,7 @@ class PengaturanTest extends TestCase
 
     public function test_ubah_brand_name_terlihat_di_title_navbar_dan_footer(): void
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         $this->actingAs($admin)
             ->put(route('admin.pengaturan.update'), $this->validPayload())
@@ -94,7 +84,7 @@ class PengaturanTest extends TestCase
 
     public function test_ubah_warna_ter_render_sebagai_override_css(): void
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         // Tanpa warna kustom → tidak ada blok override di HTML
         $this->get('/')->assertOk()->assertDontSee('--navy-900:', false);
@@ -114,7 +104,7 @@ class PengaturanTest extends TestCase
 
     public function test_ubah_buffer_dipakai_oleh_availability_service(): void
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $booking = Booking::factory()->paid()->create([
             'start_at' => '2026-11-10 10:00:00',
             'end_at' => '2026-11-10 12:00:00',
@@ -135,9 +125,9 @@ class PengaturanTest extends TestCase
 
     public function test_validasi_ditolak_jika_format_salah(): void
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
-        $response = $this->actingAs($admin)->put(route('admin.pengaturan.update'), [
+        $response = $this->put(route('admin.pengaturan.update'), [
             'brand_name' => 'Toko',
             'contact_whatsapp' => '0812345678', // Salah, harus 62
             'booking_max_days' => 15, // Max 14

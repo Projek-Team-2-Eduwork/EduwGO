@@ -19,37 +19,28 @@ class KendaraanTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'user']);
-    }
-
-    private function getAdmin()
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        return $admin;
     }
 
     public function test_admin_bisa_mengakses_semua_halaman_kendaraan()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $vehicle = Vehicle::factory()->create();
 
-        $this->actingAs($admin)->get(route('admin.kendaraan.index'))->assertOk();
-        $this->actingAs($admin)->get(route('admin.kendaraan.create'))->assertOk();
-        $this->actingAs($admin)->get(route('admin.kendaraan.edit', $vehicle->id))->assertOk();
-        $this->actingAs($admin)->get(route('admin.kendaraan.show', $vehicle->id))->assertOk();
+        $this->get(route('admin.kendaraan.index'))->assertOk();
+        $this->get(route('admin.kendaraan.create'))->assertOk();
+        $this->get(route('admin.kendaraan.edit', $vehicle->id))->assertOk();
+        $this->get(route('admin.kendaraan.show', $vehicle->id))->assertOk();
     }
 
     public function test_admin_bisa_tambah_kendaraan_dan_foto_ter_resize()
     {
         Storage::fake('public');
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $type = VehicleType::factory()->create();
         $image = UploadedFile::fake()->image('motor.jpg', 2000, 2000); // Sengaja over-size > 1200
 
-        $response = $this->actingAs($admin)->post(route('admin.kendaraan.store'), [
+        $response = $this->post(route('admin.kendaraan.store'), [
             'name' => 'Vario 150',
             'brand' => 'Honda',
             'vehicle_type_id' => $type->id,
@@ -77,13 +68,13 @@ class KendaraanTest extends TestCase
     public function test_admin_bisa_update_kendaraan_dan_hapus_foto_lama()
     {
         Storage::fake('public');
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $vehicle = Vehicle::factory()->create(['image' => 'storage/vehicles/old_image.jpg']);
         Storage::disk('public')->put('vehicles/old_image.jpg', 'dummy_content');
 
         $newImage = UploadedFile::fake()->image('new.jpg');
 
-        $this->actingAs($admin)->put(route('admin.kendaraan.update', $vehicle->id), [
+        $this->put(route('admin.kendaraan.update', $vehicle->id), [
             'name' => 'NMAX',
             'vehicle_type_id' => $vehicle->vehicle_type_id,
             'plate_number' => $vehicle->plate_number,
@@ -100,11 +91,11 @@ class KendaraanTest extends TestCase
 
     public function test_validasi_plate_number_duplikat_ditolak()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         Vehicle::factory()->create(['plate_number' => 'B 99 99 OK']);
         $vehicle = Vehicle::factory()->create();
 
-        $response = $this->actingAs($admin)->put(route('admin.kendaraan.update', $vehicle->id), [
+        $response = $this->put(route('admin.kendaraan.update', $vehicle->id), [
             'name' => 'Testing',
             'vehicle_type_id' => $vehicle->vehicle_type_id,
             'plate_number' => 'b 99 99 ok ', // Akan disanitasi jadi B9999OK
@@ -126,11 +117,11 @@ class KendaraanTest extends TestCase
 
     public function test_delete_dengan_booking_berakibat_soft_delete()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $vehicle = Vehicle::factory()->create();
         Booking::factory()->create(['vehicle_id' => $vehicle->id]);
 
-        $this->actingAs($admin)->delete(route('admin.kendaraan.destroy', $vehicle->id));
+        $this->delete(route('admin.kendaraan.destroy', $vehicle->id));
 
         $this->assertNull(Vehicle::find($vehicle->id));
         $this->assertNotNull(Vehicle::withTrashed()->find($vehicle->id));
@@ -139,11 +130,11 @@ class KendaraanTest extends TestCase
     public function test_delete_tanpa_booking_berakibat_force_delete_dan_hapus_foto()
     {
         Storage::fake('public');
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $vehicle = Vehicle::factory()->create(['image' => 'storage/vehicles/delete_me.jpg']);
         Storage::disk('public')->put('vehicles/delete_me.jpg', 'dummy');
 
-        $this->actingAs($admin)->delete(route('admin.kendaraan.destroy', $vehicle->id));
+        $this->delete(route('admin.kendaraan.destroy', $vehicle->id));
 
         $this->assertNull(Vehicle::withTrashed()->find($vehicle->id));
         Storage::disk('public')->assertMissing('vehicles/delete_me.jpg');
@@ -151,7 +142,7 @@ class KendaraanTest extends TestCase
 
     public function test_filter_dan_badge_status_berfungsi_benar()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         $nonaktif = Vehicle::factory()->create(['is_active' => false]);
         $tersedia = Vehicle::factory()->create(['is_active' => true]);
@@ -165,13 +156,13 @@ class KendaraanTest extends TestCase
         ]);
 
         // Cek Badge di Halaman Index
-        $response = $this->actingAs($admin)->get(route('admin.kendaraan.index'));
+        $response = $this->get(route('admin.kendaraan.index'));
         $response->assertSee('Nonaktif');
         $response->assertSee('Tersedia');
         $response->assertSee('Disewa');
 
         // Test Filter Disewa
-        $resFilter = $this->actingAs($admin)->get(route('admin.kendaraan.index', ['status' => 'disewa']));
+        $resFilter = $this->get(route('admin.kendaraan.index', ['status' => 'disewa']));
         $resFilter->assertSee($disewa->name);
         $resFilter->assertDontSee($nonaktif->name);
         $resFilter->assertDontSee($tersedia->name);

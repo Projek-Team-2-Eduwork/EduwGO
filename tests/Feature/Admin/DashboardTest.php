@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -22,18 +21,8 @@ class DashboardTest extends TestCase
     {
         parent::setUp();
         // Setup data minimum untuk user admin
-        Role::firstOrCreate(['name' => 'admin']);
-
         // Memakai seeder yang ada untuk memastikan dataset lengkap (ada BookingSeeder dll)
         $this->seed(DatabaseSeeder::class);
-    }
-
-    private function getAdmin()
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        return $admin;
     }
 
     public function test_angka_widget_service_cocok_dengan_query_independen()
@@ -92,13 +81,13 @@ class DashboardTest extends TestCase
 
     public function test_filter_pendapatan_berfungsi_dan_cocok()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
         $vehicle = Vehicle::first();
 
         $dari = now()->subMonths(2)->startOfMonth()->toDateString();
         $sampai = now()->subMonths(1)->endOfMonth()->toDateString();
 
-        $response = $this->actingAs($admin)->get(route('admin.dashboard', [
+        $response = $this->get(route('admin.dashboard', [
             'dari' => $dari,
             'sampai' => $sampai,
             'tipe' => $vehicle->vehicle_type_id,
@@ -119,9 +108,9 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_tampil_benar_dan_render_semua_widget()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
-        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $response = $this->get(route('admin.dashboard'));
         $response->assertOk();
 
         // Assert Judul Widget
@@ -136,7 +125,7 @@ class DashboardTest extends TestCase
 
     public function test_batas_maksimal_query_halaman_adalah_8()
     {
-        $admin = $this->getAdmin();
+        $admin = $this->actingAsAdmin();
 
         // Panaskan cache settings agar tidak memakan query get settings di global helper
         setting('brand.name');
@@ -144,7 +133,7 @@ class DashboardTest extends TestCase
         DB::enableQueryLog();
         DB::flushQueryLog(); // Pastikan mulai dari 0
 
-        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $response = $this->get(route('admin.dashboard'));
         $response->assertOk();
 
         // Total query untuk seluruh controller (termasuk Auth & auth guard yang aktif) harus <= 8
