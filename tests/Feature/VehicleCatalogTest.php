@@ -215,4 +215,61 @@ class VehicleCatalogTest extends TestCase
         // 1 untuk opsi filter tipe + 1 eager load; tidak bertambah per motor.
         $this->assertLessThanOrEqual(2, $selects->count());
     }
+
+    public function test_urut_harga_termurah_dan_termahal()
+    {
+        $this->vehicle('Motor B', null, ['price_per_day' => 150000]);
+        $this->vehicle('Motor A', null, ['price_per_day' => 90000]);
+        $this->vehicle('Motor C', null, ['price_per_day' => 200000]);
+
+        $responseTermurah = $this->get('/kendaraan?harga=termurah');
+        $responseTermurah->assertOk();
+        $responseTermurah->assertSeeInOrder(['Motor A', 'Motor B', 'Motor C']);
+
+        $responseTermahal = $this->get('/kendaraan?harga=termahal');
+        $responseTermahal->assertOk();
+        $responseTermahal->assertSeeInOrder(['Motor C', 'Motor B', 'Motor A']);
+    }
+
+    public function test_rentang_harga()
+    {
+        $this->vehicle('Motor Murah', null, ['price_per_day' => 90000]);
+        $this->vehicle('Motor Sedang', null, ['price_per_day' => 150000]);
+        $this->vehicle('Motor Mahal', null, ['price_per_day' => 200000]);
+
+        $response = $this->get('/kendaraan?harga_min=100000&harga_max=175000');
+
+        $response->assertOk();
+        $response->assertSee('Motor Sedang');
+        $response->assertDontSee('Motor Murah');
+        $response->assertDontSee('Motor Mahal');
+    }
+
+    public function test_value_harga_invalid_diabaikan()
+    {
+        $this->vehicle('A Motor', null, ['price_per_day' => 200000]);
+        $this->vehicle('B Motor', null, ['price_per_day' => 90000]);
+
+        // Input kotor akan diabaikan secara elegan (kembali ke default: abjad)
+        $response = $this->get('/kendaraan?harga=tengah&harga_min=abc&harga_max=-5');
+
+        $response->assertOk();
+        $response->assertSeeInOrder(['A Motor', 'B Motor']);
+    }
+
+    public function test_filter_harga_bertahan_di_session()
+    {
+        $this->vehicle('Murah', null, ['price_per_day' => 45000]);
+        $this->vehicle('Mahal', null, ['price_per_day' => 100000]);
+
+        // Request pertama menyimpan state di session
+        $this->get('/kendaraan?harga=termahal&harga_min=50000')->assertOk();
+
+        // Request kedua tanpa string kueri
+        $response = $this->get('/kendaraan');
+
+        $response->assertOk();
+        $response->assertSee('Mahal');
+        $response->assertDontSee('Murah'); // Filter minimal 50k dari session masih bekerja
+    }
 }

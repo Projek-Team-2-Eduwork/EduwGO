@@ -48,6 +48,13 @@
 
                 <x-form.input name="q" label="Cari kendaraan" placeholder="Nama motor" :value="$filter['q']" maxlength="100" />
 
+                <x-form.select name="harga" label="Urutkan harga" placeholder="Default (nama)"
+                    :options="['termurah' => 'Harga termurah', 'termahal' => 'Harga termahal']" :value="$filter['harga']" />
+
+                <x-form.input name="harga_min" type="number" label="Harga minimal" placeholder="Rp0" :value="$filter['harga_min']" min="0" />
+
+                <x-form.input name="harga_max" type="number" label="Harga maksimal" placeholder="Semua" :value="$filter['harga_max']" min="0" />
+
                 {{-- Filter "hanya tersedia" tetap didukung lewat query ?available=1, tapi tidak ada di desain --}}
                 @if ($filter['available'])
                     <input type="hidden" name="available" value="1">

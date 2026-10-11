@@ -29,12 +29,21 @@ class VehicleController extends Controller
         $onlyAvailable = (bool) ($filter['available'] ?? false);
         $timeFiltered = $start !== null && $days !== null;
 
+        // Normalisasi input harga (whitelist / abaikan yang invalid)
+        $sort = in_array($filter['harga'] ?? null, ['termurah', 'termahal'], true) ? $filter['harga'] : null;
+        $min = (isset($filter['harga_min']) && is_numeric($filter['harga_min']) && $filter['harga_min'] >= 0) ? (int) $filter['harga_min'] : null;
+        $max = (isset($filter['harga_max']) && is_numeric($filter['harga_max']) && $filter['harga_max'] >= 0) ? (int) $filter['harga_max'] : null;
+
         // Filter waktu & tipe dibawa ke detail motor & modal durasi lewat session (+ query string di link).
-        $request->session()->put('booking.filter', [
+        // Null tidak disimpan; min/max disimpan sebagai string supaya lolos rule 'string' saat di-merge balik.
+        $request->session()->put('booking.filter', array_filter([
             'start_at' => $start?->format('Y-m-d\TH:i'),
             'days' => $days,
             'type' => $typeId,
-        ]);
+            'harga' => $sort,
+            'harga_min' => $min !== null ? (string) $min : null,
+            'harga_max' => $max !== null ? (string) $max : null,
+        ], fn ($value) => filled($value)));
 
         if ($start !== null) {
             $request->session()->put('booking.start_at', $start->format('Y-m-d\TH:i'));
@@ -58,7 +67,14 @@ class VehicleController extends Controller
                 : $query->withExists(['bookings as is_rented' => $running]);
         }
 
-        $vehicles = $query->orderBy('name')->paginate(12)->withQueryString();
+        // Terapkan Query Harga
+        $vehicles = $query
+            ->when($min !== null, fn ($q) => $q->where('price_per_day', '>=', $min))
+            ->when($max !== null, fn ($q) => $q->where('price_per_day', '<=', $max))
+            ->when($sort === 'termurah', fn ($q) => $q->orderBy('price_per_day')->orderBy('name'))
+            ->when($sort === 'termahal', fn ($q) => $q->orderBy('price_per_day', 'desc')->orderBy('name'))
+            ->when($sort === null, fn ($q) => $q->orderBy('name'))
+            ->paginate(12)->withQueryString();
 
         return view('kendaraan.index', [
             'vehicles' => $vehicles,
@@ -71,6 +87,9 @@ class VehicleController extends Controller
                 'days' => $days,
                 'available' => $onlyAvailable,
                 'q' => $search,
+                'harga' => $sort,
+                'harga_min' => $min,
+                'harga_max' => $max,
             ],
             'timeFiltered' => $timeFiltered,
             'terms' => RentalTerms::list(),
@@ -103,8 +122,7 @@ class VehicleController extends Controller
 
         return view('kendaraan.show', [
             'vehicle' => $vehicle,
-            'isAvailableNow' => $availability->isAvailable($vehicle, now(), 1),
-            'recommendations' => $recommendations,
+            'isAvailableNow' => $availability->isAvailable($vehicle, now(), 1),             'recommendations' => $recommendations,
             'filtered' => $filtered,
         ]);
     }
