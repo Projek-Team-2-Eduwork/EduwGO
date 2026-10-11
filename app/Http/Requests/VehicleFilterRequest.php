@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 
 class VehicleFilterRequest extends FormRequest
 {
-    private const FILTER_KEYS = ['type', 'start_at', 'days', 'available', 'q'];
+    private const FILTER_KEYS = ['type', 'start_at', 'days', 'available', 'q', 'harga', 'harga_min', 'harga_max'];
 
     public function authorize(): bool
     {
@@ -49,6 +49,9 @@ class VehicleFilterRequest extends FormRequest
             'days' => ['nullable', 'integer', 'required_with:start_at', 'min:1', 'max:'.(int) setting('booking.max_days', 5)],
             'available' => ['nullable', 'boolean'],
             'q' => ['nullable', 'string', 'max:100'],
+            'harga' => ['nullable', 'string', 'max:20'],
+            'harga_min' => ['nullable', 'string', 'max:20'],
+            'harga_max' => ['nullable', 'string', 'max:20'],
         ];
     }
 
@@ -64,6 +67,9 @@ class VehicleFilterRequest extends FormRequest
             'days.min' => 'Durasi minimal 1 hari.',
             'days.max' => 'Durasi melebihi batas maksimal sewa.',
             'q.max' => 'Kata kunci pencarian terlalu panjang.',
+            'harga.max' => 'Urutan harga tidak valid.',
+            'harga_min.max' => 'Rentang harga tidak valid.',
+            'harga_max.max' => 'Rentang harga tidak valid.',
         ];
     }
 
