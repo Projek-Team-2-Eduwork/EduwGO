@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,8 +16,10 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Booking::where('user_id', $request->user()->id)
-            ->with('vehicle.type')
+        $user = $request->user();
+
+        $query = Booking::where('user_id', $user->id)
+            ->with(['vehicle.type', 'payments', 'latestPayment'])
             ->latest();
 
         if ($request->filled('status') && BookingStatus::tryFrom($request->status)) {
@@ -25,7 +28,18 @@ class BookingController extends Controller
 
         $bookings = $query->paginate(10)->withQueryString();
 
-        return view('booking.index', compact('bookings'));
+        $totalTransaksi = Booking::where('user_id', $user->id)->count();
+
+        $totalDibayar = Payment::join('bookings', 'payments.booking_id', '=', 'bookings.id')
+            ->where('bookings.user_id', $user->id)
+            ->where('payments.status', 'paid')
+            ->sum('payments.amount');
+
+        $menungguBayar = Booking::where('user_id', $user->id)
+            ->where('status', BookingStatus::Pending->value)
+            ->count();
+
+        return view('booking.index', compact('bookings', 'totalTransaksi', 'totalDibayar', 'menungguBayar'));
     }
 
     /**
