@@ -55,6 +55,9 @@
 
                 <x-form.input name="harga_max" type="number" label="Harga maksimal" placeholder="Semua" :value="$filter['harga_max']" min="0" />
 
+                <x-form.select name="urut" label="Urutkan" placeholder="Default (nama)"
+                    :options="['populer' => 'Paling populer']" :value="$filter['urut']" />
+
                 {{-- Filter "hanya tersedia" tetap didukung lewat query ?available=1, tapi tidak ada di desain --}}
                 @if ($filter['available'])
                     <input type="hidden" name="available" value="1">
