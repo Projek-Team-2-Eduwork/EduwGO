@@ -27,6 +27,7 @@ class SettingController extends Controller
         $textFields = [
             'brand.name' => 'brand_name',
             'brand.tagline' => 'brand_tagline',
+            'brand.description' => 'brand_description',
             'brand.primary_color' => 'brand_primary_color',
             'brand.accent_color' => 'brand_accent_color',
             'contact.whatsapp' => 'contact_whatsapp',

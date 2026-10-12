@@ -37,6 +37,7 @@ class HomeController extends Controller
             'types' => VehicleType::query()->orderBy('name')->pluck('name', 'id'),
             'maxDays' => $availability->maxDays(),
             'minStart' => VehicleFilterRequest::earliestStart(),
+            'profil' => $this->profil(),
         ]);
     }
 
@@ -53,5 +54,28 @@ class HomeController extends Controller
         }
 
         return is_string($value) && trim($value) !== '' ? trim($value) : $default;
+    }
+
+    /**
+     * Data section "Tentang Penyewaan" (EG-46); semua dari settings dengan fallback aman.
+     */
+    private function profil(): array
+    {
+        $waNumber = preg_replace('/\D+/', '', $this->textSetting('contact.whatsapp', ''));
+
+        return [
+            'logo' => $this->textSetting('brand.logo_light', ''),
+            'nama' => $this->textSetting('brand.name', 'EduwGo'),
+            'deskripsi' => $this->textSetting('brand.description', 'EduwGo menyediakan rental motor cepat, aman, dan terjangkau. Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.'),
+            'alamat' => $this->textSetting('contact.address', 'Alamat lokasi pengambilan akan diinformasikan oleh admin.'),
+            'jam' => $this->textSetting('contact.hours', 'Setiap hari, 08.00 – 20.00 WIB'),
+            'waUrl' => $waNumber !== '' ? 'https://wa.me/'.$waNumber : null,
+            'sosmed' => collect([
+                'Instagram' => setting('social.instagram'),
+                'Facebook' => setting('social.facebook'),
+                'TikTok' => setting('social.tiktok'),
+                'YouTube' => setting('social.youtube'),
+            ])->filter(fn ($href) => is_string($href) && trim($href) !== '' && $href !== '#'),
+        ];
     }
 }
