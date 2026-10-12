@@ -97,12 +97,15 @@ class HomeTest extends TestCase
 
     public function test_section_profil_perusahaan_tampil_default_tanpa_settings(): void
     {
-        $this->get('/')
+        $response = $this->get('/')
             ->assertOk()
             ->assertSee('Tentang Penyewaan')
             ->assertSee('EduwGo menyediakan rental motor cepat, aman, dan terjangkau')
             ->assertSee('Alamat lokasi pengambilan akan diinformasikan oleh admin')
-            ->assertSee('Setiap hari, 08.00 – 20.00 WIB')
-            ->assertDontSee('https://wa.me/');
+            ->assertSee('Setiap hari, 08.00 – 20.00 WIB');
+
+        // Tanpa setting contact.whatsapp, section profil tidak merender tombol WhatsApp
+        // (footer layout memang selalu menampilkan link wa.me, jadi jangan assertDontSee umum).
+        $this->assertNull($response->viewData('profil')['waUrl']);
     }
 }
