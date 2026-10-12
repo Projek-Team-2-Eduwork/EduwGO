@@ -16,6 +16,7 @@ class HomeController extends Controller
     {
         $vehicles = Vehicle::query()
             ->where('is_active', true)
+            ->whereNotNull('location_id')
             ->with('type')
             ->orderBy('name')
             ->limit(8)

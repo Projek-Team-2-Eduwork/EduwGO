@@ -75,6 +75,16 @@
                         <a href="{{ route('admin.kendaraan.index') }}" class="text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</a>
                         <x-primary-button>Update Kendaraan</x-primary-button>
                     </div>
+                            <div>
+                            <x-input-label for="location_id" value="Lokasi" />
+                            <select id="location_id" name="location_id" class="mt-1 block w-full rounded-md shadow-sm">
+                                <option value="">Tanpa lokasi (tidak tampil di katalog)</option>
+                                @foreach($locations as $id => $name)
+                                    <option value="{{ $id }}" {{ old('location_id', $kendaraan->location_id) == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error class="mt-2" :messages="$errors->get('location_id')" />
+                        </div>
                 </form>
             </div>
         </div>

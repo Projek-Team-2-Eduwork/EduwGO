@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             VehicleTypeSeeder::class,
+            LokasiSeeder::class,
             VehicleSeeder::class,
             SettingSeeder::class,
             BookingSeeder::class,

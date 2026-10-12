@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\VehicleRequest;
+use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
@@ -61,8 +62,9 @@ class VehicleController extends Controller
     {
         Gate::authorize('create', Vehicle::class);
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
+        $locations = Location::orderBy('name')->pluck('name', 'id');
 
-        return view('admin.kendaraan.create', compact('types'));
+        return view('admin.kendaraan.create', compact('types', 'locations'));
     }
 
     public function store(VehicleRequest $request)
@@ -97,8 +99,9 @@ class VehicleController extends Controller
     {
         Gate::authorize('update', $kendaraan);
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
+        $locations = Location::orderBy('name')->pluck('name', 'id');
 
-        return view('admin.kendaraan.edit', compact('kendaraan', 'types'));
+        return view('admin.kendaraan.edit', compact('kendaraan', 'types', 'locations'));
     }
 
     public function update(VehicleRequest $request, Vehicle $kendaraan)

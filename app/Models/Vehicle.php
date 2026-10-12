@@ -28,6 +28,14 @@ class Vehicle extends Model
     }
 
     /**
+     * Lokasi/branch tempat unit ini berada.
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    /**
      * Booking untuk unit ini.
      */
     public function bookings(): HasMany

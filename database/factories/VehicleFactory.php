@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -34,9 +35,15 @@ class VehicleFactory extends Factory
 
         // Tipe motor memakai slug yang sama dengan VehicleTypeSeeder (firstOrCreate
         // di closure) supaya factory dan seeder tidak bentrok unique constraint.
+        // Lokasi memakai firstOrCreate slug sama dengan LokasiSeeder
+        // supaya factory dan seeder tidak bentrok unique constraint.
         $type = $this->faker->randomElement(['Matic', 'Cub', 'Sport', 'Trail']);
 
         return [
+            'location_id' => fn () => Location::query()->firstOrCreate(
+                ['slug' => 'lokasi-utama'],
+                ['name' => 'Lokasi Utama'],
+            )->id,
             'vehicle_type_id' => fn () => VehicleType::query()->firstOrCreate(
                 ['slug' => Str::slug($type)],
                 ['name' => $type],
