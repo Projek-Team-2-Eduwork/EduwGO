@@ -33,6 +33,7 @@ class VehicleRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
             'vehicle_type_id' => ['required', 'exists:vehicle_types,id'],
+            'location_id' => ['nullable', 'exists:locations,id'],
             'tank_capacity' => ['nullable', 'numeric', 'min:0'],
             'plate_number' => ['required', 'string', 'max:20', 'unique:vehicles,plate_number,'.$vehicleId],
             'price_per_day' => ['required', 'numeric', 'min:0'],

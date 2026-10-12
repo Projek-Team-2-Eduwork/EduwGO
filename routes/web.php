@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LokasiController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\Admin\SettingController;
@@ -123,6 +124,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
     Route::post('/pengguna/{pengguna}/role', [PenggunaController::class, 'setRole'])->name('pengguna.role');
     Route::post('/pengguna/{pengguna}/toggle', [PenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
+
+    // Master lokasi/branch penyewaan (EG-48)
+    Route::resource('lokasi', LokasiController::class)->except(['create', 'show', 'edit']);
 
     // CRUD Kendaraan Admin (EG-18)
     Route::resource('kendaraan', AdminVehicleController::class);

@@ -54,6 +54,7 @@ class AvailabilityService
 
         return Vehicle::query()
             ->where('is_active', true)
+            ->whereNotNull('location_id')
             ->with('type')
             ->when($typeId !== null, fn (Builder $query) => $query->where('vehicle_type_id', $typeId))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))
