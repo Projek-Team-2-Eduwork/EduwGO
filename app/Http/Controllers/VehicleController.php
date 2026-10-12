@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VehicleFilterRequest;
+use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
@@ -27,6 +28,8 @@ class VehicleController extends Controller
         $typeId = isset($filter['type']) ? (int) $filter['type'] : null;
         $search = $filter['q'] ?? null;
         $onlyAvailable = (bool) ($filter['available'] ?? false);
+        $lokasiSlug = $filter['lokasi'] ?? null;
+        $lokasiId = $lokasiSlug !== null ? (int) Location::query()->where('slug', $lokasiSlug)->value('id') : null;
         $timeFiltered = $start !== null && $days !== null;
 
         // Normalisasi input harga & urut (whitelist / abaikan yang invalid)
@@ -38,6 +41,7 @@ class VehicleController extends Controller
         // Filter waktu & tipe dibawa ke detail motor & modal durasi lewat session (+ query string di link).
         // Null tidak disimpan; min/max disimpan sebagai string supaya lolos rule 'string' saat di-merge balik.
         $request->session()->put('booking.filter', array_filter([
+            'lokasi' => $lokasiSlug,
             'start_at' => $start?->format('Y-m-d\TH:i'),
             'days' => $days,
             'type' => $typeId,
@@ -52,7 +56,7 @@ class VehicleController extends Controller
         }
 
         // Query katalog dibangun AvailabilityService (dipakai juga halaman lokasi, EG-49)
-        $query = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable);
+        $query = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $lokasiId);
 
         // Terapkan Query Tambahan, Jumlah Pesanan (withCount) dan Pengurutan
         $vehicles = $query
@@ -68,10 +72,12 @@ class VehicleController extends Controller
         return view('kendaraan.index', [
             'vehicles' => $vehicles,
             'types' => VehicleType::query()->orderBy('name')->pluck('name', 'id'),
+            'lokasiOptions' => Location::query()->where('is_active', true)->orderBy('name')->pluck('name', 'slug'),
             'maxDays' => (int) $availability->maxDays(),
             'minStart' => VehicleFilterRequest::earliestStart(),
             'filter' => [
                 'type' => $typeId,
+                'lokasi' => $lokasiSlug,
                 'start_at' => $start?->format('Y-m-d\TH:i'),
                 'days' => $days,
                 'available' => $onlyAvailable,

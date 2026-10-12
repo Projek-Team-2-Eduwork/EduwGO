@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,6 +21,11 @@ class VehicleCatalogTest extends TestCase
             'name' => $name,
             'vehicle_type_id' => ($type ?? VehicleType::factory()->create())->id,
         ], $attributes));
+    }
+
+    private function location(string $name, string $slug): Location
+    {
+        return Location::factory()->create(['name' => $name, 'slug' => $slug]);
     }
 
     private function book(Vehicle $vehicle, string $start, string $end, BookingStatus $status = BookingStatus::Paid): Booking
@@ -340,5 +346,65 @@ class VehicleCatalogTest extends TestCase
 
         // Memastikan tidak ada N+1 query (0 hit karena menggunakan withCount)
         $this->assertSame(0, $separate->count());
+    }
+
+    public function test_filter_lokasi_hanya_menampilkan_unit_lokasi(): void
+    {
+        $a = $this->location('Cabang A', 'cabang-a');
+        $b = $this->location('Cabang B', 'cabang-b');
+        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
+        $this->vehicle('Motor Beta', null, ['location_id' => $b->id]);
+
+        $this->get('/kendaraan?lokasi=cabang-a')
+            ->assertOk()
+            ->assertSee('Motor Alpha')
+            ->assertDontSee('Motor Beta');
+    }
+
+    public function test_filter_lokasi_invalid_ditolak_dan_tidak_mengubah_sesi(): void
+    {
+        $a = $this->location('Cabang A', 'cabang-a');
+        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
+        $this->vehicle('Motor Gamma'); // otomatis lokasi-utama (factory)
+
+        $this->get('/kendaraan?lokasi=tidak-ada')->assertRedirect();
+
+        // Sesi tidak terkontaminasi: katalog normal menampilkan semua unit.
+        $this->get('/kendaraan')
+            ->assertOk()
+            ->assertSee('Motor Alpha')
+            ->assertSee('Motor Gamma');
+    }
+
+    public function test_filter_lokasi_bertahan_di_session(): void
+    {
+        $a = $this->location('Cabang A', 'cabang-a');
+        $b = $this->location('Cabang B', 'cabang-b');
+        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
+        $this->vehicle('Motor Beta', null, ['location_id' => $b->id]);
+
+        $this->get('/kendaraan?lokasi=cabang-a')->assertOk()->assertSee('Motor Alpha');
+
+        // Kembali tanpa parameter: filter lokasi tersimpan di session masih berlaku.
+        $this->get('/kendaraan')
+            ->assertOk()
+            ->assertSee('Motor Alpha')
+            ->assertDontSee('Motor Beta');
+    }
+
+    public function test_reset_menghapus_filter_lokasi(): void
+    {
+        $a = $this->location('Cabang A', 'cabang-a');
+        $b = $this->location('Cabang B', 'cabang-b');
+        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
+        $this->vehicle('Motor Beta', null, ['location_id' => $b->id]);
+
+        $this->get('/kendaraan?lokasi=cabang-a')->assertDontSee('Motor Beta');
+
+        $this->followingRedirects()
+            ->get('/kendaraan/reset')
+            ->assertOk()
+            ->assertSee('Motor Alpha')
+            ->assertSee('Motor Beta');
     }
 }
