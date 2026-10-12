@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -133,5 +135,113 @@ class BookingDaftarPesananTest extends TestCase
     public function test_9_guest_redirected_to_login()
     {
         $this->get(route('booking.index'))->assertRedirect(route('login'));
+    }
+
+    public function test_10_ringkasan_transaksi_angka_benar()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $type = VehicleType::create(['name' => 'Type 1', 'slug' => 'type-1']);
+
+        $vehicleA = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor A', 'slug' => 'motor-a', 'brand' => 'Honda', 'plate_number' => 'A1', 'price_per_day' => 100000]);
+        $bookingA = Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleA->id, 'status' => BookingStatus::Paid]);
+        Payment::factory()->create([
+            'booking_id' => $bookingA->id,
+            'status' => 'paid',
+            'amount' => 300000,
+            'method' => 'cash',
+            'paid_at' => now(),
+        ]);
+
+        $vehicleB = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor B', 'slug' => 'motor-b', 'brand' => 'Honda', 'plate_number' => 'B1', 'price_per_day' => 100000]);
+        $bookingB = Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleB->id, 'status' => BookingStatus::Paid]);
+        Payment::factory()->create([
+            'booking_id' => $bookingB->id,
+            'status' => 'pending',
+            'amount' => 150000,
+        ]);
+
+        $vehicleC = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor C', 'slug' => 'motor-c', 'brand' => 'Honda', 'plate_number' => 'C1', 'price_per_day' => 100000]);
+        Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleC->id, 'status' => BookingStatus::Pending]);
+
+        $response = $this->get(route('booking.index'));
+
+        $response->assertOk();
+        $response->assertSee('Riwayat Transaksi');
+        $response->assertSee('Rp 300.000');
+
+        $response->assertSee('<div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Jumlah Transaksi</div>', false);
+        $response->assertSee('<div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">3</div>', false);
+
+        $response->assertSee('<div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Menunggu Bayar</div>', false);
+        $response->assertSee('<div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">1</div>', false);
+    }
+
+    public function test_11_metode_dan_status_bayar_tampil()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $type = VehicleType::create(['name' => 'Type 2', 'slug' => 'type-2']);
+
+        $vehicleA = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor D', 'slug' => 'motor-d', 'brand' => 'Honda', 'plate_number' => 'D1', 'price_per_day' => 100000]);
+        $bookingWithPayment = Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleA->id, 'status' => BookingStatus::Paid]);
+        Payment::factory()->create([
+            'booking_id' => $bookingWithPayment->id,
+            'status' => 'paid',
+            'method' => 'cash',
+        ]);
+
+        $vehicleB = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor E', 'slug' => 'motor-e', 'brand' => 'Honda', 'plate_number' => 'E1', 'price_per_day' => 100000]);
+        Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleB->id, 'status' => BookingStatus::Pending]);
+
+        $response = $this->get(route('booking.index'));
+
+        $response->assertOk();
+        $response->assertSee('Cash - Paid');
+        $response->assertSee('Belum bayar');
+    }
+
+    public function test_12_riwayat_tetap_terisolasi()
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $type = VehicleType::create(['name' => 'Type 3', 'slug' => 'type-3']);
+        $vehicle = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor F', 'slug' => 'motor-f', 'brand' => 'Honda', 'plate_number' => 'F1', 'price_per_day' => 100000]);
+
+        Booking::factory()->create([
+            'user_id' => $userA->id,
+            'vehicle_id' => $vehicle->id,
+            'code' => 'BOOK-UNIQUE-A',
+        ]);
+
+        $this->actingAs($userB);
+        $response = $this->get(route('booking.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('BOOK-UNIQUE-A');
+    }
+
+    public function test_13_ringkasan_tanpa_pembayaran()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $type = VehicleType::create(['name' => 'Type 4', 'slug' => 'type-4']);
+        $vehicle = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor G', 'slug' => 'motor-g', 'brand' => 'Honda', 'plate_number' => 'G1', 'price_per_day' => 100000]);
+
+        Booking::factory()->create([
+            'user_id' => $user->id,
+            'vehicle_id' => $vehicle->id,
+            'status' => BookingStatus::Pending,
+        ]);
+
+        $response = $this->get(route('booking.index'));
+
+        $response->assertOk();
+        $response->assertSee('Rp 0');
+        $response->assertDontSee('Belum ada pesanan');
     }
 }
