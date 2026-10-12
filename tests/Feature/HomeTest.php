@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\Setting;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -73,5 +74,35 @@ class HomeTest extends TestCase
         $this->get('/')->assertOk();
 
         $this->assertSame($kecil, count(DB::getQueryLog()));
+    }
+
+    public function test_section_profil_perusahaan_tampil_dengan_settings_terisi(): void
+    {
+        Setting::updateOrCreate(['key' => 'brand.description'], ['value' => 'Kami menyediakan motor terawat untuk perjalanan Anda.']);
+        Setting::updateOrCreate(['key' => 'contact.address'], ['value' => 'Jl. Test Alamat No. 7, Malang']);
+        Setting::updateOrCreate(['key' => 'contact.hours'], ['value' => 'Senin - Sabtu, 08.00 - 17.00']);
+        Setting::updateOrCreate(['key' => 'contact.whatsapp'], ['value' => '628123999888']);
+        Setting::updateOrCreate(['key' => 'social.instagram'], ['value' => 'https://instagram.com/eduwgo']);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Tentang Penyewaan')
+            ->assertSee('Kami menyediakan motor terawat untuk perjalanan Anda.')
+            ->assertSee('Jl. Test Alamat No. 7, Malang')
+            ->assertSee('Senin - Sabtu, 08.00 - 17.00')
+            ->assertSee('https://wa.me/628123999888', false)
+            ->assertSee('https://instagram.com/eduwgo', false)
+            ->assertSee('Selengkapnya');
+    }
+
+    public function test_section_profil_perusahaan_tampil_default_tanpa_settings(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Tentang Penyewaan')
+            ->assertSee('EduwGo menyediakan rental motor cepat, aman, dan terjangkau')
+            ->assertSee('Alamat lokasi pengambilan akan diinformasikan oleh admin')
+            ->assertSee('Setiap hari, 08.00 – 20.00 WIB')
+            ->assertDontSee('https://wa.me/');
     }
 }

@@ -59,6 +59,12 @@
                                 </div>
                             </div>
 
+                            <div>
+                                <x-input-label for="brand_description" value="Deskripsi Singkat (Profil Perusahaan)" />
+                                <textarea id="brand_description" name="brand_description" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('brand_description', setting('brand.description')) }}</textarea>
+                                <x-input-error :messages="$errors->get('brand_description')" class="mt-2" />
+                            </div>
+
                             <div class="space-y-4">
                                 <div>
                                     <x-input-label for="brand_logo_light" value="Logo Mode Terang (Max 512KB)" />

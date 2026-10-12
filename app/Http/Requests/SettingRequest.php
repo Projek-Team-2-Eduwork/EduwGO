@@ -16,6 +16,7 @@ class SettingRequest extends FormRequest
         return [
             'brand_name' => ['required', 'string', 'max:80'],
             'brand_tagline' => ['nullable', 'string', 'max:255'],
+            'brand_description' => ['nullable', 'string', 'max:1000'],
             'brand_primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/i'],
             'brand_accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/i'],
 
