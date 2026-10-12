@@ -43,7 +43,7 @@ class DashboardService
         ];
     }
 
-    public function revenue($from, $to, $typeId = null)
+    public function revenue($from, $to, $typeId = null, $method = null)
     {
         $query = Payment::query()
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
@@ -54,6 +54,10 @@ class DashboardService
         if ($typeId) {
             $query->join('vehicles', 'bookings.vehicle_id', '=', 'vehicles.id')
                 ->where('vehicles.vehicle_type_id', $typeId);
+        }
+
+        if ($method) {
+            $query->where('payments.method', $method);
         }
 
         return (float) $query->sum('payments.amount');

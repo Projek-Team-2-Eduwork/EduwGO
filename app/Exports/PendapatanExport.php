@@ -11,7 +11,12 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class PendapatanExport implements FromQuery, WithHeadings, WithMapping
 {
-    public function __construct(private $from, private $to, private $typeId) {}
+    public function __construct(
+        private $from,
+        private $to,
+        private $typeId,
+        private $method = null,
+    ) {}
 
     public function query(): Builder
     {
@@ -26,13 +31,30 @@ class PendapatanExport implements FromQuery, WithHeadings, WithMapping
             $query->where('vehicles.vehicle_type_id', $this->typeId);
         }
 
-        return $query->select('payments.paid_at', 'payments.method', 'payments.amount', 'bookings.code', 'bookings.customer_name', 'vehicles.name as vehicle_name')
-            ->orderBy('payments.paid_at');
+        if ($this->method) {
+            $query->where('payments.method', $this->method);
+        }
+
+        return $query->select(
+            'payments.paid_at',
+            'payments.method',
+            'payments.amount',
+            'bookings.code',
+            'bookings.customer_name',
+            'vehicles.name as vehicle_name',
+        )->orderBy('payments.paid_at');
     }
 
     public function headings(): array
     {
-        return ['Kode', 'Motor', 'Penyewa', 'Tanggal', 'Metode', 'Nominal'];
+        return [
+            'Kode',
+            'Motor',
+            'Penyewa',
+            'Tanggal',
+            'Metode',
+            'Nominal',
+        ];
     }
 
     public function map($row): array

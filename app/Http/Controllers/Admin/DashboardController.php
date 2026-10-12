@@ -13,21 +13,34 @@ class DashboardController extends Controller
 {
     public function index(Request $request, DashboardService $dashboardService)
     {
+        $request->validate([
+            'metode' => ['nullable', 'in:xendit_invoice,cash'],
+        ]);
+
         $dari = $request->input('dari', now()->startOfMonth()->toDateString());
         $sampai = $request->input('sampai', now()->endOfMonth()->toDateString());
         $tipe = $request->input('tipe');
+        $metode = $request->input('metode');
 
         $from = Carbon::parse($dari)->startOfDay();
         $to = Carbon::parse($sampai)->endOfDay();
 
         $topVehicles = $dashboardService->topVehicles();
         $stats = $dashboardService->stats();
-        $revenue = $dashboardService->revenue($from, $to, $tipe);
+        $revenue = $dashboardService->revenue($from, $to, $tipe, $metode);
         $recentBookings = $dashboardService->recentBookings();
         $vehicleTypes = $dashboardService->vehicleTypes();
 
         return view('admin.dashboard', compact(
-            'topVehicles', 'stats', 'revenue', 'recentBookings', 'vehicleTypes', 'dari', 'sampai', 'tipe'
+            'topVehicles',
+            'stats',
+            'revenue',
+            'recentBookings',
+            'vehicleTypes',
+            'dari',
+            'sampai',
+            'tipe',
+            'metode',
         ));
     }
 
@@ -37,17 +50,19 @@ class DashboardController extends Controller
             'dari' => ['date'],
             'sampai' => ['date'],
             'tipe' => ['nullable', 'integer'],
+            'metode' => ['nullable', 'in:xendit_invoice,cash'],
         ]);
 
         $dari = $request->input('dari', now()->startOfMonth()->toDateString());
         $sampai = $request->input('sampai', now()->endOfMonth()->toDateString());
         $tipe = $request->input('tipe');
+        $metode = $request->input('metode');
 
         $from = Carbon::parse($dari)->startOfDay();
         $to = Carbon::parse($sampai)->endOfDay();
 
         return Excel::download(
-            new PendapatanExport($from, $to, $tipe),
+            new PendapatanExport($from, $to, $tipe, $metode),
             'pendapatan-'.$from->format('Y-m-d').'-'.$to->format('Y-m-d').'.xlsx'
         );
     }

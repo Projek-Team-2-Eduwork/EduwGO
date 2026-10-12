@@ -51,15 +51,15 @@
                 </div>
 
                 <!-- Widget: Pendapatan -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 col-span-1 lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
                         <h3 class="font-bold text-gray-900 dark:text-gray-100">Pendapatan</h3>
-                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe]) }}" class="inline-flex items-center px-3 py-1.5 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode]) }}" class="inline-flex items-center px-3 py-1.5 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
                             Export Excel
                         </a>
                     </div>
-
-                    <form method="GET" action="{{ route('admin.dashboard') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                    
+                    <form method="GET" action="{{ route('admin.dashboard') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                         <div>
                             <x-input-label for="dari" value="Tanggal Awal" />
                             <x-text-input id="dari" type="date" name="dari" value="{{ $dari }}" class="w-full mt-1 text-sm" />
@@ -70,14 +70,22 @@
                         </div>
                         <div>
                             <x-input-label for="tipe" value="Tipe Kendaraan" />
+                            <select id="tipe" name="tipe" class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                                <option value="">Semua Tipe</option>
+                                @foreach($vehicleTypes as $id => $name)
+                                    <option value="{{ $id }}" {{ $tipe == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="metode" value="Metode Bayar" />
                             <div class="flex gap-2 items-start mt-1">
-                                <select id="tipe" name="tipe" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
-                                    <option value="">Semua Tipe</option>
-                                    @foreach($vehicleTypes as $id => $name)
-                                        <option value="{{ $id }}" {{ $tipe == $id ? 'selected' : '' }}>{{ $name }}</option>
-                                    @endforeach
+                                <select id="metode" name="metode" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                                    <option value="">Semua Metode</option>
+                                    <option value="cash" {{ $metode === 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
+                                    <option value="xendit_invoice" {{ $metode === 'xendit_invoice' ? 'selected' : '' }}>Xendit</option>
                                 </select>
-                                <x-primary-button type="submit" class="px-3 py-2 text-xs">Filter</x-primary-button>
+                                <x-primary-button type="submit" class="px-3 py-2 text-xs h-[38px]">Filter</x-primary-button>
                             </div>
                         </div>
                     </form>
@@ -91,7 +99,7 @@
                 </div>
 
                 <!-- Widget: Pesanan Terakhir -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col col-span-1 lg:col-span-2">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                         <h3 class="font-bold text-gray-900 dark:text-gray-100">Pesanan Terakhir</h3>
                         <a href="{{ route('admin.pesanan.index') }}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Lihat semua</a>
