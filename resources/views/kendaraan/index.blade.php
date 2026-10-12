@@ -5,7 +5,7 @@
         'days' => $filter['days'],
     ], fn ($value) => filled($value));
 
-    $activeCount = collect([$filter['type'], $filter['start_at'], $filter['available'] ?: null, $filter['q']])->filter(fn ($v) => filled($v))->count();
+    $activeCount = collect([$filter['type'], $filter['lokasi'], $filter['start_at'], $filter['available'] ?: null, $filter['q']])->filter(fn ($v) => filled($v))->count();
 @endphp
 
 <x-app-layout title="Pilih Kendaraan">
@@ -41,6 +41,8 @@
                 x-on:change="if (window.matchMedia('(min-width: 1024px)').matches) $el.requestSubmit()"
             >
                 <x-form.select name="type" label="Tipe kendaraan" placeholder="Semua" :options="$types" :value="$filter['type']" />
+
+                <x-form.select name="lokasi" label="Lokasi" placeholder="Semua" :options="$lokasiOptions" :value="$filter['lokasi']" />
 
                 <x-form.datetime name="start_at" label="Tanggal & jam sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" />
 
