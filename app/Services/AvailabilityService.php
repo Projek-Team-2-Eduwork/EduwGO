@@ -99,4 +99,37 @@ class AvailabilityService
                 'selesai' => $booking->end_at->copy()->addMinutes($buffer),
             ]);
     }
+
+    /**
+     * Query katalog bersama (katalog utama & halaman lokasi): unit aktif + filter
+     * tipe, pencarian, dan ketersediaan pada rentang waktu tertentu. (EG-49)
+     */
+    public function catalogQuery(
+        ?CarbonInterface $start,
+        ?int $days,
+        ?int $typeId = null,
+        ?string $search = null,
+        bool $onlyAvailable = false,
+        ?int $locationId = null,
+    ): Builder {
+        if ($start !== null && $days !== null) {
+            return $this->availableVehicles($start, $days, $typeId, $search)
+                ->when($locationId !== null, fn (Builder $query) => $query->where('location_id', $locationId));
+        }
+
+        // Status saat ini: sedang ada booking aktif yang berjalan.
+        $running = fn (Builder $query) => $query->active()->where('start_at', '<=', now())->where('end_at', '>', now());
+
+        return Vehicle::query()
+            ->where('is_active', true)
+            ->when($locationId !== null, fn (Builder $query) => $query->where('location_id', $locationId))
+            ->with('type')
+            ->when($typeId !== null, fn (Builder $query) => $query->where('vehicle_type_id', $typeId))
+            ->when(filled($search), fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))
+            ->when(
+                $onlyAvailable,
+                fn (Builder $query) => $query->whereDoesntHave('bookings', $running),
+                fn (Builder $query) => $query->withExists(['bookings as is_rented' => $running])
+            );
+    }
 }

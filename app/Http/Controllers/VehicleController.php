@@ -51,23 +51,8 @@ class VehicleController extends Controller
             $request->session()->put('booking.start_at', $start->format('Y-m-d\TH:i'));
         }
 
-        if ($timeFiltered) {
-            // Hanya unit yang bebas di rentang [mulai, mulai + durasi] (termasuk buffer).
-            $query = $availability->availableVehicles($start, $days, $typeId, $search);
-        } else {
-            $query = Vehicle::query()
-                ->where('is_active', true)
-                ->with('type')
-                ->when($typeId !== null, fn (Builder $q) => $q->where('vehicle_type_id', $typeId))
-                ->when(filled($search), fn (Builder $q) => $q->where('name', 'like', "%{$search}%"));
-
-            // Status saat ini: sedang ada booking aktif yang berjalan.
-            $running = fn (Builder $q) => $q->active()->where('start_at', '<=', now())->where('end_at', '>', now());
-
-            $onlyAvailable
-                ? $query->whereDoesntHave('bookings', $running)
-                : $query->withExists(['bookings as is_rented' => $running]);
-        }
+        // Query katalog dibangun AvailabilityService (dipakai juga halaman lokasi, EG-49)
+        $query = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable);
 
         // Terapkan Query Tambahan, Jumlah Pesanan (withCount) dan Pengurutan
         $vehicles = $query

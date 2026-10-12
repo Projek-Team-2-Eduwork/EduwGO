@@ -12,6 +12,7 @@ use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KendaraanController;
+use App\Http\Controllers\LokasiPublikController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
@@ -27,6 +28,11 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Katalog kendaraan + filter (EG-24)
 Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
 Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
+
+// Halaman lokasi penyewaan publik (EG-49)
+Route::get('/lokasi', [LokasiPublikController::class, 'index'])->name('lokasi.index');
+Route::get('/lokasi/{slug}/reset', [LokasiPublikController::class, 'resetFilter'])->name('lokasi.reset');
+Route::get('/lokasi/{slug}', [LokasiPublikController::class, 'show'])->name('lokasi.show');
 
 // Halaman Publik: Detail Kendaraan — binding slug (EG-25)
 Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->name('kendaraan.detail');
