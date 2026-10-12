@@ -35,6 +35,7 @@
                             <option value="{{ $s->value }}" {{ request('status') === $s->value ? 'selected' : '' }}>{{ $s->label() }}</option>
                             @endforeach
                             <option value="terlambat" {{ request('status') === 'terlambat' ? 'selected' : '' }}>Terlambat</option>
+                            <option value="sukses" {{ request('status') === 'sukses' ? 'selected' : '' }}>Sukses</option>
                         </select>
                     </div>
                     <div class="md:col-span-1">
@@ -58,6 +59,30 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Kartu ringkasan status (EG-51): klik untuk filter, klik lagi untuk lepas -->
+            @php
+                $statusHref = fn (string $key) => request('status') === $key
+                    ? request()->fullUrlWithQuery(['status' => null])
+                    : request()->fullUrlWithQuery(['status' => $key]);
+            @endphp
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                @foreach ([
+                    'pending' => ['label' => 'Pending', 'color' => 'text-[var(--orange-500)]'],
+                    'sukses' => ['label' => 'Sukses', 'color' => 'text-emerald-600 dark:text-emerald-400'],
+                    'expired' => ['label' => 'Expired', 'color' => 'text-red-600 dark:text-red-400'],
+                ] as $key => $card)
+                    <a href="{{ $statusHref($key) }}"
+                       @class([
+                           'card-surface p-6 transition hover:-translate-y-0.5 hover:shadow-md',
+                           'ring-2 ring-[var(--orange-500)]' => request('status') === $key,
+                       ])
+                       @if (request('status') === $key) aria-current="true" @endif>
+                        <div class="text-sm font-medium">{{ $card['label'] }}</div>
+                        <div class="mt-2 text-3xl font-bold {{ $card['color'] }}">{{ $summary[$key] }}</div>
+                    </a>
+                @endforeach
             </div>
 
             <!-- Content Container -->
