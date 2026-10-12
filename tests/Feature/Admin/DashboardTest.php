@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -20,16 +21,23 @@ class DashboardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Setup data minimum untuk user admin
-        // Memakai seeder yang ada untuk memastikan dataset lengkap (ada BookingSeeder dll)
+        Role::firstOrCreate(['name' => 'admin']);
+
         $this->seed(DatabaseSeeder::class);
+    }
+
+    private function getAdmin()
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        return $admin;
     }
 
     public function test_angka_widget_service_cocok_dengan_query_independen()
     {
         $service = new DashboardService;
 
-        // 1. Stats
         $stats = $service->stats();
 
         $expectedActiveVehicles = Vehicle::where('is_active', true)->count();
@@ -42,7 +50,6 @@ class DashboardTest extends TestCase
         $this->assertEquals($expectedActiveBookings, $stats['active_bookings']);
         $this->assertEquals($expectedRented, $stats['rented_bookings']);
 
-        // 2. Top Vehicles
         $top = $service->topVehicles();
         $rawTop = DB::table('bookings')
             ->whereIn('status', ['paid', 'rented', 'returned'])
@@ -57,7 +64,6 @@ class DashboardTest extends TestCase
             $this->assertEquals($rawTop->first()->count, $top->first()->booking_count);
         }
 
-        // 3. Revenue
         $from = now()->startOfMonth();
         $to = now()->endOfMonth();
         $revenue = $service->revenue($from, $to);
@@ -70,7 +76,6 @@ class DashboardTest extends TestCase
 
         $this->assertEquals((float) $expectedRevenue, $revenue);
 
-        // 4. Recent Bookings
         $recent = $service->recentBookings();
         $expectedRecent = Booking::orderByDesc('created_at')->limit(8)->get();
         $this->assertCount($expectedRecent->count(), $recent);
@@ -81,13 +86,13 @@ class DashboardTest extends TestCase
 
     public function test_filter_pendapatan_berfungsi_dan_cocok()
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->getAdmin();
         $vehicle = Vehicle::first();
 
         $dari = now()->subMonths(2)->startOfMonth()->toDateString();
         $sampai = now()->subMonths(1)->endOfMonth()->toDateString();
 
-        $response = $this->get(route('admin.dashboard', [
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', [
             'dari' => $dari,
             'sampai' => $sampai,
             'tipe' => $vehicle->vehicle_type_id,
@@ -106,14 +111,46 @@ class DashboardTest extends TestCase
         $response->assertSee(number_format($expectedRevenue, 0, ',', '.'));
     }
 
-    public function test_dashboard_tampil_benar_dan_render_semua_widget()
+    public function test_filter_pendapatan_berdasarkan_metode_pembayaran()
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->getAdmin();
 
-        $response = $this->get(route('admin.dashboard'));
+        $booking = Booking::factory()->create(['status' => 'paid']);
+        Payment::factory()->create([
+            'booking_id' => $booking->id,
+            'method' => 'cash',
+            'status' => 'paid',
+            'amount' => 150000,
+            'paid_at' => now(),
+        ]);
+
+        Payment::factory()->create([
+            'booking_id' => $booking->id,
+            'method' => 'xendit_invoice',
+            'status' => 'paid',
+            'amount' => 300000,
+            'paid_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', [
+            'metode' => 'cash',
+        ]));
+
         $response->assertOk();
 
-        // Assert Judul Widget
+        $service = new DashboardService;
+        $cashRevenue = $service->revenue(now()->startOfDay(), now()->endOfDay(), null, 'cash');
+
+        $this->assertEquals(150000, $cashRevenue);
+    }
+
+    public function test_dashboard_tampil_benar_dan_render_semua_widget()
+    {
+        $admin = $this->getAdmin();
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $response->assertOk();
+
         $response->assertSee('Total Unit Aktif');
         $response->assertSee('Tersedia');
         $response->assertSee('5 Top Orderan Rental');
@@ -125,18 +162,16 @@ class DashboardTest extends TestCase
 
     public function test_batas_maksimal_query_halaman_adalah_8()
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->getAdmin();
 
-        // Panaskan cache settings agar tidak memakan query get settings di global helper
         setting('brand.name');
 
         DB::enableQueryLog();
-        DB::flushQueryLog(); // Pastikan mulai dari 0
+        DB::flushQueryLog();
 
-        $response = $this->get(route('admin.dashboard'));
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
         $response->assertOk();
 
-        // Total query untuk seluruh controller (termasuk Auth & auth guard yang aktif) harus <= 8
         $this->assertLessThanOrEqual(8, count(DB::getQueryLog()));
     }
 }
