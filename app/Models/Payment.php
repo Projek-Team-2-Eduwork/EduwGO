@@ -16,6 +16,7 @@ class Payment extends Model
         'paid_at' => 'datetime',
         'expires_at' => 'datetime',
         'gateway_payload' => 'array',
+        'instructions' => 'array',
     ];
 
     public function booking()
