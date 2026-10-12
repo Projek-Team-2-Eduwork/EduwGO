@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 
 class VehicleFilterRequest extends FormRequest
 {
-    private const FILTER_KEYS = ['type', 'start_at', 'days', 'available', 'q', 'harga', 'harga_min', 'harga_max'];
+    private const FILTER_KEYS = ['type', 'start_at', 'days', 'available', 'q', 'harga', 'harga_min', 'harga_max', 'urut'];
 
     public function authorize(): bool
     {
@@ -52,6 +52,7 @@ class VehicleFilterRequest extends FormRequest
             'harga' => ['nullable', 'string', 'max:20'],
             'harga_min' => ['nullable', 'string', 'max:20'],
             'harga_max' => ['nullable', 'string', 'max:20'],
+            'urut' => ['nullable', 'string', 'max:20'],
         ];
     }
 
@@ -70,6 +71,7 @@ class VehicleFilterRequest extends FormRequest
             'harga.max' => 'Urutan harga tidak valid.',
             'harga_min.max' => 'Rentang harga tidak valid.',
             'harga_max.max' => 'Rentang harga tidak valid.',
+            'urut.max' => 'Urutan tidak valid.',
         ];
     }
 

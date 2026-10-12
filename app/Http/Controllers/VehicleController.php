@@ -29,10 +29,11 @@ class VehicleController extends Controller
         $onlyAvailable = (bool) ($filter['available'] ?? false);
         $timeFiltered = $start !== null && $days !== null;
 
-        // Normalisasi input harga (whitelist / abaikan yang invalid)
+        // Normalisasi input harga & urut (whitelist / abaikan yang invalid)
         $sort = in_array($filter['harga'] ?? null, ['termurah', 'termahal'], true) ? $filter['harga'] : null;
         $min = (isset($filter['harga_min']) && is_numeric($filter['harga_min']) && $filter['harga_min'] >= 0) ? (int) $filter['harga_min'] : null;
         $max = (isset($filter['harga_max']) && is_numeric($filter['harga_max']) && $filter['harga_max'] >= 0) ? (int) $filter['harga_max'] : null;
+        $popular = in_array($filter['urut'] ?? null, ['populer'], true);
 
         // Filter waktu & tipe dibawa ke detail motor & modal durasi lewat session (+ query string di link).
         // Null tidak disimpan; min/max disimpan sebagai string supaya lolos rule 'string' saat di-merge balik.
@@ -43,6 +44,7 @@ class VehicleController extends Controller
             'harga' => $sort,
             'harga_min' => $min !== null ? (string) $min : null,
             'harga_max' => $max !== null ? (string) $max : null,
+            'urut' => $popular ? 'populer' : null,
         ], fn ($value) => filled($value)));
 
         if ($start !== null) {
@@ -67,13 +69,15 @@ class VehicleController extends Controller
                 : $query->withExists(['bookings as is_rented' => $running]);
         }
 
-        // Terapkan Query Harga
+        // Terapkan Query Tambahan, Jumlah Pesanan (withCount) dan Pengurutan
         $vehicles = $query
+            ->withCount(['bookings as booking_count' => fn (Builder $q) => $q->whereIn('status', ['paid', 'rented', 'returned'])])
             ->when($min !== null, fn ($q) => $q->where('price_per_day', '>=', $min))
             ->when($max !== null, fn ($q) => $q->where('price_per_day', '<=', $max))
-            ->when($sort === 'termurah', fn ($q) => $q->orderBy('price_per_day')->orderBy('name'))
-            ->when($sort === 'termahal', fn ($q) => $q->orderBy('price_per_day', 'desc')->orderBy('name'))
-            ->when($sort === null, fn ($q) => $q->orderBy('name'))
+            ->when($popular, fn ($q) => $q->orderBy('booking_count', 'desc')->orderBy('name'))
+            ->when(! $popular && $sort === 'termurah', fn ($q) => $q->orderBy('price_per_day')->orderBy('name'))
+            ->when(! $popular && $sort === 'termahal', fn ($q) => $q->orderBy('price_per_day', 'desc')->orderBy('name'))
+            ->when(! $popular && $sort === null, fn ($q) => $q->orderBy('name'))
             ->paginate(12)->withQueryString();
 
         return view('kendaraan.index', [
@@ -90,6 +94,7 @@ class VehicleController extends Controller
                 'harga' => $sort,
                 'harga_min' => $min,
                 'harga_max' => $max,
+                'urut' => $popular ? 'populer' : null,
             ],
             'timeFiltered' => $timeFiltered,
             'terms' => RentalTerms::list(),

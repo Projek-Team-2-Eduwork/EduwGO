@@ -272,4 +272,73 @@ class VehicleCatalogTest extends TestCase
         $response->assertSee('Mahal');
         $response->assertDontSee('Murah'); // Filter minimal 50k dari session masih bekerja
     }
+
+    public function test_urut_populer_berdasarkan_jumlah_booking()
+    {
+        $motorA = $this->vehicle('Motor A');
+        $motorB = $this->vehicle('Motor B');
+        $motorC = $this->vehicle('Motor C');
+
+        // Motor A dipesan 3x
+        $this->book($motorA, now()->addDays(1), now()->addDays(2), BookingStatus::Paid);
+        $this->book($motorA, now()->addDays(4), now()->addDays(5), BookingStatus::Rented);
+        $this->book($motorA, now()->addDays(7), now()->addDays(8), BookingStatus::Returned);
+
+        // Motor B dipesan 1x
+        $this->book($motorB, now()->addDays(1), now()->addDays(2), BookingStatus::Paid);
+
+        // Motor C dipesan 1x tapi pending (tidak dihitung)
+        $this->book($motorC, now()->addDays(1), now()->addDays(2), BookingStatus::Pending);
+
+        $response = $this->get('/kendaraan?urut=populer');
+
+        $response->assertOk();
+        $response->assertSeeInOrder(['Motor A', 'Motor B', 'Motor C']);
+        $response->assertSee('3× dipesan');
+        $response->assertSee('1× dipesan');
+        $response->assertDontSee('0× dipesan');
+    }
+
+    public function test_jumlah_dipesan_hanya_tampil_bila_lewat_nol()
+    {
+        $this->vehicle('Sepi Sekali');
+
+        $response = $this->get('/kendaraan');
+        $response->assertOk();
+        $response->assertDontSee('dipesan');
+    }
+
+    public function test_agregat_booking_tidak_n_plus_1()
+    {
+        // Satu tipe dipakai bersama; unit dibuat manual (bukan factory) karena
+        // VehicleFactory memakai pool nama unik terbatas (10) yang tidak muat untuk 13 unit.
+        $type = VehicleType::factory()->create();
+
+        // Buat 13 unit (1 halaman = 12 + 1 page berikutnya)
+        for ($i = 1; $i <= 13; $i++) {
+            $unit = Vehicle::create([
+                'vehicle_type_id' => $type->id,
+                'name' => "Unit Test {$i}",
+                'slug' => 'unit-test-'.$i,
+                'brand' => 'Honda',
+                'plate_number' => 'B '.(2000 + $i).' EDU',
+                'price_per_day' => 100000,
+                'is_active' => true,
+            ]);
+            // Masing-masing dipesan 2x
+            $this->book($unit, now()->addDays($i), now()->addDays($i)->addHours(10), BookingStatus::Paid);
+            $this->book($unit, now()->addDays(15 + $i), now()->addDays(15 + $i)->addHours(10), BookingStatus::Paid);
+        }
+
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+
+        $response = $this->get('/kendaraan?urut=populer');
+        $response->assertOk();
+
+        $separate = collect(\Illuminate\Support\Facades\DB::getQueryLog())->pluck('query')
+            ->filter(fn ($q) => str_contains(strtolower($q), 'from `bookings`') && ! str_contains(strtolower($q), 'from `vehicles`'));
+
+        // Memastikan tidak ada N+1 query (0 hit karena menggunakan withCount)
+        $this->assertSame(0, $separate->count());
+    }
 }

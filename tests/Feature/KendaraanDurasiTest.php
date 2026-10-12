@@ -16,15 +16,19 @@ class KendaraanDurasiTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create(['is_active' => true]);
 
-        // Booking memblokir hari ke-3
+        // Start relatif (tanggal hardcode cepat basi); hari ke-3 diblokir booking 3 jam.
+        $start = now()->addDays(3)->ceilHour();
+
+        // Booking memblokir hari ke-3; mulai 3 jam setelah batas akhir opsi 2
+        // agar tidak kena buffer sebelum booking (opsi 2 tetap available).
         Booking::factory()->create([
             'vehicle_id' => $vehicle->id,
             'status' => BookingStatus::Paid,
-            'start_at' => '2026-10-12 12:00:00',
-            'end_at' => '2026-10-12 15:00:00',
+            'start_at' => $start->copy()->addDays(2)->addHours(3),
+            'end_at' => $start->copy()->addDays(2)->addHours(6),
         ]);
 
-        $response = $this->getJson('/api/kendaraan/'.$vehicle->id.'/durasi?start=2026-10-10T10:00');
+        $response = $this->getJson('/api/kendaraan/'.$vehicle->id.'/durasi?start='.$start->format('Y-m-d\TH:i'));
 
         $response->assertOk();
 
