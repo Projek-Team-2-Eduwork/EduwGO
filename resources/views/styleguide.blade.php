@@ -37,7 +37,7 @@
         {{-- Tipografi --}}
         <section>
             <h2 class="mb-3 font-serif text-2xl">Tipografi</h2>
-            <p class="mb-2 font-serif text-3xl">Heading serif (Instrument Serif)</p>
+            <p class="mb-2 font-serif text-3xl">Heading — Plus Jakarta Sans bold (utility `font-serif` dipetakan ke sans, bukan serif)</p>
             <p>Body sans (Inter) — teks paragraf biasa dipakai di seluruh halaman.</p>
         </section>
 

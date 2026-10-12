@@ -6,7 +6,7 @@
 ])
 
 <div {{ $attributes->merge(['class' => 'card-surface flex flex-col items-center px-6 py-12 text-center']) }}>
-    <span class="inline-flex h-16 w-16 items-center justify-center rounded-full text-white" style="background-image: var(--accent-gradient);" aria-hidden="true">
+    <span class="inline-flex h-16 w-16 items-center justify-center rounded-full text-[#0A0F1D]" style="background-image: var(--accent-gradient);" aria-hidden="true">
         @if (isset($icon))
             {{ $icon }}
         @else

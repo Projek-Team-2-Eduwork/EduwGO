@@ -1,32 +1,32 @@
 <x-admin-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            <h2 class="text-xl font-semibold leading-tight">
                 {{ __('Kelola Kendaraan') }}
             </h2>
-            <a href="{{ route('admin.kendaraan.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+            <a href="{{ route('admin.kendaraan.create') }}" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">
                 + Tambah Kendaraan
             </a>
         </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6">
             
             @if(session('success'))
-                <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">
+                <x-alert type="success">
                     {{ session('success') }}
-                </div>
+                </x-alert>
             @endif
 
             <!-- Filters -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div class="card-surface p-4">
                 <form method="GET" action="{{ route('admin.kendaraan.index') }}" class="flex flex-col md:flex-row gap-4">
                     <div class="flex-1">
-                        <x-text-input name="q" value="{{ request('q') }}" placeholder="Cari nama atau plat..." class="w-full" />
+                        <x-text-input name="q" value="{{ request('q') }}" placeholder="Cari nama atau plat..." aria-label="Cari nama atau plat" class="w-full" />
                     </div>
                     <div>
-                        <select name="tipe" class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full">
+                        <select name="tipe" aria-label="Filter tipe kendaraan" class="w-full rounded-md shadow-sm">
                             <option value="">Semua Tipe</option>
                             @foreach($types as $id => $name)
                                 <option value="{{ $id }}" {{ request('tipe') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -34,7 +34,7 @@
                         </select>
                     </div>
                     <div>
-                        <select name="status" class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full">
+                        <select name="status" aria-label="Filter status kendaraan" class="w-full rounded-md shadow-sm">
                             <option value="">Semua Status</option>
                             <option value="tersedia" {{ request('status') === 'tersedia' ? 'selected' : '' }}>Tersedia</option>
                             <option value="disewa" {{ request('status') === 'disewa' ? 'selected' : '' }}>Disewa</option>
@@ -44,7 +44,7 @@
                     <div>
                         <x-primary-button type="submit">Filter</x-primary-button>
                         @if(request()->hasAny(['q', 'tipe', 'status']))
-                            <a href="{{ route('admin.kendaraan.index') }}" class="ml-2 text-sm text-gray-500 hover:underline">Reset</a>
+                            <a href="{{ route('admin.kendaraan.index') }}" class="ml-2 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Reset</a>
                         @endif
                     </div>
                 </form>
@@ -52,11 +52,9 @@
 
             <!-- Grid Card -->
             @if($vehicles->isEmpty())
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-12 text-center text-gray-500 dark:text-gray-400">
-                    Tidak ada kendaraan yang ditemukan.
-                </div>
+                <x-empty-state title="Tidak ada kendaraan" description="Tidak ada kendaraan yang ditemukan." />
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     @foreach($vehicles as $vehicle)
                         @php
                             if (!$vehicle->is_active) {
@@ -68,33 +66,33 @@
                             }
                         @endphp
 
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
-                            <div class="relative h-48 bg-gray-100 dark:bg-gray-900">
+                        <div class="card-surface group flex flex-col overflow-hidden transition hover:-translate-y-0.5">
+                            <div class="relative h-48 bg-[var(--bg)]">
                                 @if($vehicle->image)
-                                    <img src="{{ asset($vehicle->image) }}" class="w-full h-full object-cover" alt="{{ $vehicle->name }}">
+                                    <img src="{{ asset($vehicle->image) }}" class="w-full h-full object-cover" alt="{{ $vehicle->name }}" loading="lazy">
                                 @endif
                                 <span class="absolute top-2 right-2 px-2 py-1 text-xs font-bold rounded {{ $badge['class'] }}">
                                     {{ $badge['text'] }}
                                 </span>
                             </div>
                             <div class="p-4 flex flex-col flex-grow">
-                                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $vehicle->name }}</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">{{ $vehicle->type?->name ?? '-' }}</p>
+                                <h3 class="text-lg font-bold">{{ $vehicle->name }}</h3>
+                                <p class="mb-2 text-sm">{{ $vehicle->type?->name ?? '-' }}</p>
                                 
-                                <div class="flex justify-between items-center mt-auto pt-4">
-                                    <div class="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm text-gray-700 dark:text-gray-300">
+                                <div class="mt-auto flex items-center justify-between pt-4">
+                                    <div class="rounded bg-[var(--bg)] px-2 py-1 font-mono text-sm">
                                         {{ $vehicle->plate_number }}
                                     </div>
-                                    <div class="font-bold text-indigo-600 dark:text-indigo-400">
-                                        Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}<span class="text-xs text-gray-500 font-normal">/hari</span>
+                                    <div class="font-bold text-[var(--orange-500)]">
+                                        Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}<span class="text-xs font-normal">/hari</span>
                                     </div>
                                 </div>
                                 
                                 <div class="mt-4 flex gap-2">
-                                    <a href="{{ route('admin.kendaraan.show', $vehicle->id) }}" class="flex-1 text-center px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-gray-800 dark:text-gray-200 uppercase hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                    <a href="{{ route('admin.kendaraan.show', $vehicle->id) }}" class="btn-secondary-edu flex-1 px-4 py-2 text-center text-xs">
                                         Detail
                                     </a>
-                                    <a href="{{ route('admin.kendaraan.edit', $vehicle->id) }}" class="flex-1 text-center px-4 py-2 bg-indigo-50 dark:bg-indigo-900/50 border border-transparent rounded-md font-semibold text-xs text-indigo-700 dark:text-indigo-300 uppercase hover:bg-indigo-100 dark:hover:bg-indigo-900 transition">
+                                    <a href="{{ route('admin.kendaraan.edit', $vehicle->id) }}" class="btn-secondary-edu flex-1 px-4 py-2 text-center text-xs">
                                         Update
                                     </a>
                                 </div>

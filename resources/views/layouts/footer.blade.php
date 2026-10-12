@@ -1,7 +1,8 @@
 @php
     $brand = setting('brand.name', 'EduwGo');
     $waNumber = preg_replace('/\D+/', '', (string) setting('contact.whatsapp', ''));
-    $waUrl = 'https://wa.me/'.$waNumber.'?text='.rawurlencode('Halo, saya butuh bantuan.');
+    // Nomor belum diatur: arahkan ke wa.me tanpa nomor agar tidak menghasilkan tautan rusak.
+    $waUrl = $waNumber ? 'https://wa.me/'.$waNumber.'?text='.rawurlencode('Halo, saya butuh bantuan.') : '//wa.me';
 
     $socials = [
         'Instagram' => setting('social.instagram', '#'),

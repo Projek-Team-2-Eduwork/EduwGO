@@ -1,15 +1,15 @@
 <x-admin-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Detail Pesanan: <span class="font-mono text-indigo-600 dark:text-indigo-400">{{ $booking->code }}</span>
+            <h2 class="text-xl font-semibold leading-tight">
+                Detail Pesanan: <span class="font-mono text-[var(--orange-500)]">{{ $booking->code }}</span>
             </h2>
             <div class="flex gap-3">
                 @if(Route::has('admin.pesanan.update') && in_array($booking->status->value, ['pending', 'paid', 'rented']))
-                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase shadow-sm hover:bg-indigo-700 transition">Update Status</button>
+                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">Update Status</button>
                 @endif
                 @if($booking->status === App\Enums\BookingStatus::Pending)
-                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 active:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="btn-secondary-edu inline-flex items-center px-4 py-2 text-sm">
                         Catat Bayar Tunai
                     </button>
                 @endif
@@ -18,47 +18,47 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6">
             @if(session('success'))
-                <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">
+                <x-alert type="success">
                     {{ session('success') }}
-                </div>
+                </x-alert>
             @endif
             
             @if(session('error'))
-                <div class="p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">
+                <x-alert type="error">
                     {{ session('error') }}
-                </div>
+                </x-alert>
             @endif
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Data Penyewa & Motor -->
                 <div class="space-y-6">
                     <!-- Card Penyewa -->
-                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-900 dark:text-gray-100">Data Penyewa</h3>
+                    <div class="card-surface overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                            <h3 class="font-bold">Data Penyewa</h3>
                         </div>
                         <div class="p-6">
                             <dl class="space-y-4 text-sm">
                                 <div>
-                                    <dt class="text-gray-500 dark:text-gray-400">Nama</dt>
-                                    <dd class="font-semibold text-gray-900 dark:text-gray-100">{{ $booking->customer_name }}</dd>
+                                    <dt>Nama</dt>
+                                    <dd class="font-semibold text-[var(--navy-900)]">{{ $booking->customer_name }}</dd>
                                 </div>
                                 <div>
-                                    <dt class="text-gray-500 dark:text-gray-400">WhatsApp / Telepon</dt>
-                                    <dd class="font-semibold text-gray-900 dark:text-gray-100">{{ $booking->customer_phone ?? '-' }}</dd>
+                                    <dt>WhatsApp / Telepon</dt>
+                                    <dd class="font-semibold text-[var(--navy-900)]">{{ $booking->customer_phone ?? '-' }}</dd>
                                 </div>
                                 
                                 @if(isset($booking->user->social_account['instagram']) || isset($booking->user->social_account['facebook']))
                                 <div>
-                                    <dt class="text-gray-500 dark:text-gray-400">Sosial Media Terhubung</dt>
-                                    <dd class="font-semibold mt-1 flex gap-2">
+                                    <dt>Sosial Media Terhubung</dt>
+                                    <dd class="mt-1 flex gap-2 font-semibold">
                                         @if(isset($booking->user->social_account['instagram']))
-                                            <a href="https://instagram.com/{{ $booking->user->social_account['instagram'] }}" target="_blank" class="text-pink-600 hover:underline">Instagram</a>
+                                            <a href="https://instagram.com/{{ $booking->user->social_account['instagram'] }}" target="_blank" rel="noopener" class="text-pink-600 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Instagram</a>
                                         @endif
                                         @if(isset($booking->user->social_account['facebook']))
-                                            <a href="https://facebook.com/{{ $booking->user->social_account['facebook'] }}" target="_blank" class="text-blue-600 hover:underline">Facebook</a>
+                                            <a href="https://facebook.com/{{ $booking->user->social_account['facebook'] }}" target="_blank" rel="noopener" class="text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Facebook</a>
                                         @endif
                                     </dd>
                                 </div>
@@ -71,7 +71,7 @@
                                         $wa = '62' . substr($wa, 1);
                                     }
                                 @endphp
-                                <a href="https://wa.me/{{ $wa }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-green-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-600 focus:bg-green-600 shadow-sm w-full sm:w-auto justify-center">
+                                <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm sm:w-auto">
                                     Chat Penyewa (WA)
                                 </a>
                             </div>
@@ -79,37 +79,37 @@
                     </div>
 
                     <!-- Card Kendaraan & Rentang -->
-                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-900 dark:text-gray-100">Data Kendaraan</h3>
+                    <div class="card-surface overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                            <h3 class="font-bold">Data Kendaraan</h3>
                             <x-badge-status :status="$booking->status" />
                         </div>
                         <div class="p-6">
-                            <div class="flex items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                            <div class="mb-6 flex items-start gap-4 border-b border-[var(--border)] pb-6">
                                 @if($booking->vehicle?->image)
-                                    <img src="{{ asset($booking->vehicle->image) }}" class="w-24 h-24 rounded-lg object-cover bg-gray-100 dark:bg-gray-700">
+                                    <img src="{{ asset($booking->vehicle->image) }}" class="h-24 w-24 rounded-lg bg-[var(--bg)] object-cover" alt="">
                                 @else
-                                    <div class="w-24 h-24 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    <div class="w-24 h-24 rounded-lg bg-[var(--bg)] flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-[var(--border)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                     </div>
                                 @endif
                                 <div>
-                                    <div class="font-bold text-lg text-gray-900 dark:text-gray-100">{{ $booking->vehicle?->name ?? 'Kendaraan Dihapus' }}</div>
-                                    <div class="text-sm text-gray-500">{{ $booking->vehicle?->type?->name ?? '-' }}</div>
-                                    <div class="text-sm font-mono mt-2 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded inline-block text-gray-700 dark:text-gray-300">{{ $booking->vehicle?->plate_number ?? '-' }}</div>
+                                    <div class="text-lg font-bold text-[var(--navy-900)]">{{ $booking->vehicle?->name ?? 'Kendaraan Dihapus' }}</div>
+                                    <div class="text-sm">{{ $booking->vehicle?->type?->name ?? '-' }}</div>
+                                    <div class="mt-2 inline-block rounded bg-[var(--bg)] px-2 py-1 font-mono text-sm">{{ $booking->vehicle?->plate_number ?? '-' }}</div>
                                 </div>
                             </div>
                             
                             <dl class="space-y-4 text-sm">
                                 <div>
-                                    <dt class="text-gray-500 dark:text-gray-400">Rentang Sewa ({{ $booking->duration_days }} hari)</dt>
-                                    <dd class="font-semibold text-gray-900 dark:text-gray-100 mt-1">
+                                    <dt>Rentang Sewa ({{ $booking->duration_days }} hari)</dt>
+                                    <dd class="mt-1 font-semibold text-[var(--navy-900)]">
                                         {{ $booking->start_at->translatedFormat('d M Y H:i') }} &mdash; {{ $booking->end_at->translatedFormat('d M Y H:i') }}
                                     </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-gray-500 dark:text-gray-400">Total Harga</dt>
-                                    <dd class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</dd>
+                                    <dt>Total Harga</dt>
+                                    <dd class="text-lg font-bold text-[var(--orange-500)]">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</dd>
                                 </div>
                             </dl>
                         </div>
@@ -119,18 +119,18 @@
                 <!-- Riwayat & Timeline -->
                 <div class="space-y-6">
                     <!-- Card Payments -->
-                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-900 dark:text-gray-100">Riwayat Pembayaran</h3>
+                    <div class="card-surface overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                            <h3 class="font-bold">Riwayat Pembayaran</h3>
                             @if($payment && $payment->status === 'pending')
-                                <a href="{{ route('admin.pesanan.cek-status', $booking->code) }}" class="inline-flex items-center px-3 py-1 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 shadow-sm">
+                                <a href="{{ route('admin.pesanan.cek-status', $booking->code) }}" class="btn-secondary-edu inline-flex items-center px-3 py-1.5 text-xs">
                                     Cek Status Xendit
                                 </a>
                             @endif
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-[var(--bg)] text-xs uppercase">
                                     <tr>
                                         <th class="px-4 py-3">Metode / Referensi</th>
                                         <th class="px-4 py-3">Status</th>
@@ -139,12 +139,12 @@
                                 </thead>
                                 <tbody>
                                     @forelse($booking->payments as $p)
-                                        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <tr class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
                                             <td class="px-4 py-3">
-                                                <div class="font-medium text-gray-900 dark:text-gray-100 capitalize">{{ str_replace('_', ' ', $p->method) }}</div>
-                                                <div class="text-xs font-mono mt-1">{{ $p->gateway_reference }}</div>
+                                                <div class="font-medium capitalize text-[var(--navy-900)]">{{ str_replace('_', ' ', $p->method) }}</div>
+                                                <div class="mt-1 font-mono text-xs">{{ $p->gateway_reference }}</div>
                                             </td>
-                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-green-600 dark:text-green-400' : '' }}">{{ $p->status }}</td>
+                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-emerald-600 dark:text-emerald-400' : '' }}">{{ $p->status }}</td>
                                             <td class="px-4 py-3 text-xs">{{ $p->paid_at ? $p->paid_at->translatedFormat('d M Y H:i') : '-' }}</td>
                                         </tr>
                                     @empty
@@ -158,30 +158,30 @@
                     </div>
 
                     <!-- Timeline & Catatan -->
-                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden p-6">
-                        <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-5">Timeline Status</h3>
-                        <ol class="relative border-l border-gray-200 dark:border-gray-700 ml-2 mb-8">
+                    <div class="card-surface overflow-hidden p-6">
+                        <h3 class="mb-5 font-bold">Timeline Status</h3>
+                        <ol class="relative mb-8 ml-2 border-l border-[var(--border)]">
                             @foreach($booking->histories->sortBy('created_at') as $h)
                                 <li class="mb-5 ml-6">
-                                    <span class="absolute flex items-center justify-center w-3 h-3 bg-indigo-500 rounded-full -left-1.5 ring-4 ring-white dark:ring-gray-800"></span>
-                                    <h4 class="flex items-center mb-1 text-sm font-bold text-gray-900 dark:text-gray-100">
+                                    <span class="absolute -left-1.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--orange-500)] ring-4 ring-[var(--surface)]"></span>
+                                    <h4 class="mb-1 flex items-center text-sm font-bold">
                                         {{ App\Enums\BookingStatus::from($h->to_status)->label() }}
                                     </h4>
-                                    <time class="block mb-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+                                    <time class="mb-1 block text-xs font-normal">
                                         {{ $h->created_at->translatedFormat('D, d M Y H:i') }} &middot; 
                                         Oleh: <span class="font-semibold">{{ $h->changer?->name ?? 'Sistem' }}</span>
                                     </time>
                                     @if($h->note)
-                                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-100 dark:border-gray-700">{{ $h->note }}</p>
+                                        <p class="mt-2 rounded border border-[var(--border)] bg-[var(--bg)] p-2 text-sm">{{ $h->note }}</p>
                                     @endif
                                 </li>
                             @endforeach
                         </ol>
 
-                        <form action="{{ route('admin.pesanan.notes', $booking->code) }}" method="POST" class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <form action="{{ route('admin.pesanan.notes', $booking->code) }}" method="POST" class="border-t border-[var(--border)] pt-6">
                             @csrf
-                            <label for="notes" class="block font-bold text-sm text-gray-900 dark:text-gray-100 mb-2">Catatan Internal Admin (Tidak terlihat oleh penyewa)</label>
-                            <textarea id="notes" name="notes" rows="4" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" placeholder="Tuliskan catatan terkait pesanan ini...">{{ old('notes', $booking->notes) }}</textarea>
+                            <label for="notes" class="mb-2 block text-sm font-semibold text-[var(--navy-900)]">Catatan Internal Admin (Tidak terlihat oleh penyewa)</label>
+                            <textarea id="notes" name="notes" rows="4" class="w-full rounded-md shadow-sm" placeholder="Tuliskan catatan terkait pesanan ini...">{{ old('notes', $booking->notes) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('notes')" />
                             <div class="mt-3 flex justify-end">
                                 <x-primary-button>Simpan Catatan</x-primary-button>

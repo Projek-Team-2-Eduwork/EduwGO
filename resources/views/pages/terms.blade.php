@@ -9,7 +9,7 @@
         <ol class="card-surface mt-8 space-y-4 p-6 sm:p-8">
             @foreach ($points as $point)
                 <li class="flex gap-4">
-                    <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white" style="background-image: var(--accent-gradient);">{{ $loop->iteration }}</span>
+                    <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-[#0A0F1D]" style="background-image: var(--accent-gradient);">{{ $loop->iteration }}</span>
                     <span class="pt-1 text-sm leading-relaxed sm:text-base">{{ $point }}</span>
                 </li>
             @endforeach

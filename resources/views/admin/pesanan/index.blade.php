@@ -1,27 +1,27 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="text-xl font-semibold leading-tight">
             {{ __('Daftar Pesanan') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6">
             
             @if(session('success'))
-                <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">
+                <x-alert type="success">
                     {{ session('success') }}
-                </div>
+                </x-alert>
             @endif
             
             @if(session('error'))
-                <div class="p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">
+                <x-alert type="error">
                     {{ session('error') }}
-                </div>
+                </x-alert>
             @endif
 
             <!-- Filter -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div class="card-surface p-4">
                 <form method="GET" action="{{ route('admin.pesanan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div class="md:col-span-1">
                         <x-input-label for="q" value="Cari Pesanan" />
@@ -29,7 +29,7 @@
                     </div>
                     <div class="md:col-span-1">
                         <x-input-label for="status" value="Status" />
-                        <select name="status" id="status" class="w-full sm:w-auto border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" onchange="this.form.submit()">
+                        <select name="status" id="status" class="w-full rounded-md text-sm shadow-sm sm:w-auto" onchange="this.form.submit()">
                             <option value="">Semua Status</option>
                                 @foreach(App\Enums\BookingStatus::cases() as $s)
                             <option value="{{ $s->value }}" {{ request('status') === $s->value ? 'selected' : '' }}>{{ $s->label() }}</option>
@@ -39,7 +39,7 @@
                     </div>
                     <div class="md:col-span-1">
                         <x-input-label for="tipe" value="Tipe Kendaraan" />
-                        <select id="tipe" name="tipe" class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                        <select id="tipe" name="tipe" class="mt-1 w-full rounded-md shadow-sm">
                             <option value="">Semua Tipe</option>
                             @foreach($types as $id => $name)
                                 <option value="{{ $id }}" {{ request('tipe') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -61,12 +61,10 @@
             </div>
 
             <!-- Content Container -->
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+            <div class="card-surface overflow-hidden">
                 
                 @if($bookings->isEmpty())
-                    <div class="p-12 text-center text-gray-500 dark:text-gray-400">
-                        Tidak ada pesanan yang sesuai dengan filter pencarian.
-                    </div>
+                    <x-empty-state title="Tidak ada pesanan" description="Tidak ada pesanan yang sesuai dengan filter pencarian." />
                 @else
                     <!-- Tabel Desktop -->
                     <div class="hidden md:block overflow-x-auto">
@@ -113,9 +111,9 @@
                                         </td>
                                         <td class="px-4 py-3 text-right">
                                             @if(Route::has('admin.pesanan.update') && in_array($b->status->value, ['pending', 'paid', 'rented']))
-                                                <button type="button" x-data @click.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">Update</button>
+                                                <button type="button" x-data @click.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Update</button>
                                             @else
-                                                <button disabled class="text-gray-400 font-medium cursor-not-allowed">Update</button>
+                                                <button disabled class="cursor-not-allowed font-medium opacity-50">Update</button>
                                             @endif
                                         </td>
                                     </tr>
@@ -155,9 +153,9 @@
                                 <div class="flex justify-between items-center mt-2">
                                     <div class="font-bold text-gray-900 dark:text-gray-100">Rp {{ number_format($b->total_amount, 0, ',', '.') }}</div>
                                     @if(Route::has('admin.pesanan.update') && in_array($b->status->value, ['pending', 'paid', 'rented']))
-                                        <span role="button" tabindex="0" x-data @click.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="text-indigo-600 dark:text-indigo-400 text-sm font-medium cursor-pointer">Update</span>
+                                        <span role="button" tabindex="0" x-data @click.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" @keydown.enter.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="cursor-pointer text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Update</span>
                                     @else
-                                        <span class="text-gray-400 text-sm font-medium">Update</span>
+                                        <span class="text-sm font-medium opacity-50">Update</span>
                                     @endif
                                 </div>
                             </a>
@@ -165,7 +163,7 @@
                     </div>
                 @endif
                 
-                <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="border-t border-[var(--border)] p-4">
                     {{ $bookings->links() }}
                 </div>
             </div>

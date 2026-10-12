@@ -1,6 +1,6 @@
 <x-app-layout>
-    <div class="min-h-screen bg-gray-50 dark:bg-navy-900 py-12 flex items-center justify-center px-4">
-        <div class="card-surface max-w-md w-full p-8 shadow-lg border border-gray-100 dark:border-gray-800" style="border-radius: 16px;">
+    <div class="flex items-center justify-center px-4 py-12">
+        <div class="card-surface w-full max-w-md p-8">
             <!-- Ikon Menunggu -->
             <div class="flex justify-center mb-6">
                 <svg class="w-16 h-16 text-yellow-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -8,30 +8,30 @@
                 </svg>
             </div>
 
-            <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2">Menunggu Pembayaran</h2>
-            <p class="text-center text-gray-600 dark:text-gray-400 mb-6 text-sm">
+            <h2 class="mb-2 text-center text-2xl font-bold text-[var(--navy-900)]">Menunggu Pembayaran</h2>
+            <p class="mb-6 text-center text-sm">
                 Selesaikan pembayaran sebelum waktu habis agar pesanan <strong>{{ $booking->code }}</strong> tidak dibatalkan.
             </p>
 
             <!-- Alpine.js Countdown (Berdasarkan waktu server, tahan reload) -->
             <div x-data="countdown('{{ $payment->expires_at->toIso8601String() }}', '{{ route('booking.failed', $booking->code) }}')" 
-                 class="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 text-center mb-6">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Sisa Waktu</p>
+                 class="mb-6 rounded-xl p-4 text-center" style="background-color: var(--bg);">
+                <p class="mb-1 text-sm">Sisa Waktu</p>
                 <div class="text-3xl font-bold text-red-600 dark:text-red-500 font-mono tracking-wider">
                     <span x-text="hours"></span>:<span x-text="minutes"></span>:<span x-text="seconds"></span>
                 </div>
             </div>
 
             <!-- Ringkasan -->
-            <div class="flex justify-between items-center border-t border-b border-gray-200 dark:border-gray-700 py-4 mb-6">
-                <span class="text-gray-600 dark:text-gray-300 font-medium">Total Pembayaran</span>
-                <span class="text-xl font-bold text-gray-900 dark:text-white">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
+            <div class="mb-6 flex justify-between items-center border-t border-b border-[var(--border)] py-4">
+                <span class="font-medium">Total Pembayaran</span>
+                <span class="text-xl font-bold text-[var(--navy-900)]">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
             </div>
 
             <!-- Tombol Aksi -->
             <div class="space-y-3">
-                <a href="{{ $payment->gateway_url }}" target="_blank" 
-                   class="btn-primary-edu w-full flex justify-center items-center py-3 rounded-lg text-white font-semibold shadow-md transition duration-200">
+                <a href="{{ $payment->gateway_url }}" target="_blank" rel="noopener"
+                   class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm">
                     Bayar Sekarang
                 </a>
                 
@@ -39,8 +39,8 @@
                     $waNumber = setting('contact.whatsapp', '6281234567890');
                     $waText = urlencode("Halo, saya ingin konfirmasi kendala pembayaran untuk pesanan {$booking->code}");
                 @endphp
-                <a href="https://wa.me/{{ $waNumber }}?text={{ $waText }}" target="_blank"
-                   class="btn-secondary-edu w-full flex justify-center items-center py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold transition duration-200">
+                <a href="https://wa.me/{{ $waNumber }}?text={{ $waText }}" target="_blank" rel="noopener"
+                   class="btn-wa-edu flex w-full items-center justify-center py-3 text-sm">
                     Chat Admin
                 </a>
             </div>
