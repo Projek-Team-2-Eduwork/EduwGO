@@ -7,10 +7,10 @@
 
     <x-modal name="booking-modal-{{ $vehicle->id }}" :show="request()->boolean('ulang')" focusable>
         <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            <h2 class="text-lg font-semibold text-[var(--navy-900)]">
                 Pilih Durasi Sewa
             </h2>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p class="mt-1 text-sm">
                 Durasi sewa 24 jam/hari
             </p>
 

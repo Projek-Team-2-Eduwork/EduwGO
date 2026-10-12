@@ -1,6 +1,6 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="text-xl font-semibold leading-tight">
             {{ __('Dashboard Admin') }}
         </h2>
     </x-slot>
@@ -11,50 +11,50 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Widget: Stats (Jumlah Kendaraan) -->
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Unit Aktif</div>
-                        <div class="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{{ $stats['total_vehicles'] }}</div>
+                    <div class="card-surface p-6">
+                        <div class="text-sm font-medium">Total Unit Aktif</div>
+                        <div class="mt-2 text-3xl font-bold text-[var(--navy-900)]">{{ $stats['total_vehicles'] }}</div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Tersedia</div>
-                        <div class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{{ $stats['available_vehicles'] }}</div>
+                    <div class="card-surface p-6">
+                        <div class="text-sm font-medium">Tersedia</div>
+                        <div class="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-400">{{ $stats['available_vehicles'] }}</div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Booking Aktif</div>
-                        <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">{{ $stats['active_bookings'] }}</div>
+                    <div class="card-surface p-6">
+                        <div class="text-sm font-medium">Booking Aktif</div>
+                        <div class="mt-2 text-3xl font-bold text-[var(--orange-500)]">{{ $stats['active_bookings'] }}</div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Sedang Disewa</div>
-                        <div class="text-3xl font-bold text-orange-500 dark:text-orange-400 mt-2">{{ $stats['rented_bookings'] }}</div>
+                    <div class="card-surface p-6">
+                        <div class="text-sm font-medium">Sedang Disewa</div>
+                        <div class="mt-2 text-3xl font-bold text-[var(--orange-500)]">{{ $stats['rented_bookings'] }}</div>
                     </div>
                     @if($stats['overdue_vehicles'] > 0)
-                        <a href="{{ route('admin.pesanan.index', ['status' => 'terlambat']) }}" class="col-span-2 bg-rose-600 hover:bg-rose-700 transition text-white p-4 rounded-lg shadow-sm font-bold flex justify-center text-center">
+                        <a href="{{ route('admin.pesanan.index', ['status' => 'terlambat']) }}" class="btn-danger-edu col-span-2 flex items-center justify-center p-4 text-center text-base">
                             {{ $stats['overdue_vehicles'] }} unit terlambat
                         </a>
                     @endif
                 </div>
 
                 <!-- Widget: Top 5 Orderan Rental -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-4">5 Top Orderan Rental</h3>
+                <div class="card-surface p-6">
+                    <h3 class="mb-4 font-bold">5 Top Orderan Rental</h3>
                     <div class="flex items-center justify-center relative w-full h-64">
                         @if($topVehicles->isEmpty())
-                            <div class="text-gray-500">Belum ada data rental.</div>
+                            <div class="text-sm">Belum ada data rental.</div>
                         @else
                             <canvas id="topVehiclesChart"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Total Sewa</span>
-                                <span class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $topVehicles->sum('booking_count') }}</span>
+                                <span class="text-xs">Total Sewa</span>
+                                <span class="text-2xl font-bold text-[var(--navy-900)]">{{ $topVehicles->sum('booking_count') }}</span>
                             </div>
                         @endif
                     </div>
                 </div>
 
                 <!-- Widget: Pendapatan -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 col-span-1 lg:col-span-2">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
-                        <h3 class="font-bold text-gray-900 dark:text-gray-100">Pendapatan</h3>
-                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode]) }}" class="inline-flex items-center px-3 py-1.5 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                <div class="card-surface col-span-1 p-6 lg:col-span-2">
+                    <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="font-bold">Pendapatan</h3>
+                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode]) }}" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">
                             Export Excel
                         </a>
                     </div>
@@ -90,45 +90,45 @@
                         </div>
                     </form>
                     
-                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 text-center">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Pendapatan</div>
-                        <div class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">
+                    <div class="mb-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4 text-center">
+                        <div class="text-sm">Total Pendapatan</div>
+                        <div class="mt-2 text-3xl font-bold text-[var(--orange-500)] sm:text-4xl">
                             Rp {{ number_format($revenue, 0, ',', '.') }}
                         </div>
                     </div>
                 </div>
 
                 <!-- Widget: Pesanan Terakhir -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col col-span-1 lg:col-span-2">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-900 dark:text-gray-100">Pesanan Terakhir</h3>
-                        <a href="{{ route('admin.pesanan.index') }}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Lihat semua</a>
+                <div class="card-surface col-span-1 flex flex-col overflow-hidden lg:col-span-2">
+                    <div class="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                        <h3 class="font-bold">Pesanan Terakhir</h3>
+                        <a href="{{ route('admin.pesanan.index') }}" class="text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Lihat semua</a>
                     </div>
                     <div class="overflow-y-auto flex-1 max-h-[400px]">
                         @if($recentBookings->isEmpty())
-                            <div class="p-6 text-center text-gray-500">Belum ada pesanan masuk.</div>
+                            <div class="p-6 text-center text-sm">Belum ada pesanan masuk.</div>
                         @else
-                            <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+                            <ul class="divide-y divide-[var(--border)]">
                                 @foreach($recentBookings as $b)
-                                    <li class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                                    <li class="p-4 transition hover:bg-[var(--bg)]">
                                         <div class="flex items-center gap-4">
                                             @if($b->vehicle_image)
-                                                <img src="{{ asset($b->vehicle_image) }}" class="w-12 h-12 rounded object-cover flex-shrink-0">
+                                                <img src="{{ asset($b->vehicle_image) }}" class="w-12 h-12 rounded object-cover flex-shrink-0" alt="">
                                             @else
-                                                <div class="w-12 h-12 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-                                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                                <div class="w-12 h-12 rounded bg-[var(--bg)] flex items-center justify-center flex-shrink-0">
+                                                    <svg class="w-6 h-6 text-[var(--border)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                                 </div>
                                             @endif
                                             <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
-                                                    {{ $b->customer_name }} <span class="text-gray-500 font-normal">({{ $b->vehicle_name }})</span>
+                                                <p class="truncate text-sm font-bold text-[var(--navy-900)]">
+                                                    {{ $b->customer_name }} <span class="font-normal">({{ $b->vehicle_name }})</span>
                                                 </p>
-                                                <p class="text-xs text-gray-500 truncate mt-0.5">
+                                                <p class="truncate mt-0.5 text-xs">
                                                     {{ $b->vehicle_type_name }} &bull; {{ \Carbon\Carbon::parse($b->start_at)->translatedFormat('d M Y H:i') }}
                                                 </p>
                                             </div>
                                             <div class="text-right flex-shrink-0 flex flex-col items-end gap-1">
-                                                <span class="text-sm font-bold text-gray-900 dark:text-gray-100">Rp {{ number_format($b->total_amount, 0, ',', '.') }}</span>
+                                                <span class="text-sm font-bold text-[var(--navy-900)]">Rp {{ number_format($b->total_amount, 0, ',', '.') }}</span>
                                                 <x-badge-status :status="$b->status" />
                                             </div>
                                         </div>

@@ -10,13 +10,13 @@
     </header>
 
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div class="border border-[var(--border)] p-4" style="background-color: var(--surface);">
-            <div class="text-sm text-[var(--ink-muted)]">Total booking</div>
+        <div class="card-surface p-4">
+            <div class="text-sm">Total booking</div>
             <div class="mt-1 text-3xl text-[var(--navy-900)]">{{ $summary['total'] }}</div>
         </div>
 
-        <div class="border border-[var(--border)] p-4" style="background-color: var(--surface);">
-            <div class="text-sm text-[var(--ink-muted)]">Booking aktif</div>
+        <div class="card-surface p-4">
+            <div class="text-sm">Booking aktif</div>
             <div class="mt-1 text-3xl text-[var(--navy-900)]">{{ $summary['active'] }}</div>
         </div>
     </div>

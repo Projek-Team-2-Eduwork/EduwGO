@@ -76,7 +76,7 @@
 
                         @auth
                             <span class="hidden items-center gap-2 text-sm font-medium text-[var(--navy-900)] sm:inline-flex">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background-image: var(--accent-gradient);">
+                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-[#0A0F1D]" style="background-image: var(--accent-gradient);">
                                     {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
                                 </span>
                                 <span class="max-w-[10rem] truncate">{{ Auth::user()->name }}</span>

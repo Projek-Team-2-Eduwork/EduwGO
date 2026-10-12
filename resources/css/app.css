@@ -7,31 +7,31 @@
  * Palet dipetakan ke CSS variable; dark mode memakai class strategy (html.dark).
  */
 :root {
-    --bg:              #E4E7EC;
-    --bg-gradient:     linear-gradient(180deg, #F2F4F7 0%, #D9DEE6 100%);
+    --bg:              #EDF0F6;
+    --bg-gradient:     linear-gradient(180deg, #F5F7FB 0%, #E4E9F3 100%);
     --surface:         #FFFFFF;
-    --navy-900:        #0F1A2E;
-    --navy-700:        #1C2942;
-    --ink-muted:       #4B5563;
-    --orange-500:      #F26A1B;
-    --accent-gradient: linear-gradient(135deg, #FF8A3D 0%, #F2571C 100%);
-    --coral-300:       #FFB27A;
-    --border:          #C9D0DA;
-    --gold-tan:        #C78A5A;
+    --navy-900:        #0A0F1D;
+    --navy-700:        #1B2537;
+    --ink-muted:       #465064;
+    --orange-500:      #4D7C0F;
+    --accent-gradient: linear-gradient(135deg, #C6F659 0%, #A3E635 100%);
+    --coral-300:       #DDD0FB;
+    --border:          #D3D9E4;
+    --gold-tan:        #0EA5E9;
 }
 
 .dark {
-    --bg:              #0B1220;
-    --bg-gradient:     linear-gradient(180deg, #111A2B 0%, #0B1220 100%);
-    --surface:         #141E31;
-    --navy-900:        #F2F4F7;
-    --navy-700:        #D9DEE6;
-    --ink-muted:       #A3ADBD;
-    --orange-500:      #FF8A3D;
-    --accent-gradient: linear-gradient(135deg, #FF8A3D 0%, #F2571C 100%);
-    --coral-300:       #FFB27A;
-    --border:          #263248;
-    --gold-tan:        #D9A377;
+    --bg:              #0A0F1D;
+    --bg-gradient:     linear-gradient(180deg, #101829 0%, #0A0F1D 100%);
+    --surface:         #141B2C;
+    --navy-900:        #E9EEF8;
+    --navy-700:        #C7D1E4;
+    --ink-muted:       #A6B0C3;
+    --orange-500:      #C6F659;
+    --accent-gradient: linear-gradient(135deg, #C6F659 0%, #A3E635 100%);
+    --coral-300:       #A855F7;
+    --border:          #232C42;
+    --gold-tan:        #38BDF8;
 }
 
 @layer base {
@@ -93,7 +93,35 @@
     .btn-secondary-edu:hover,
     .btn-secondary-edu:focus-visible {
         background-color: var(--orange-500);
+        color: #0A0F1D;
+    }
+
+    /* Tombol destruktif (batalkan/hapus): merah, radius & bobot sama seperti tombol lain */
+    .btn-danger-edu {
+        border-radius: 0.5rem;
+        background-color: #DC2626;
         color: #FFFFFF;
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out;
+    }
+
+    .btn-danger-edu:hover,
+    .btn-danger-edu:focus-visible {
+        background-color: #B91C1C;
+    }
+
+    /* Tombol WhatsApp: hijau khas WA, radius & bobot konsisten */
+    .btn-wa-edu {
+        border-radius: 0.5rem;
+        background-color: #16A34A;
+        color: #FFFFFF;
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out;
+    }
+
+    .btn-wa-edu:hover,
+    .btn-wa-edu:focus-visible {
+        background-color: #15803D;
     }
 
     /* Ikon aksen oranye (hanya untuk ikon/kecil, sesuai spesifikasi) */
@@ -142,6 +170,9 @@ input[type='email'],
 input[type='password'],
 input[type='tel'],
 input[type='search'],
+input[type='date'],
+input[type='datetime-local'],
+input[type='number'],
 select,
 textarea {
     background-color: var(--surface);
@@ -159,6 +190,9 @@ input[type='text']:focus,
 input[type='email']:focus,
 input[type='password']:focus,
 input[type='tel']:focus,
+input[type='date']:focus,
+input[type='datetime-local']:focus,
+input[type='number']:focus,
 select:focus,
 textarea:focus {
     border-color: var(--navy-700);

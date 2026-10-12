@@ -1,6 +1,7 @@
 @php
     $waNumber = preg_replace('/\D+/', '', (string) setting('contact.whatsapp', ''));
-    $waUrl = 'https://wa.me/'.$waNumber.'?text='.rawurlencode('Halo, saya butuh bantuan.');
+    // Nomor belum diatur: arahkan ke wa.me tanpa nomor agar tidak menghasilkan tautan rusak.
+    $waUrl = $waNumber ? 'https://wa.me/'.$waNumber.'?text='.rawurlencode('Halo, saya butuh bantuan.') : '//wa.me';
 
     $menu = [
         ['label' => 'Home', 'href' => url('/'), 'active' => request()->is('/')],
@@ -36,7 +37,7 @@
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button type="button" class="flex items-center gap-2 text-sm font-medium text-[var(--navy-900)] focus:outline-none" aria-label="Menu akun">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background-image: var(--accent-gradient);">
+                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-[#0A0F1D]" style="background-image: var(--accent-gradient);">
                                     {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
                                 </span>
                                 <svg class="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">

@@ -1,13 +1,13 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="text-xl font-semibold leading-tight">
             Update Kendaraan: {{ $kendaraan->name }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="card-surface p-6">
                 <form action="{{ route('admin.kendaraan.update', $kendaraan->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     @method('PUT')
@@ -25,7 +25,7 @@
                         </div>
                         <div>
                             <x-input-label for="vehicle_type_id" value="Tipe Kendaraan *" />
-                            <select id="vehicle_type_id" name="vehicle_type_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                            <select id="vehicle_type_id" name="vehicle_type_id" class="mt-1 block w-full rounded-md shadow-sm" required>
                                 <option value="">Pilih Tipe</option>
                                 @foreach($types as $id => $name)
                                     <option value="{{ $id }}" {{ old('vehicle_type_id', $kendaraan->vehicle_type_id) == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -50,29 +50,29 @@
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="image" value="Foto Baru (Kosongkan jika tidak ingin mengubah)" />
-                            <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-[var(--bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--navy-900)] hover:file:brightness-95">
                             <x-input-error class="mt-2" :messages="$errors->get('image')" />
                             @if($kendaraan->image)
                                 <div class="mt-3">
-                                    <p class="text-sm text-gray-500 mb-1">Foto saat ini:</p>
-                                    <img src="{{ asset($kendaraan->image) }}" class="h-24 w-auto object-cover rounded shadow-sm border border-gray-200">
+                                    <p class="mb-1 text-sm">Foto saat ini:</p>
+                                    <img src="{{ asset($kendaraan->image) }}" class="h-24 w-auto rounded border border-[var(--border)] object-cover shadow-sm" alt="">
                                 </div>
                             @endif
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="description" value="Deskripsi" />
-                            <textarea id="description" name="description" rows="4" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('description', $kendaraan->description) }}</textarea>
+                            <textarea id="description" name="description" rows="4" class="mt-1 block w-full rounded-md shadow-sm">{{ old('description', $kendaraan->description) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('description')" />
                         </div>
                         <div class="md:col-span-2 flex items-center">
                             <input type="hidden" name="is_active" value="0">
-                            <input id="is_active" name="is_active" type="checkbox" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" {{ old('is_active', $kendaraan->is_active) ? 'checked' : '' }}>
-                            <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">Status Aktif</label>
+                            <input id="is_active" name="is_active" type="checkbox" value="1" class="rounded border-[var(--border)] text-[var(--orange-500)] shadow-sm focus:ring-[var(--orange-500)]" {{ old('is_active', $kendaraan->is_active) ? 'checked' : '' }}>
+                            <label for="is_active" class="ml-2 block text-sm text-[var(--navy-900)]">Status Aktif</label>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end mt-4 gap-4">
-                        <a href="{{ route('admin.kendaraan.index') }}" class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Batal</a>
+                    <div class="mt-4 flex items-center justify-end gap-4">
+                        <a href="{{ route('admin.kendaraan.index') }}" class="text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</a>
                         <x-primary-button>Update Kendaraan</x-primary-button>
                     </div>
                 </form>

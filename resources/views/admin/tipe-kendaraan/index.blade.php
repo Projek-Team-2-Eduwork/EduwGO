@@ -1,16 +1,16 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Kelola Tipe Kendaraan</h2>
+        <h2 class="text-xl font-semibold leading-tight">Kelola Tipe Kendaraan</h2>
     </x-slot>
 
     <div class="py-12" x-data="{ editMode: null }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if(session('success')) <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">{{ session('success') }}</div> @endif
-            @if(session('error')) <div class="p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">{{ session('error') }}</div> @endif
-            @if($errors->any()) <div class="p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">{{ $errors->first() }}</div> @endif
+        <div class="max-w-7xl mx-auto space-y-6">
+            @if(session('success')) <x-alert type="success">{{ session('success') }}</x-alert> @endif
+            @if(session('error')) <x-alert type="error">{{ session('error') }}</x-alert> @endif
+            @if($errors->any()) <x-alert type="error">{{ $errors->first() }}</x-alert> @endif
 
             <!-- Form Tambah -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div class="card-surface p-4">
                 <form action="{{ route('admin.tipe-kendaraan.store') }}" method="POST" class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
                     @csrf
                     <div class="w-full sm:flex-1">
@@ -22,10 +22,13 @@
             </div>
 
             <!-- List Tipe -->
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+            <div class="card-surface overflow-hidden">
+                @if($types->isEmpty())
+                    <x-empty-state title="Belum ada tipe kendaraan" description="Tambahkan tipe pertama lewat form di atas." />
+                @else
                 <div class="hidden md:block overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-[var(--bg)] text-xs uppercase">
                             <tr>
                                 <th class="px-4 py-3">Nama Tipe</th>
                                 <th class="px-4 py-3">Slug / URL Param</th>
@@ -35,28 +38,28 @@
                         </thead>
                         <tbody>
                             @foreach($types as $type)
-                                <tr x-show="editMode !== {{ $type->id }}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $type->name }}</td>
+                                <tr x-show="editMode !== {{ $type->id }}" class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
+                                    <td class="px-4 py-3 font-medium text-[var(--navy-900)]">{{ $type->name }}</td>
                                     <td class="px-4 py-3 font-mono text-xs">{{ $type->slug }}</td>
                                     <td class="px-4 py-3">{{ $type->vehicles_count }} Unit</td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-3">
-                                        <button @click="editMode = {{ $type->id }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 font-medium">Edit</button>
+                                        <button @click="editMode = {{ $type->id }}" class="font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
                                         <form action="{{ route('admin.tipe-kendaraan.destroy', $type->id) }}" method="POST" onsubmit="return confirm('Hapus tipe ini?');">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 font-medium">Hapus</button>
+                                            <button type="submit" class="font-medium text-red-600 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
                                         </form>
                                     </td>
                                 </tr>
                                 <!-- Mode Edit -->
-                                <tr x-show="editMode === {{ $type->id }}" x-cloak class="border-b bg-indigo-50/50 dark:bg-indigo-900/10 dark:border-gray-700">
+                                <tr x-show="editMode === {{ $type->id }}" x-cloak class="border-b border-[var(--border)] bg-[var(--bg)]">
                                     <td colspan="4" class="px-4 py-3">
                                         <form action="{{ route('admin.tipe-kendaraan.update', $type->id) }}" method="POST" class="flex gap-4 items-center">
                                             @csrf @method('PUT')
-                                            <x-text-input name="name" value="{{ $type->name }}" class="w-full sm:w-1/2" required />
-                                            <span class="text-xs text-gray-500 font-mono hidden sm:inline">Slug tetap: {{ $type->slug }}</span>
+                                            <x-text-input name="name" value="{{ $type->name }}" aria-label="Nama tipe" class="w-full sm:w-1/2" required />
+                                            <span class="hidden font-mono text-xs sm:inline">Slug tetap: {{ $type->slug }}</span>
                                             <div class="flex ml-auto gap-2">
-                                                <button type="button" @click="editMode = null" class="px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-sm">Batal</button>
-                                                <x-primary-button class="py-1.5 px-3">Simpan</x-primary-button>
+                                                <button type="button" @click="editMode = null" class="rounded px-3 py-1.5 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</button>
+                                                <x-primary-button class="px-3 py-1.5">Simpan</x-primary-button>
                                             </div>
                                         </form>
                                     </td>
@@ -67,36 +70,37 @@
                 </div>
 
                 <!-- Mobile Card Layout -->
-                <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                <div class="divide-y divide-[var(--border)] md:hidden">
                     @foreach($types as $type)
                         <div class="p-4" x-show="editMode !== {{ $type->id }}">
-                            <div class="flex justify-between items-start mb-2">
+                            <div class="mb-2 flex items-start justify-between">
                                 <div>
-                                    <div class="font-bold text-gray-900 dark:text-gray-100">{{ $type->name }}</div>
-                                    <div class="text-xs font-mono text-gray-500 mt-1">{{ $type->slug }}</div>
+                                    <div class="font-bold text-[var(--navy-900)]">{{ $type->name }}</div>
+                                    <div class="mt-1 font-mono text-xs">{{ $type->slug }}</div>
                                 </div>
-                                <span class="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded">{{ $type->vehicles_count }} Unit</span>
+                                <span class="rounded bg-[var(--bg)] px-2 py-1 text-xs">{{ $type->vehicles_count }} Unit</span>
                             </div>
-                            <div class="flex justify-end gap-4 mt-3">
-                                <button @click="editMode = {{ $type->id }}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400">Edit</button>
+                            <div class="mt-3 flex justify-end gap-4">
+                                <button @click="editMode = {{ $type->id }}" class="text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
                                 <form action="{{ route('admin.tipe-kendaraan.destroy', $type->id) }}" method="POST" onsubmit="return confirm('Hapus tipe ini?');">
                                     @csrf @method('DELETE')
-                                    <button class="text-sm font-medium text-red-600 dark:text-red-400">Hapus</button>
+                                    <button class="text-sm font-medium text-red-600 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
                                 </form>
                             </div>
                         </div>
-                        <div class="p-4 bg-indigo-50/50 dark:bg-indigo-900/10" x-show="editMode === {{ $type->id }}" x-cloak>
+                        <div class="p-4 bg-[var(--bg)]" x-show="editMode === {{ $type->id }}" x-cloak>
                             <form action="{{ route('admin.tipe-kendaraan.update', $type->id) }}" method="POST">
                                 @csrf @method('PUT')
-                                <x-text-input name="name" value="{{ $type->name }}" class="w-full text-sm" required />
-                                <div class="flex justify-end gap-2 mt-3">
-                                    <button type="button" @click="editMode = null" class="px-3 py-1.5 text-gray-600 dark:text-gray-400 rounded text-sm">Batal</button>
-                                    <x-primary-button class="py-1.5 px-3">Simpan</x-primary-button>
+                                <x-text-input name="name" value="{{ $type->name }}" aria-label="Nama tipe" class="w-full text-sm" required />
+                                <div class="mt-3 flex justify-end gap-2">
+                                    <button type="button" @click="editMode = null" class="rounded px-3 py-1.5 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</button>
+                                    <x-primary-button class="px-3 py-1.5">Simpan</x-primary-button>
                                 </div>
                             </form>
                         </div>
                     @endforeach
                 </div>
+                @endif
             </div>
         </div>
     </div>

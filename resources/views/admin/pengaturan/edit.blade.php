@@ -1,34 +1,35 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="text-xl font-semibold leading-tight">
             Pengaturan Toko
         </h2>
     </x-slot>
 
     <div class="py-12" x-data="{ tab: 'brand' }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6">
             @if(session('success'))
-                <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">
+                <x-alert type="success">
                     {{ session('success') }}
-                </div>
+                </x-alert>
             @endif
 
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden flex flex-col md:flex-row">
-                <!-- Sidebar Tabs -->
-                <div class="md:w-1/4 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 space-y-2">
-                    <button @click="tab = 'brand'" :class="{ 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400': tab === 'brand', 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700': tab !== 'brand' }" class="w-full text-left px-4 py-3 rounded-md font-medium transition">
-                        Identitas & Brand
-                    </button>
-                    <button @click="tab = 'kontak'" :class="{ 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400': tab === 'kontak', 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700': tab !== 'kontak' }" class="w-full text-left px-4 py-3 rounded-md font-medium transition">
-                        Kontak & Sosial Media
-                    </button>
-                    <button @click="tab = 'aturan'" :class="{ 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400': tab === 'aturan', 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700': tab !== 'aturan' }" class="w-full text-left px-4 py-3 rounded-md font-medium transition">
-                        Aturan Sewa & S&K
-                    </button>
-                </div>
+            <div class="card-surface overflow-hidden">
+                <div class="flex flex-col md:flex-row">
+                    <!-- Sidebar Tabs -->
+                    <div class="space-y-2 border-b border-[var(--border)] p-4 md:w-1/4 md:border-b-0 md:border-e">
+                        <button type="button" @click="tab = 'brand'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'brand', 'hover:bg-[var(--bg)]': tab !== 'brand' }" class="w-full rounded-md px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                            Identitas & Brand
+                        </button>
+                        <button type="button" @click="tab = 'kontak'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'kontak', 'hover:bg-[var(--bg)]': tab !== 'kontak' }" class="w-full rounded-md px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                            Kontak & Sosial Media
+                        </button>
+                        <button type="button" @click="tab = 'aturan'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'aturan', 'hover:bg-[var(--bg)]': tab !== 'aturan' }" class="w-full rounded-md px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                            Aturan Sewa & S&K
+                        </button>
+                    </div>
 
-                <!-- Form Content -->
-                <div class="p-6 md:w-3/4">
+                    <!-- Form Content -->
+                    <div class="p-6 md:w-3/4">
                     <form method="POST" action="{{ route('admin.pengaturan.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')

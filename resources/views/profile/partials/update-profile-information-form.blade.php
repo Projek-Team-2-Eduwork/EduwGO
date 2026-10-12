@@ -89,7 +89,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button class="btn-primary-edu">Simpan</x-primary-button>
+            <x-primary-button>Simpan</x-primary-button>
 
             @if (session('status') === 'profile-updated')
                 <p

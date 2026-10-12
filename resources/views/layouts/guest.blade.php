@@ -8,19 +8,19 @@
             <!-- Banner kiri (desktop): accent-gradient -->
             <aside class="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12" style="background-image: var(--accent-gradient);">
                 <a href="{{ url('/') }}" class="inline-flex" aria-label="{{ setting('brand.name', 'EduwGo') }}">
-                    <span class="text-2xl font-extrabold leading-none tracking-tight text-white">{{ setting('brand.name', 'EduwGo') }}</span>
+                    <span class="text-2xl font-extrabold leading-none tracking-tight text-[#0A0F1D]">{{ setting('brand.name', 'EduwGo') }}</span>
                 </a>
 
                 <div>
-                    <h2 class="max-w-md text-5xl !text-white lg:leading-[1.2]">
+                    <h2 class="max-w-md text-5xl !text-[#0A0F1D] lg:leading-[1.2]">
                         {{ setting('brand.tagline', 'Rental Motor Cepat & Aman') }}
                     </h2>
-                    <p class="mt-4 max-w-md text-white/90">
+                    <p class="mt-4 max-w-md text-[#0A0F1D]/80">
                         Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.
                     </p>
                 </div>
 
-                <p class="text-sm text-white/80">&copy; {{ now()->year }} {{ setting('brand.name', 'EduwGo') }}</p>
+                <p class="text-sm text-[#0A0F1D]/70">&copy; {{ now()->year }} {{ setting('brand.name', 'EduwGo') }}</p>
             </aside>
 
             <!-- Form kanan -->
