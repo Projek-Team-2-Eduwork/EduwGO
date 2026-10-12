@@ -111,4 +111,89 @@ class PesananAdminTest extends TestCase
         auth()->logout();
         $this->get(route('admin.pesanan.index'))->assertRedirect();
     }
+
+    /**
+     * Angka pada kartu ringkasan berdasarkan labelnya (blok kartu EG-51).
+     */
+    private function summaryNumber(string $html, string $label): ?string
+    {
+        return preg_match('/'.$label.'<\/div>\s*<div[^>]*>(\d+)<\/div>/u', $html, $m) ? $m[1] : null;
+    }
+
+    public function test_kartu_ringkasan_menampilkan_jumlah_status_yang_cocok()
+    {
+        $this->actingAsAdmin();
+        Booking::factory()->pending()->count(2)->create();
+        Booking::factory()->paid()->create();
+        Booking::factory()->rented()->create();
+        Booking::factory()->returned()->create();
+        Booking::factory()->expired()->create();
+
+        $html = $this->get(route('admin.pesanan.index'))->assertOk()->getContent();
+
+        $this->assertSame('2', $this->summaryNumber($html, 'Pending'));
+        $this->assertSame('3', $this->summaryNumber($html, 'Sukses'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Expired'));
+    }
+
+    public function test_klik_kartu_pending_dan_expired_memfilter_tabel()
+    {
+        $this->actingAsAdmin();
+        Booking::factory()->pending()->create(['code' => 'EG.200001']);
+        Booking::factory()->pending()->create(['code' => 'EG.200002']);
+        Booking::factory()->paid()->create(['code' => 'EG.200003']);
+        Booking::factory()->expired()->create(['code' => 'EG.200004']);
+
+        $this->get(route('admin.pesanan.index', ['status' => 'pending']))
+            ->assertOk()
+            ->assertSee('EG.200001')
+            ->assertSee('EG.200002')
+            ->assertDontSee('EG.200003')
+            ->assertDontSee('EG.200004');
+
+        $this->get(route('admin.pesanan.index', ['status' => 'expired']))
+            ->assertOk()
+            ->assertSee('EG.200004')
+            ->assertDontSee('EG.200001')
+            ->assertDontSee('EG.200003');
+    }
+
+    public function test_klik_kartu_sukses_menampilkan_paid_rented_returned()
+    {
+        $this->actingAsAdmin();
+        Booking::factory()->paid()->create(['code' => 'EG.300001']);
+        Booking::factory()->rented()->create(['code' => 'EG.300002']);
+        Booking::factory()->returned()->create(['code' => 'EG.300003']);
+        Booking::factory()->pending()->create(['code' => 'EG.300004']);
+        Booking::factory()->expired()->create(['code' => 'EG.300005']);
+        Booking::factory()->cancelled()->create(['code' => 'EG.300006']);
+
+        $this->get(route('admin.pesanan.index', ['status' => 'sukses']))
+            ->assertOk()
+            ->assertSee('EG.300001')
+            ->assertSee('EG.300002')
+            ->assertSee('EG.300003')
+            ->assertDontSee('EG.300004')
+            ->assertDontSee('EG.300005')
+            ->assertDontSee('EG.300006');
+    }
+
+    public function test_klik_kartu_aktif_lagi_melepas_filter()
+    {
+        $this->actingAsAdmin();
+        Booking::factory()->pending()->create(['code' => 'EG.500001']);
+        Booking::factory()->paid()->create(['code' => 'EG.500002']);
+
+        $response = $this->get(route('admin.pesanan.index', ['status' => 'pending']));
+        $response->assertOk()->assertSee('EG.500001')->assertDontSee('EG.500002');
+
+        // Kartu Pending sedang aktif: href-nya harus tanpa param status (toggle lepas).
+        preg_match_all('/<a href="([^"]+)"[^>]*aria-current="true"/', $response->getContent(), $matches);
+        $this->assertCount(1, $matches[1]);
+        $href = html_entity_decode($matches[1][0]);
+        $this->assertStringNotContainsString('status=pending', $href);
+
+        // Klik kartu aktif → kembali menampilkan semua pesanan.
+        $this->get($href)->assertOk()->assertSee('EG.500001')->assertSee('EG.500002');
+    }
 }

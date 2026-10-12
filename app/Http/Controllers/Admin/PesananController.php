@@ -12,6 +12,7 @@ use App\Models\VehicleType;
 use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\XenditService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,19 +30,17 @@ class PesananController extends Controller
     {
         Gate::authorize('viewAny', Booking::class);
 
+        // Kartu ringkasan status: jumlah global per kategori (EG-51)
+        $summary = [
+            'pending' => $this->countStatus('pending'),
+            'sukses' => $this->countStatus('sukses'),
+            'expired' => $this->countStatus('expired'),
+        ];
+
         $query = Booking::with(['user', 'vehicle.type', 'payments', 'histories.changer']);
 
-        // Filter Status
-        if ($request->filled('status')) {
-            if ($request->status === 'terlambat') {
-                $query->overdue();
-            } else {
-                $statusEnum = BookingStatus::tryFrom($request->status);
-                if ($statusEnum) {
-                    $query->where('status', $statusEnum->value);
-                }
-            }
-        }
+        // Filter Status — aturan tunggal direuse kartu ringkasan (EG-51)
+        $this->applyStatusFilter($query, $request->input('status'));
 
         // Filter Tipe Kendaraan
         if ($request->filled('tipe')) {
@@ -71,7 +70,46 @@ class PesananController extends Controller
         $bookings = $query->orderBy('start_at', 'desc')->paginate(12)->withQueryString();
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
 
-        return view('admin.pesanan.index', compact('bookings', 'types'));
+        return view('admin.pesanan.index', compact('bookings', 'types', 'summary'));
+    }
+
+    /**
+     * Terapkan filter status pada query. Satu-satunya tempat aturan status
+     * (termasuk 'sukses' = paid+rented+returned) — dipakai tabel & kartu (EG-51).
+     */
+    private function applyStatusFilter(Builder $query, ?string $status): void
+    {
+        if (! filled($status)) {
+            return;
+        }
+
+        if ($status === 'terlambat') {
+            $query->overdue();
+
+            return;
+        }
+
+        if ($status === 'sukses') {
+            $query->whereIn('status', ['paid', 'rented', 'returned']);
+
+            return;
+        }
+
+        $statusEnum = BookingStatus::tryFrom($status);
+        if ($statusEnum) {
+            $query->where('status', $statusEnum->value);
+        }
+    }
+
+    /**
+     * Jumlah pesanan untuk satu nilai filter status (dipakai kartu ringkasan).
+     */
+    private function countStatus(string $status): int
+    {
+        $query = clone Booking::query();
+        $this->applyStatusFilter($query, $status);
+
+        return $query->count();
     }
 
     public function show(string $code): View
