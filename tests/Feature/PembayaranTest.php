@@ -254,6 +254,40 @@ class PembayaranTest extends TestCase
             ->assertJson(['status' => 'pending', 'paid' => false]);
     }
 
+    public function test_webhook_referensi_tidak_dikenal_dianggap_ok_agar_xendit_tidak_mengulang()
+    {
+        // Ping uji dashboard Xendit & event lama: token valid tapi referensi tak
+        // dikenal → di-acknowledge 200 (EG-57), bukan 404 yang bikin Xendit retry
+        $this->seedQrisPayment();
+
+        $this->postJson('/webhooks/xendit', [
+            'event' => 'payment.capture',
+            'data' => ['payment_request_id' => 'pr-tidak-ada', 'status' => 'SUCCEEDED'],
+        ], ['x-callback-token' => self::TOKEN])->assertOk();
+
+        // Event invoice versi lama dengan id tak dikenal juga di-acknowledge
+        $this->postJson('/webhooks/xendit', [
+            'event' => 'invoice.status',
+            'id' => 'inv-tidak-ada',
+            'status' => 'PAID',
+        ], ['x-callback-token' => self::TOKEN])->assertOk();
+
+        // Payment asli tidak tersentuh oleh event tak dikenal
+        $this->assertSame('pending', $this->booking->fresh()->status->value);
+        $this->assertSame('pending', Payment::where('booking_id', $this->booking->id)->first()->status);
+
+        // Token tetap wajib — request tanpa/misi token tetap ditolak
+        $this->postJson('/webhooks/xendit', [
+            'event' => 'payment.capture',
+            'data' => ['payment_request_id' => 'pr-tidak-ada'],
+        ], ['x-callback-token' => 'token-salah'])->assertForbidden();
+
+        $this->postJson('/webhooks/xendit', [
+            'event' => 'payment.capture',
+            'data' => ['payment_request_id' => 'pr-tidak-ada'],
+        ])->assertForbidden();
+    }
+
     public function test_polling_setelah_webhook_paid_mengalihkan_ke_berhasil()
     {
         $this->seedQrisPayment();

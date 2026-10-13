@@ -193,9 +193,11 @@ class PaymentRequestTest extends TestCase
         $this->assertSame('payment.failure', $payment->gateway_payload['event'], 'payload wajib tercatat');
     }
 
-    public function test_webhook_payment_request_tidak_dikenal_404()
+    public function test_webhook_payment_request_tidak_dikenal_dianggap_ok()
     {
-        $this->webhook($this->paymentRequestPayload('payment.capture'))->assertStatus(404);
+        // Event terotentikasi tapi referensi tak dikenal (mis. ping uji dashboard
+        // Xendit) di-acknowledge 200 agar tidak dikirim ulang (EG-57)
+        $this->webhook($this->paymentRequestPayload('payment.capture'))->assertStatus(200);
     }
 
     public function test_webhook_ditolak_403_jika_token_salah()

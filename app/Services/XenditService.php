@@ -374,7 +374,9 @@ class XenditService
                 'external_id' => $externalId,
             ]);
 
-            abort(404, 'Invoice Xendit tidak dikenal.');
+            // Event terotentikasi tapi tak dikenal (mis. ping uji dashboard atau
+            // invoice lama) → akui dengan 200 agar Xendit tidak mengulang kirim
+            return;
         }
 
         // Logika status dikumpulkan di PaymentService agar bisa dipakai EG-26
@@ -406,7 +408,9 @@ class XenditService
                 'reference' => $reference,
             ]);
 
-            abort(404, 'Payment request Xendit tidak dikenal.');
+            // Event terotentikasi tapi referensi tak dikenal (mis. ping uji
+            // dashboard Xendit) → akui 200, jangan 404 (biar tak diulang Xendit)
+            return;
         }
 
         $paid = in_array($event, ['payment.paid', 'payment.capture'], true);
