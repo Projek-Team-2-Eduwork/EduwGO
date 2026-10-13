@@ -24,18 +24,33 @@
             @endif
         </div>
 
-        {{-- Pilih metode --}}
-        <div class="mb-6 grid grid-cols-3 gap-2">
-            @foreach (['QRIS' => 'QRIS', 'BANK_TRANSFER' => 'Transfer Bank', 'EWALLET' => 'E-Wallet'] as $value => $label)
-                <a href="{{ route('booking.bayar', ['code' => $booking->code, 'metode' => $value]) }}"
-                   @class([
-                       'block rounded-xl border px-3 py-3 text-center text-sm font-medium transition',
-                       'border-[var(--orange-500)] bg-[var(--orange-500)]/10 ring-2 ring-[var(--orange-500)]' => $channel === $value,
-                       'border-[var(--border)] hover:border-[var(--navy-900)]' => $channel !== $value,
-                   ])>
-                    {{ $label }}
-                </a>
-            @endforeach
+        {{-- Pilih metode (gaya gateway: per kategori + logo kanal) --}}
+        <div class="card-surface mb-6 p-6">
+            <h2 class="mb-4 font-semibold text-[var(--navy-900)]">Pilih Metode Pembayaran</h2>
+
+            <div class="space-y-5">
+                @foreach ($kategoriKanal as $kategori)
+                    <div>
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $kategori['name'] }}</p>
+
+                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            @foreach ($kategori['channels'] as $kanal)
+                                <a href="{{ route('booking.bayar', ['code' => $booking->code, 'metode' => $kanal['code']]) }}"
+                                   @class([
+                                       'flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition',
+                                       'border-[var(--orange-500)] bg-[var(--orange-500)]/10 ring-2 ring-[var(--orange-500)]' => $channel === $kanal['code'],
+                                       'border-[var(--border)] hover:border-[var(--navy-900)]' => $channel !== $kanal['code'],
+                                   ])>
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white" style="background-color: {{ $channel === $kanal['code'] ? 'var(--orange-500)' : 'var(--navy-900)' }};">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">{!! $kanal['icon'] !!}</svg>
+                                    </span>
+                                    <span>{{ $kanal['label'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
 
         {{-- Isi halaman --}}

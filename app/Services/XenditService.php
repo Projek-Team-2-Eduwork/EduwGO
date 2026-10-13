@@ -84,13 +84,78 @@ class XenditService
     }
 
     /**
-     * Membuat Payment Request Xendit (QRIS / BANK_TRANSFER / EWALLET) untuk booking
-     * pending lewat Payments API v3. Halaman bayar ditangani sendiri, bukan hosted
-     * checkout (EG-52, format API dimigrasi EG-54).
+     * Katalog channel pembayaran yang didukung (divalidasi ke API Xendit demo).
+     * Tiap channel_code dipetakan ke kategori tampilan + label pada halaman bayar
+     * (EG-55, desain ulang bergaya gateway).
+     *
+     * @var array<string, array{category: string, label: string}>
+     */
+    public const CHANNELS = [
+        'BCA_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'BCA Virtual Account'],
+        'CREDIT_CARD' => ['category' => 'Kartu Kredit', 'label' => 'Visa / Mastercard'],
+        'SHOPEEPAY' => ['category' => 'E-Wallet', 'label' => 'ShopeePay'],
+        'DANA' => ['category' => 'E-Wallet', 'label' => 'DANA'],
+        'OVO' => ['category' => 'E-Wallet', 'label' => 'OVO'],
+        'LINKAJA' => ['category' => 'E-Wallet', 'label' => 'LinkAja!'],
+        'ASTRAPAY' => ['category' => 'E-Wallet', 'label' => 'AstraPay'],
+        'QRIS' => ['category' => 'QR', 'label' => 'QRIS'],
+        'ALFAMART' => ['category' => 'Retail Outlet', 'label' => 'Alfamart'],
+        'INDOMARET' => ['category' => 'Retail Outlet', 'label' => 'Indomaret'],
+    ];
+
+    /**
+     * Menyusun katalog channel per kategori untuk ditampilkan halaman bayar
+     * (EG-55, gaya gateway). Tiap channel membawa channel_code (untuk link
+     * ?metode=), label tampilan, dan ikon SVG inline.
+     *
+     * @return array<int, array{name: string, channels: array<int, array{code: string, label: string, icon: string}>}>
+     */
+    public static function channelCatalog(): array
+    {
+        $icons = [
+            'Virtual Account' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6a2 2 0 012-2h14a2 2 0 012 2M3 6v12a2 2 0 002 2h14a2 2 0 002-2V6m-18 6h18"/>',
+            'Kartu Kredit' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6a2 2 0 012-2h14a2 2 0 012 2M3 6v12a2 2 0 002 2h14a2 2 0 002-2V6m-18 6h18"/>',
+            'E-Wallet' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6a2 2 0 012-2h14a2 2 0 012 2M3 6v12a2 2 0 002 2h14a2 2 0 002-2V6m-18 6h18"/>',
+            'QR' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h6v6H4zM14 6h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>',
+            'Retail Outlet' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4 21V9l8-6 8 6v12M9 21v-6h6v6"/>',
+        ];
+
+        $grouped = [];
+
+        foreach (self::CHANNELS as $code => $meta) {
+            $grouped[$meta['category']][] = [
+                'code' => $code,
+                'label' => $meta['label'],
+                'icon' => $icons[$meta['category']] ?? $icons['QR'],
+            ];
+        }
+
+        $order = ['Virtual Account', 'Kartu Kredit', 'E-Wallet', 'QR', 'Retail Outlet'];
+        $catalog = [];
+
+        foreach ($order as $kategori) {
+            if (! isset($grouped[$kategori])) {
+                continue;
+            }
+
+            $catalog[] = [
+                'name' => $kategori,
+                'channels' => $grouped[$kategori],
+            ];
+        }
+
+        return $catalog;
+    }
+
+    /**
+     * Membuat Payment Request Xendit untuk booking pending lewat Payments API v3.
+     * Halaman bayar ditangani sendiri, bukan hosted checkout (EG-52, format API
+     * dimigrasi EG-54). Channel mengikuti katalog CHANNELS (EG-55); nilai bucket
+     * lama QRIS/BANK_TRANSFER/EWALLET tetap diterima demi kompatibilitas URL lama.
      */
     public function createPaymentRequest(Booking $booking, string $channel = 'QRIS'): Payment
     {
-        $channel = in_array($channel, ['QRIS', 'BANK_TRANSFER', 'EWALLET'], true) ? $channel : 'QRIS';
+        $channel = $this->resolveChannel($channel);
 
         // 1. Idempotensi: pakai payment request pending yang masih berlaku (per channel)
         $existingPayment = Payment::where('booking_id', $booking->id)
@@ -114,7 +179,7 @@ class XenditService
             'country' => 'ID',
             'currency' => 'IDR',
             'request_amount' => (int) $booking->total_amount,
-            'channel_code' => $this->channelCodeV3($channel),
+            'channel_code' => $channel,
             'channel_properties' => $this->channelPropertiesV3($channel, $booking),
             'description' => "Sewa {$booking->vehicle->name} {$durationDays} hari",
             'metadata' => [
@@ -153,15 +218,15 @@ class XenditService
             'gateway_url' => null, // Tidak ada hosted checkout — halaman bayar sendiri
             'gateway_payload' => $data,
             'amount' => $booking->total_amount,
-            'payment_channel' => $channel, // bucket pilihan UI (idempotensi per channel)
+            'payment_channel' => $channel, // channel_code pilihan UI (idempotensi per channel)
             'instructions' => $instructions,
             'expires_at' => Carbon::parse($expiresAt)->setTimezone(config('app.timezone')),
         ]);
     }
 
     /**
-     * Menyusun instruksi pembayaran per bucket channel dari aksi respons
-     * Payments API v3 (EG-52/54). String QR dipisahkan controller untuk kanvas.
+     * Menyusun instruksi pembayaran per channel_code dari aksi respons Payments
+     * API v3 (EG-52/54). String QR dipisahkan controller untuk kanvas.
      *
      * @param  array<int, mixed>  $actions
      * @param  array<string, mixed>  $data
@@ -172,20 +237,30 @@ class XenditService
         $qrString = $this->actionValue($actions, 'QR_STRING');
         $vaNumber = $this->actionValue($actions, 'VIRTUAL_ACCOUNT_NUMBER');
         $payUrl = $this->actionValue($actions, 'DEEPLINK_URL') ?? $this->actionValue($actions, 'WEB_URL');
+        $paymentCode = $this->actionValue($actions, 'PAYMENT_CODE');
+        $label = self::CHANNELS[$channel]['label'] ?? $channel;
 
         if ($channel === 'QRIS') {
             $steps = ['Scan QRIS dengan aplikasi bank atau e-wallet apa pun.'];
-        } elseif ($channel === 'BANK_TRANSFER') {
-            $bank = strtoupper(str_replace('_VIRTUAL_ACCOUNT', '', (string) ($data['channel_code'] ?? 'BCA')));
+        } elseif (str_contains($channel, '_VIRTUAL_ACCOUNT')) {
+            $bank = strtoupper(str_replace('_VIRTUAL_ACCOUNT', '', $channel));
             $bankName = (string) ($data['channel_properties']['display_name'] ?? config('app.name'));
 
             $steps = [
                 'Transfer sesuai nominal ke rekening berikut:',
                 $bank.' '.((string) $vaNumber).' a.n. '.$bankName,
             ];
+        } elseif ($paymentCode) {
+            // Retail outlet (Alfamart / Indomaret): tampilkan kode pembayaran
+            $steps = [
+                'Buka aplikasi '.$label.' atau datang ke gerai terdekat.',
+                'Sebutkan kode pembayaran berikut kepada kasir:',
+                'Kode pembayaran: '.$paymentCode,
+                'Setelah bayar, klik "Saya Sudah Bayar".',
+            ];
         } else {
             $steps = array_values(array_filter([
-                $payUrl ? 'Selesaikan pembayaran lewat e-wallet: '.$payUrl : null,
+                $payUrl ? 'Selesaikan pembayaran lewat '.$label.': '.$payUrl : 'Buka aplikasi '.$label.' untuk menyelesaikan pembayaran.',
                 'Setelah pembayaran selesai, klik "Saya Sudah Bayar".',
             ]));
         }
@@ -214,21 +289,25 @@ class XenditService
     }
 
     /**
-     * Memetakan bucket pilihan UI ke channel_code Xendit Payments API v3
-     * (divalidasi langsung ke API test: QRIS, BCA_VIRTUAL_ACCOUNT, SHOPEEPAY).
+     * Menyelesaikan nilai ?metode= menjadi channel_code yang ada di katalog.
+     * Nilai bucket lawas QRIS/BANK_TRANSFER/EWALLET dipetakan ke channel_code
+     * sekarang; nilai tak dikenal jatuh balik ke QRIS (default).
      */
-    private function channelCodeV3(string $channel): string
+    private function resolveChannel(string $channel): string
     {
-        return match ($channel) {
+        $alias = match ($channel) {
             'BANK_TRANSFER' => 'BCA_VIRTUAL_ACCOUNT',
             'EWALLET' => 'SHOPEEPAY',
-            default => 'QRIS',
+            default => $channel,
         };
+
+        return isset(self::CHANNELS[$alias]) ? $alias : 'QRIS';
     }
 
     /**
-     * Persyaratan channel_properties per channel_code v3: QRIS butuh masa
-     * berlaku, VA butuh nama tampilan, e-wallet butuh URL kembalikan pembeli.
+     * Persyaratan channel_properties per channel_code v3 (divalidasi ke API demo):
+     * QRIS butuh masa berlaku, VA butuh nama tampilan, e-wallet butuh URL kembalikan
+     * pembeli (OVO + nomor HP), retail butuh nama pembayar.
      *
      * @return array<string, string>
      */
@@ -240,14 +319,32 @@ class XenditService
             ];
         }
 
-        if ($channel === 'BANK_TRANSFER') {
+        if (str_contains($channel, '_VIRTUAL_ACCOUNT')) {
             return ['display_name' => (string) config('app.name')];
         }
 
-        return [
+        if ($channel === 'ALFAMART' || $channel === 'INDOMARET') {
+            return ['payer_name' => $booking->user->name ?? 'Penyewa'];
+        }
+
+        $returnUrls = [
             'success_return_url' => route('booking.success', $booking->code),
             'failure_return_url' => route('booking.failed', $booking->code),
         ];
+
+        // OVO mewajibkan nomor HP pembeli dalam format E.164 (+62..., tanpa nol depan)
+        if ($channel === 'OVO') {
+            $phone = preg_replace('/\D/', '', (string) ($booking->user->phone ?? ''));
+            $phone = ltrim($phone, '0');
+
+            if (str_starts_with($phone, '62')) {
+                $returnUrls['account_mobile_number'] = '+'.$phone;
+            } elseif (str_starts_with($phone, '8')) {
+                $returnUrls['account_mobile_number'] = '+62'.$phone;
+            }
+        }
+
+        return $returnUrls;
     }
 
     /**

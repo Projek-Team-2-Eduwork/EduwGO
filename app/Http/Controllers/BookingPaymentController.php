@@ -63,10 +63,16 @@ class BookingPaymentController extends Controller
             return redirect()->route('booking.failed', $booking->code);
         }
 
-        // Metode yang dipilih penyewa (default QRIS) — nilai lain diabaikan
-        $channels = ['QRIS', 'BANK_TRANSFER', 'EWALLET'];
+        // Metode yang dipilih penyewa (default QRIS) — nilai tak dikenal jatuh balik ke QRIS
         $channel = strtoupper((string) $request->query('metode', 'QRIS'));
-        $channel = in_array($channel, $channels, true) ? $channel : 'QRIS';
+
+        if (! isset(XenditService::CHANNELS[$channel])) {
+            $channel = match ($channel) {
+                'BANK_TRANSFER' => 'BCA_VIRTUAL_ACCOUNT',
+                'EWALLET' => 'SHOPEEPAY',
+                default => 'QRIS',
+            };
+        }
 
         // Payment request dibuat lazily saat halaman dibuka (idempoten per channel)
         try {
@@ -81,6 +87,7 @@ class BookingPaymentController extends Controller
                 'booking' => $booking,
                 'payment' => null,
                 'channel' => $channel,
+                'kategoriKanal' => XenditService::channelCatalog(),
                 'steps' => [],
                 'qrString' => null,
                 'error' => 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.',
@@ -120,6 +127,7 @@ class BookingPaymentController extends Controller
             'booking' => $booking,
             'payment' => $payment,
             'channel' => $channel,
+            'kategoriKanal' => XenditService::channelCatalog(),
             'steps' => array_values($steps),
             'qrString' => $qrString,
             'error' => null,

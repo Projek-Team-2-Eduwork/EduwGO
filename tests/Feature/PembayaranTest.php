@@ -165,7 +165,7 @@ class PembayaranTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'booking_id' => $this->booking->id,
-            'payment_channel' => 'BANK_TRANSFER',
+            'payment_channel' => 'BCA_VIRTUAL_ACCOUNT',
             'gateway_reference' => 'pr-va-123',
         ]);
     }
@@ -182,6 +182,15 @@ class PembayaranTest extends TestCase
             ->assertSee('887766554412');
 
         Http::assertSentCount(1);
+        // ?metode=BANK_TRANSFER (bucket lawas) dipetakan ke channel_code BCA_VIRTUAL_ACCOUNT
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $this->booking->id,
+            'payment_channel' => 'QRIS',
+        ]);
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $this->booking->id,
+            'payment_channel' => 'BCA_VIRTUAL_ACCOUNT',
+        ]);
         $this->assertSame(2, Payment::where('booking_id', $this->booking->id)->count());
     }
 
@@ -253,5 +262,74 @@ class PembayaranTest extends TestCase
             ->get('/pembayaran/BOOK-PBR-001')
             ->assertOk()
             ->assertSee('Metode pembayaran belum tersedia');
+    }
+
+    public function test_halaman_bayar_menampilkan_katalog_channel_per_kategori()
+    {
+        Http::fake(['api.xendit.co/*' => Http::response($this->fakeQrisResponse())]);
+
+        $this->actingAs($this->user)
+            ->get('/pembayaran/BOOK-PBR-001')
+            ->assertOk()
+            ->assertSee('Pilih Metode Pembayaran')
+            ->assertSee('Virtual Account')
+            ->assertSee('Kartu Kredit')
+            ->assertSee('E-Wallet')
+            ->assertSee('QR')
+            ->assertSee('Retail Outlet')
+            ->assertSee('BCA Virtual Account')
+            ->assertSee('ShopeePay')
+            ->assertSee('QRIS')
+            ->assertSee('Alfamart')
+            ->assertSee('Indomaret');
+    }
+
+    public function test_pilih_metode_ovo_mengirim_nomor_hp_penyewa()
+    {
+        $this->user->update(['phone' => '081234567890']);
+
+        Http::fake(['api.xendit.co/*' => Http::response([
+            'payment_request_id' => 'pr-ovo-123',
+            'reference_id' => 'BOOK-PBR-001',
+            'status' => 'REQUIRES_ACTION',
+            'channel_code' => 'OVO',
+            'actions' => [['type' => 'DEEPLINK_URL', 'value' => 'https://shopeepay.example/abc']],
+            'channel_properties' => ['expires_at' => now()->addHour()->toIso8601String()],
+        ])]);
+
+        $this->actingAs($this->user)
+            ->get('/pembayaran/BOOK-PBR-001?metode=OVO')
+            ->assertOk()
+            ->assertSee('OVO');
+
+        Http::assertSent(fn ($request) => $request['channel_code'] === 'OVO'
+            && $request['channel_properties']['account_mobile_number'] === '+6281234567890');
+
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $this->booking->id,
+            'payment_channel' => 'OVO',
+        ]);
+    }
+
+    public function test_pilih_metode_retail_menampilkan_kode_pembayaran()
+    {
+        Http::fake(['api.xendit.co/*' => Http::response([
+            'payment_request_id' => 'pr-alfamart-123',
+            'reference_id' => 'BOOK-PBR-001',
+            'status' => 'REQUIRES_ACTION',
+            'channel_code' => 'ALFAMART',
+            'actions' => [['type' => 'PRESENT_TO_CUSTOMER', 'descriptor' => 'PAYMENT_CODE', 'value' => 'TESTCODE123']],
+            'channel_properties' => ['expires_at' => now()->addHour()->toIso8601String()],
+        ])]);
+
+        $this->actingAs($this->user)
+            ->get('/pembayaran/BOOK-PBR-001?metode=ALFAMART')
+            ->assertOk()
+            ->assertSee('Kode pembayaran: TESTCODE123');
+
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $this->booking->id,
+            'payment_channel' => 'ALFAMART',
+        ]);
     }
 }
