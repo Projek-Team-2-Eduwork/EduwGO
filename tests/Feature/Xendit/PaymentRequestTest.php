@@ -50,16 +50,15 @@ class PaymentRequestTest extends TestCase
     private function paymentRequestResponse(): array
     {
         return [
-            'id' => 'pr-123',
+            'payment_request_id' => 'pr-123',
             'reference_id' => 'BOOK-PR-001',
-            'status' => 'PENDING',
-            'payment_method' => [
-                'id' => 'pm-123',
-                'type' => 'QRIS',
-                'qr_code' => [
-                    'qr_string' => self::QR_STRING,
-                    'expires_at' => now()->addHour()->toIso8601String(),
-                ],
+            'status' => 'REQUIRES_ACTION',
+            'channel_code' => 'QRIS',
+            'channel_properties' => [
+                'expires_at' => now()->addHour()->toIso8601String(),
+            ],
+            'actions' => [
+                ['type' => 'PRESENT_TO_CUSTOMER', 'descriptor' => 'QR_STRING', 'value' => self::QR_STRING],
             ],
         ];
     }
@@ -81,9 +80,9 @@ class PaymentRequestTest extends TestCase
             'event' => $event,
             'business_id' => 'business-123',
             'data' => array_merge([
-                'id' => 'pr-123',
+                'payment_request_id' => 'pr-123',
                 'reference_id' => 'BOOK-PR-001',
-                'status' => $event === 'payment.paid' ? 'SUCCEEDED' : 'FAILED',
+                'status' => in_array($event, ['payment.paid', 'payment.capture'], true) ? 'SUCCEEDED' : 'FAILED',
             ], $dataOverrides),
         ];
     }
@@ -107,10 +106,12 @@ class PaymentRequestTest extends TestCase
 
         $payment = app(XenditService::class)->createPaymentRequest($this->booking, 'QRIS');
 
-        Http::assertSent(fn ($request) => str_contains($request->url(), '/payment_requests')
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/v3/payment_requests')
             && $request['reference_id'] === 'BOOK-PR-001'
-            && $request['payment_methods'] === ['QRIS']
-            && $request['amount'] === 150000);
+            && $request['type'] === 'PAY'
+            && $request['channel_code'] === 'QRIS'
+            && $request['request_amount'] === 150000
+            && $request->hasHeader('api-version'));
 
         $this->assertDatabaseHas('payments', [
             'id' => $payment->id,
@@ -142,8 +143,8 @@ class PaymentRequestTest extends TestCase
     {
         $this->seedPaymentRequest();
 
-        $this->webhook($this->paymentRequestPayload('payment.paid', [
-            'succeeded_at' => '2026-10-12T12:00:00.000Z',
+        $this->webhook($this->paymentRequestPayload('payment.capture', [
+            'captures' => [['capture_timestamp' => '2026-10-12T12:00:00.000Z']],
         ]))->assertStatus(200)->assertJson(['status' => 'ok']);
 
         $payment = Payment::where('gateway_reference', 'pr-123')->first();
@@ -155,20 +156,20 @@ class PaymentRequestTest extends TestCase
             'from_status' => 'pending',
             'to_status' => 'paid',
         ]);
-        $this->assertSame('payment.paid', $payment->gateway_payload['event']);
+        $this->assertSame('payment.capture', $payment->gateway_payload['event']);
     }
 
     public function test_webhook_payment_paid_ganda_idempoten()
     {
         $this->seedPaymentRequest();
 
-        $this->webhook($this->paymentRequestPayload('payment.paid', [
-            'succeeded_at' => '2026-10-12T12:00:00.000Z',
+        $this->webhook($this->paymentRequestPayload('payment.capture', [
+            'captures' => [['capture_timestamp' => '2026-10-12T12:00:00.000Z']],
         ]))->assertStatus(200);
 
         // Kirim ulang event yang sama persis
-        $this->webhook($this->paymentRequestPayload('payment.paid', [
-            'succeeded_at' => '2026-10-12T12:00:00.000Z',
+        $this->webhook($this->paymentRequestPayload('payment.capture', [
+            'captures' => [['capture_timestamp' => '2026-10-12T12:00:00.000Z']],
         ]))->assertStatus(200);
 
         $this->assertSame('paid', Payment::where('gateway_reference', 'pr-123')->first()->status);
@@ -180,7 +181,7 @@ class PaymentRequestTest extends TestCase
     {
         $this->seedPaymentRequest();
 
-        $this->webhook($this->paymentRequestPayload('payment.failed', [
+        $this->webhook($this->paymentRequestPayload('payment.failure', [
             'failure_code' => 'USER_CANCELLED',
         ]))->assertStatus(200);
 
@@ -189,22 +190,37 @@ class PaymentRequestTest extends TestCase
         $this->assertSame('pending', $payment->status);
         $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);
         $this->assertSame(0, $this->booking->histories()->count());
-        $this->assertSame('payment.failed', $payment->gateway_payload['event'], 'payload wajib tercatat');
+        $this->assertSame('payment.failure', $payment->gateway_payload['event'], 'payload wajib tercatat');
     }
 
     public function test_webhook_payment_request_tidak_dikenal_404()
     {
-        $this->webhook($this->paymentRequestPayload('payment.paid'))->assertStatus(404);
+        $this->webhook($this->paymentRequestPayload('payment.capture'))->assertStatus(404);
     }
 
     public function test_webhook_ditolak_403_jika_token_salah()
     {
         $this->seedPaymentRequest();
 
-        $this->webhook($this->paymentRequestPayload('payment.paid'), 'token-salah')->assertStatus(403);
-        $this->webhook($this->paymentRequestPayload('payment.paid'), null)->assertStatus(403);
+        $this->webhook($this->paymentRequestPayload('payment.capture'), 'token-salah')->assertStatus(403);
+        $this->webhook($this->paymentRequestPayload('payment.capture'), null)->assertStatus(403);
 
         $this->assertSame('pending', Payment::where('gateway_reference', 'pr-123')->first()->status);
         $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);
+    }
+
+    public function test_webhook_event_lama_payment_paid_masih_diterima()
+    {
+        $this->seedPaymentRequest();
+
+        // Payload versi lama: identifikasi memakai "id", waktu memakai "succeeded_at"
+        $this->webhook($this->paymentRequestPayload('payment.paid', [
+            'payment_request_id' => null,
+            'id' => 'pr-123',
+            'succeeded_at' => '2026-10-12T12:00:00.000Z',
+        ]))->assertStatus(200);
+
+        $this->assertSame('paid', Payment::where('gateway_reference', 'pr-123')->first()->status);
+        $this->assertSame(BookingStatus::Paid, $this->booking->refresh()->status);
     }
 }

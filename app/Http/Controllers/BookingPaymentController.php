@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BookingPaymentController extends Controller
 {
@@ -27,6 +28,12 @@ class BookingPaymentController extends Controller
             return redirect()->route('booking.failed', $booking->code);
         }
 
+        // Mode Payment Request (EG-52/53): arahkan ke halaman bayar sendiri.
+        // Mode 'invoice' (default) tetap pakai halaman waiting lama — rollback aman.
+        if (config('services.xendit.mode', 'invoice') === 'payment_request') {
+            return redirect()->route('booking.bayar', $booking->code);
+        }
+
         try {
             $payment = $xenditService->createInvoice($booking);
         } catch (\Exception $e) {
@@ -34,6 +41,89 @@ class BookingPaymentController extends Controller
         }
 
         return view('booking.waiting', compact('booking', 'payment'));
+    }
+
+    /**
+     * Halaman bayar sendiri (Xendit Payment Request): pilih metode lalu lihat
+     * instruksi pembayaran (QR / nomor rekening) tanpa hosted checkout (EG-53).
+     */
+    public function bayar(Request $request, $code, XenditService $xenditService)
+    {
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        if ($booking->status !== BookingStatus::Pending) {
+            if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
+                return redirect()->route('booking.success', $booking->code);
+            }
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
+        // Metode yang dipilih penyewa (default QRIS) — nilai lain diabaikan
+        $channels = ['QRIS', 'BANK_TRANSFER', 'EWALLET'];
+        $channel = strtoupper((string) $request->query('metode', 'QRIS'));
+        $channel = in_array($channel, $channels, true) ? $channel : 'QRIS';
+
+        // Payment request dibuat lazily saat halaman dibuka (idempoten per channel)
+        try {
+            $payment = $xenditService->createPaymentRequest($booking, $channel);
+        } catch (\Exception $e) {
+            Log::channel('xendit')->error('Halaman bayar: gagal membuat payment request.', [
+                'booking' => $booking->code,
+                'error' => $e->getMessage(),
+            ]);
+
+            return view('booking.bayar', [
+                'booking' => $booking,
+                'payment' => null,
+                'channel' => $channel,
+                'steps' => [],
+                'qrString' => null,
+                'error' => 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.',
+            ]);
+        }
+
+        // Pisahkan string QR dari langkah instruksi. Sumber utama: aksi QR_STRING
+        // pada gateway_payload (mode test Xendit tidak memakai prefix EMV 000201);
+        // fallback lama dipertahankan untuk baris payment format lawas.
+        $steps = is_array($payment->instructions ?? null) ? $payment->instructions : [];
+        $payload = $payment->gateway_payload ?? null;
+
+        // Baris lama bisa tersimpan double-encoded (string JSON dalam kolom json)
+        if (is_string($payload)) {
+            $payload = json_decode($payload, true);
+        }
+
+        $payload = is_array($payload) ? $payload : [];
+        $qrString = null;
+
+        foreach (is_array($payload['actions'] ?? null) ? $payload['actions'] : [] as $action) {
+            if (($action['descriptor'] ?? null) === 'QR_STRING' && ! empty($action['value'])) {
+                $qrString = (string) $action['value'];
+
+                break;
+            }
+        }
+
+        foreach ($steps as $index => $step) {
+            if (is_string($step) && ($step === $qrString || str_starts_with($step, '000201'))) {
+                $qrString ??= $step;
+                unset($steps[$index]);
+            }
+        }
+
+        return view('booking.bayar', [
+            'booking' => $booking,
+            'payment' => $payment,
+            'channel' => $channel,
+            'steps' => array_values($steps),
+            'qrString' => $qrString,
+            'error' => null,
+        ]);
     }
 
     public function success(Request $request, $code)
