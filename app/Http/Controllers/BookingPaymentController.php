@@ -172,12 +172,19 @@ class BookingPaymentController extends Controller
         return view('booking.failed', ['booking' => $booking]);
     }
 
-    public function status(Request $request, $code)
+    public function status(Request $request, $code, XenditService $xenditService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
         if ($booking->user_id !== $request->user()->id) {
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        // Selaraskan dengan API Xendit bila masih pending (EG-56): polling "Saya
+        // Sudah Bayar" jadi tetap ke-deteksi walau webhook telat/putus di mode test
+        if ($booking->status === BookingStatus::Pending) {
+            $xenditService->syncPaymentStatus($booking);
+            $booking->refresh();
         }
 
         $lunas = [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned];

@@ -194,6 +194,66 @@ class PembayaranTest extends TestCase
         $this->assertSame(2, Payment::where('booking_id', $this->booking->id)->count());
     }
 
+    public function test_polling_selaraskan_status_via_api_ketika_webhook_belum_masuk()
+    {
+        // Booking masih pending, webhook test gak pernah nyampe ke localhost.
+        // Polling "Saya Sudah Bayar" harus cek langsung ke API Xendit (EG-56).
+        config(['services.xendit.mode' => 'payment_request']);
+        $payment = $this->seedQrisPayment();
+
+        Http::fake([
+            'api.xendit.co/v3/payment_requests/*' => Http::response([
+                'payment_request_id' => $payment->gateway_reference,
+                'status' => 'SUCCEEDED',
+                'succeeded_at' => now()->toIso8601String(),
+            ]),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('booking.status', $this->booking->code))
+            ->assertOk()
+            ->assertJson(['status' => 'paid', 'paid' => true]);
+
+        // API Xendit disentuh, lalu status lokal ke-deteksi walau webhook gak masuk
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/v3/payment_requests/'.$payment->gateway_reference));
+        $this->assertSame('paid', $payment->fresh()->status);
+        $this->assertSame(BookingStatus::Paid, $this->booking->fresh()->status);
+    }
+
+    public function test_polling_belum_bayar_biarkan_pending_ketika_api_balas_requires_action()
+    {
+        config(['services.xendit.mode' => 'payment_request']);
+        $this->seedQrisPayment();
+
+        Http::fake([
+            'api.xendit.co/v3/payment_requests/*' => Http::response([
+                'payment_request_id' => 'pr-qris-123',
+                'status' => 'REQUIRES_ACTION',
+            ]),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('booking.status', $this->booking->code))
+            ->assertOk()
+            ->assertJson(['status' => 'pending', 'paid' => false]);
+    }
+
+    public function test_polling_tetap_pending_ketika_cek_api_gagal()
+    {
+        // Cek API gagal (mis. key bermasalah) bukan fatal — webhook tetap sumber kebenaran
+        config(['services.xendit.mode' => 'payment_request']);
+        $this->seedQrisPayment();
+
+        Http::fake([
+            'api.xendit.co/v3/payment_requests/*' => Http::response(['message' => 'server error'], 500),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('booking.status', $this->booking->code))
+            ->assertOk()
+            ->assertJson(['status' => 'pending', 'paid' => false]);
+    }
+
     public function test_polling_setelah_webhook_paid_mengalihkan_ke_berhasil()
     {
         $this->seedQrisPayment();

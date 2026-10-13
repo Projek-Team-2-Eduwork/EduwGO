@@ -426,6 +426,77 @@ class XenditService
     }
 
     /**
+     * Menyelaraskan status payment request dengan API Xendit tanpa menunggu
+     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56): kalo webhook telat
+     * nyampe (atau gak nyampe di mode test), status ke-deteksi juga. Aman dipanggil
+     * berkali-kali — applyInvoiceStatus idempoten.
+     */
+    public function syncPaymentStatus(Booking $booking): void
+    {
+        $payment = Payment::where('booking_id', $booking->id)
+            ->where('method', 'xendit_payment_request')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if (! $payment || ! $payment->gateway_reference) {
+            return;
+        }
+
+        // Mode invoice (rollback) gak punya payment request — jangan disentuh
+        if (config('services.xendit.mode', 'invoice') !== 'payment_request') {
+            return;
+        }
+
+        try {
+            $data = $this->getPaymentRequest($payment->gateway_reference);
+        } catch (Exception $e) {
+            // Gagal cek bukan hal fatal — biarkan webhook yang jadi sumber kebenaran
+            Log::channel('xendit')->warning('Gagal menyelaraskan status payment request.', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        $status = strtoupper((string) ($data['status'] ?? ''));
+        $map = ['SUCCEEDED' => 'PAID', 'FAILED' => 'FAILED', 'EXPIRED' => 'EXPIRED'];
+
+        if (! isset($map[$status])) {
+            return; // REQUIRES_ACTION / PENDING / lainnya → belum bayar
+        }
+
+        $this->paymentService->applyInvoiceStatus($payment, [
+            'status' => $map[$status],
+            'paid_at' => $data['succeeded_at']
+                ?? $data['payment']['paid_at']
+                ?? $data['updated']
+                ?? null,
+        ]);
+    }
+
+    /**
+     * Mengambil detail payment request dari Payments API v3 berdasarkan ID.
+     *
+     * @return array<string, mixed>
+     */
+    private function getPaymentRequest(string $id): array
+    {
+        $secretKey = config('services.xendit.secret_key', env('XENDIT_SECRET_KEY'));
+
+        $response = Http::withBasicAuth($secretKey, '')
+            ->withHeaders(['api-version' => self::API_VERSION])
+            ->get('https://api.xendit.co/v3/payment_requests/'.$id);
+
+        if (! $response->successful()) {
+            throw new Exception('Gagal mengambil status payment request Xendit: '.$response->body());
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Mendapatkan detail invoice dari API Xendit berdasarkan reference ID.
      */
     public function getInvoice(string $reference): array
