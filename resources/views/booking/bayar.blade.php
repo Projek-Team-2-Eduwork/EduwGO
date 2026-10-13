@@ -61,7 +61,7 @@
             </div>
         @else
             {{-- Instruksi pembayaran --}}
-            <div class="card-surface p-6" x-data="bayarPembayaran({{ json_encode(route('booking.status', $booking->code)) }}, {{ json_encode(route('booking.success', $booking->code)) }})">
+            <div class="card-surface p-6" x-data="bayarPembayaran({{ json_encode(route('booking.status', $booking->code)) }}, {{ json_encode(route('booking.show', $booking->code)) }})">
                 <h2 class="mb-4 font-semibold text-[var(--navy-900)]">Instruksi Pembayaran</h2>
 
                 @if ($qrString)

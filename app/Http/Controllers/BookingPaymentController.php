@@ -57,7 +57,7 @@ class BookingPaymentController extends Controller
 
         if ($booking->status !== BookingStatus::Pending) {
             if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
-                return redirect()->route('booking.success', $booking->code);
+                return redirect()->route('booking.show', $booking->code)->with('bayar_berhasil', true);
             }
 
             return redirect()->route('booking.failed', $booking->code);
@@ -173,10 +173,18 @@ class BookingPaymentController extends Controller
         }
 
         $lunas = [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned];
+        $paid = in_array($booking->status, $lunas, true);
+
+        // Notifikasi sukses "sekali baca" untuk halaman detail pesanan. Diset di
+        // sini agar redirect JS halaman bayar (pembayaran baru terkonfirmasi)
+        // langsung menampilkan notifikasi di /pesanan/{code}.
+        if ($paid) {
+            session()->flash('bayar_berhasil', true);
+        }
 
         return response()->json([
             'status' => $booking->status->value,
-            'paid' => in_array($booking->status, $lunas, true),
+            'paid' => $paid,
         ]);
     }
 

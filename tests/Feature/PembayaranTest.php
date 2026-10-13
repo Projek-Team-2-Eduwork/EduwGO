@@ -119,7 +119,13 @@ class PembayaranTest extends TestCase
 
         $this->actingAs($this->user)
             ->get('/pembayaran/BOOK-PBR-001')
-            ->assertRedirect(route('booking.success', $this->booking->code));
+            ->assertRedirect(route('booking.show', $this->booking->code));
+
+        // Halaman detail menampilkan notifikasi sukses (sekali baca)
+        $this->actingAs($this->user)
+            ->get(route('booking.show', $this->booking->code))
+            ->assertOk()
+            ->assertSee('Pembayaran berhasil!');
     }
 
     public function test_pembukaan_pertama_membuat_qris_dan_menampilkan_instruksi()
@@ -192,16 +198,30 @@ class PembayaranTest extends TestCase
             ],
         ], ['x-callback-token' => self::TOKEN])->assertOk();
 
-        // Route polling yang dipakai tombol "Saya Sudah Bayar"
-        $this->actingAs($this->user)
-            ->get(route('booking.status', $this->booking->code))
-            ->assertOk()
-            ->assertJson(['status' => 'paid', 'paid' => true]);
+        // Route polling yang dipakai tombol "Saya Sudah Bayar" — menyiapkan
+        // notifikasi sekali-baca untuk halaman detail pesanan
+        $statusResponse = $this->actingAs($this->user)
+            ->get(route('booking.status', $this->booking->code));
 
-        // Halaman bayar mengalihkan otomatis ke halaman berhasil
+        $statusResponse->assertOk()
+            ->assertJson(['status' => 'paid', 'paid' => true])
+            ->assertSessionHas('bayar_berhasil');
+
+        // Halaman bayar mengalihkan otomatis ke halaman detail pesanan
         $this->actingAs($this->user)
             ->get('/pembayaran/BOOK-PBR-001')
-            ->assertRedirect(route('booking.success', $this->booking->code));
+            ->assertRedirect(route('booking.show', $this->booking->code));
+    }
+
+    public function test_halaman_detail_setelah_bayar_menampilkan_langkah_selanjutnya()
+    {
+        $this->booking->update(['status' => BookingStatus::Paid]);
+
+        $this->actingAs($this->user)
+            ->get(route('booking.show', $this->booking->code))
+            ->assertOk()
+            ->assertSee('Langkah Selanjutnya')
+            ->assertSee('KTP atau SIM');
     }
 
     public function test_api_gagal_menampilkan_pesan_error_dan_retry()
