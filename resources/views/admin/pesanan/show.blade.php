@@ -144,7 +144,7 @@
                                                 <div class="font-medium capitalize text-[var(--navy-900)]">{{ str_replace('_', ' ', $p->method) }}</div>
                                                 <div class="mt-1 font-mono text-xs">{{ $p->gateway_reference }}</div>
                                             </td>
-                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-emerald-600 dark:text-emerald-400' : '' }}">{{ $p->status }}</td>
+                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-emerald-700 dark:text-emerald-400' : '' }}">{{ $p->status }}</td>
                                             <td class="px-4 py-3 text-xs">{{ $p->paid_at ? $p->paid_at->translatedFormat('d M Y H:i') : '-' }}</td>
                                         </tr>
                                     @empty

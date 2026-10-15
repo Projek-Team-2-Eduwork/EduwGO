@@ -62,26 +62,26 @@
 
                             <div>
                                 <x-input-label for="brand_description" value="Deskripsi Singkat (Profil Perusahaan)" />
-                                <textarea id="brand_description" name="brand_description" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('brand_description', setting('brand.description')) }}</textarea>
+                                <textarea id="brand_description" name="brand_description" rows="3" class="mt-1 block w-full rounded-md shadow-sm">{{ old('brand_description', setting('brand.description')) }}</textarea>
                                 <x-input-error :messages="$errors->get('brand_description')" class="mt-2" />
                             </div>
 
                             <div class="space-y-4">
                                 <div>
                                     <x-input-label for="brand_logo_light" value="Logo Mode Terang (Max 512KB)" />
-                                    <input type="file" id="brand_logo_light" name="brand_logo_light" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-gray-500">
+                                    <input type="file" id="brand_logo_light" name="brand_logo_light" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-[var(--ink-muted)]">
                                     <x-input-error :messages="$errors->get('brand_logo_light')" class="mt-2" />
-                                    @if(setting('brand.logo_light')) <p class="text-xs text-gray-500 mt-1">Logo saat ini telah terpasang.</p> @endif
+                                    @if(setting('brand.logo_light')) <p class="text-xs text-[var(--ink-muted)] mt-1">Logo saat ini telah terpasang.</p> @endif
                                 </div>
                                 <div>
                                     <x-input-label for="brand_logo_dark" value="Logo Mode Gelap (Max 512KB)" />
-                                    <input type="file" id="brand_logo_dark" name="brand_logo_dark" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-gray-500">
+                                    <input type="file" id="brand_logo_dark" name="brand_logo_dark" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-[var(--ink-muted)]">
                                     <x-input-error :messages="$errors->get('brand_logo_dark')" class="mt-2" />
-                                    @if(setting('brand.logo_dark')) <p class="text-xs text-gray-500 mt-1">Logo dark saat ini telah terpasang.</p> @endif
+                                    @if(setting('brand.logo_dark')) <p class="text-xs text-[var(--ink-muted)] mt-1">Logo dark saat ini telah terpasang.</p> @endif
                                 </div>
                                 <div>
                                     <x-input-label for="brand_favicon" value="Favicon (Max 512KB)" />
-                                    <input type="file" id="brand_favicon" name="brand_favicon" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-gray-500">
+                                    <input type="file" id="brand_favicon" name="brand_favicon" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-[var(--ink-muted)]">
                                     <x-input-error :messages="$errors->get('brand_favicon')" class="mt-2" />
                                 </div>
                             </div>
@@ -92,13 +92,13 @@
                             <div>
                                 <x-input-label for="contact_whatsapp" value="WhatsApp Admin (62xxx) *" />
                                 <x-text-input id="contact_whatsapp" name="contact_whatsapp" type="text" class="mt-1 block w-full" :value="old('contact_whatsapp', setting('contact.whatsapp', '6281234567890'))" required />
-                                <p class="text-xs text-gray-500 mt-1">Wajib diawali angka 62 tanpa spasi/plus.</p>
+                                <p class="text-xs text-[var(--ink-muted)] mt-1">Wajib diawali angka 62 tanpa spasi/plus.</p>
                                 <x-input-error :messages="$errors->get('contact_whatsapp')" class="mt-2" />
                             </div>
 
                             <div>
                                 <x-input-label for="contact_address" value="Alamat Toko" />
-                                <textarea id="contact_address" name="contact_address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('contact_address', setting('contact.address')) }}</textarea>
+                                <textarea id="contact_address" name="contact_address" rows="3" class="mt-1 block w-full rounded-md shadow-sm">{{ old('contact_address', setting('contact.address')) }}</textarea>
                             </div>
 
                             <div>
@@ -146,7 +146,7 @@
 
                             <div>
                                 <x-input-label for="content_terms" value="Syarat & Ketentuan (1 Poin per baris)" />
-                                <textarea id="content_terms" name="content_terms" rows="8" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('content_terms', setting('content.terms')) }}</textarea>
+                                <textarea id="content_terms" name="content_terms" rows="8" class="mt-1 block w-full rounded-md shadow-sm">{{ old('content_terms', setting('content.terms')) }}</textarea>
                             </div>
                         </div>
 

@@ -49,12 +49,12 @@
                     </div>
                     <div class="md:col-span-1">
                         <x-input-label for="mulai" value="Mulai" />
-                        <x-text-input id="mulai" type="datetime-local" name="mulai" value="{{ request('mulai') }}" class="w-full mt-1" />
+                        <x-text-input id="mulai" type="datetime-local" name="mulai" value="{{ request('mulai') }}" class="w-full min-w-0 mt-1" />
                     </div>
                     <div class="md:col-span-1">
                         <x-input-label for="selesai" value="Selesai" />
                         <div class="flex gap-2 items-start mt-1">
-                            <x-text-input id="selesai" type="datetime-local" name="selesai" value="{{ request('selesai') }}" class="w-full" />
+                            <x-text-input id="selesai" type="datetime-local" name="selesai" value="{{ request('selesai') }}" class="w-full min-w-0" />
                             <x-primary-button type="submit" class="px-4 py-3">Cari</x-primary-button>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 @foreach ([
                     'pending' => ['label' => 'Pending', 'color' => 'text-[var(--orange-500)]'],
-                    'sukses' => ['label' => 'Sukses', 'color' => 'text-emerald-600 dark:text-emerald-400'],
+                    'sukses' => ['label' => 'Sukses', 'color' => 'text-emerald-700 dark:text-emerald-400'],
                     'expired' => ['label' => 'Expired', 'color' => 'text-red-600 dark:text-red-400'],
                 ] as $key => $card)
                     <a href="{{ $statusHref($key) }}"
@@ -93,7 +93,7 @@
                 @else
                     <!-- Tabel Desktop -->
                     <div class="hidden md:block overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <table class="w-full text-sm text-left text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
                                 <tr>
                                     <th class="px-4 py-3">Kendaraan</th>
@@ -112,18 +112,18 @@
                                                 <img src="{{ asset($b->vehicle->image) }}" class="w-12 h-12 rounded object-cover">
                                             @else
                                                 <div class="w-12 h-12 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                                    <svg class="w-6 h-6 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                                 </div>
                                             @endif
                                             <div>
                                                 <div class="font-bold text-gray-900 dark:text-gray-100">{{ $b->vehicle?->name ?? 'Kendaraan Dihapus' }}</div>
-                                                <div class="text-xs text-gray-500">{{ $b->customer_name }}</div>
+                                                <div class="text-xs text-[var(--ink-muted)]">{{ $b->customer_name }}</div>
                                             </div>
                                         </td>
                                         <td class="px-4 py-3 font-mono font-medium">{{ $b->code }}</td>
                                         <td class="px-4 py-3 text-xs">
                                             <div class="font-medium text-gray-800 dark:text-gray-200">{{ $b->start_at->translatedFormat('d M Y H:i') }}</div>
-                                            <div class="text-gray-500">{{ $b->duration_days }} hari</div>
+                                            <div class="text-[var(--ink-muted)]">{{ $b->duration_days }} hari</div>
                                         </td>
                                         <td class="px-4 py-3">
                                             <x-badge-status :status="$b->status" />
@@ -165,14 +165,14 @@
                                         <img src="{{ asset($b->vehicle->image) }}" class="w-16 h-16 rounded object-cover">
                                     @else
                                         <div class="w-16 h-16 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                            <svg class="w-8 h-8 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                             </svg>
                                         </div>
                                     @endif
                                     <div>
                                         <div class="font-bold text-gray-900 dark:text-gray-100">{{ $b->vehicle?->name ?? 'Dihapus' }}</div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ $b->customer_name }}</div>
-                                        <div class="text-xs text-gray-500 mt-1">{{ $b->start_at->translatedFormat('d M Y H:i') }} ({{ $b->duration_days }} hr)</div>
+                                        <div class="text-sm text-gray-600 dark:text-[var(--ink-muted)]">{{ $b->customer_name }}</div>
+                                        <div class="text-xs text-[var(--ink-muted)] mt-1">{{ $b->start_at->translatedFormat('d M Y H:i') }} ({{ $b->duration_days }} hr)</div>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center mt-2">
@@ -189,7 +189,7 @@
                 @endif
                 
                 <div class="border-t border-[var(--border)] p-4">
-                    {{ $bookings->links() }}
+                    {{ $bookings->links('components.pagination') }}
                 </div>
             </div>
 

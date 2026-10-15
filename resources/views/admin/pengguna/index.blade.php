@@ -54,7 +54,7 @@
                                         <div class="flex items-center justify-end gap-3" x-data>
                                             <form action="{{ route('admin.pengguna.toggle', $user->id) }}" method="POST">
                                                 @csrf
-                                                <button type="submit" class="text-xs font-medium underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)] {{ $user->is_active ? 'text-red-600' : 'text-emerald-600' }}">
+                                                <button type="submit" class="text-xs font-medium underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)] {{ $user->is_active ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400' }}">
                                                     {{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                                 </button>
                                             </form>
@@ -91,7 +91,7 @@
                                 <div class="flex gap-3">
                                     <form action="{{ route('admin.pengguna.toggle', $user->id) }}" method="POST">
                                         @csrf
-                                        <button class="text-sm font-medium underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)] {{ $user->is_active ? 'text-red-600' : 'text-emerald-600' }}">
+                                        <button class="text-sm font-medium underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)] {{ $user->is_active ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400' }}">
                                             {{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                         </button>
                                     </form>
@@ -110,7 +110,7 @@
                 @endif
                 
                 <div class="border-t border-[var(--border)] p-4">
-                    {{ $users->links() }}
+                    {{ $users->links('components.pagination') }}
                 </div>
             </div>
         </div>

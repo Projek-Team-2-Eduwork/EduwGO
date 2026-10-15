@@ -42,10 +42,6 @@
                             <div class="text-sm">Belum ada data rental.</div>
                         @else
                             <canvas id="topVehiclesChart"></canvas>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-                                <span class="text-xs">Total Sewa</span>
-                                <span class="text-2xl font-bold text-[var(--navy-900)]">{{ $topVehicles->sum('booking_count') }}</span>
-                            </div>
                         @endif
                     </div>
                 </div>
@@ -70,7 +66,7 @@
                         </div>
                         <div>
                             <x-input-label for="tipe" value="Tipe Kendaraan" />
-                            <select id="tipe" name="tipe" class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                            <select id="tipe" name="tipe" class="w-full mt-1 rounded-md shadow-sm text-sm">
                                 <option value="">Semua Tipe</option>
                                 @foreach($vehicleTypes as $id => $name)
                                     <option value="{{ $id }}" {{ $tipe == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -80,7 +76,7 @@
                         <div>
                             <x-input-label for="metode" value="Metode Bayar" />
                             <div class="flex gap-2 items-start mt-1">
-                                <select id="metode" name="metode" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                                <select id="metode" name="metode" class="w-full rounded-md shadow-sm text-sm">
                                     <option value="">Semua Metode</option>
                                     <option value="cash" {{ $metode === 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
                                     <option value="xendit_invoice" {{ $metode === 'xendit_invoice' ? 'selected' : '' }}>Xendit</option>
@@ -149,38 +145,56 @@
             const chartData = @json($topVehicles);
             
             if(chartData.length > 0) {
-                const root = getComputedStyle(document.documentElement);
-                const colors = [
-                    root.getPropertyValue('--navy-900').trim() || '#1e3a8a',
-                    root.getPropertyValue('--navy-700').trim() || '#1d4ed8',
-                    root.getPropertyValue('--orange-500').trim() || '#f97316',
-                    root.getPropertyValue('--coral-300').trim() || '#fca5a5',
-                    root.getPropertyValue('--gold-tan').trim() || '#fbbf24'
-                ];
-
+                const root = document.documentElement;
+                const token = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+                const palette = () => ['--navy-900', '--navy-700', '--orange-500', '--coral-300', '--gold-tan'].map(token);
                 const ctx = document.getElementById('topVehiclesChart').getContext('2d');
-                new Chart(ctx, {
+                const mobile = window.matchMedia('(max-width: 639px)');
+
+                // Teks tengah digambar di canvas supaya selalu pas di tengah donat (legend bisa di kanan/bawah).
+                const centerText = {
+                    id: 'centerText',
+                    afterDraw(c) {
+                        const { left, right, top, bottom } = c.chartArea;
+                        const x = (left + right) / 2;
+                        const y = (top + bottom) / 2;
+                        c.ctx.save();
+                        c.ctx.textAlign = 'center';
+                        c.ctx.textBaseline = 'middle';
+                        c.ctx.fillStyle = token('--ink-muted');
+                        c.ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+                        c.ctx.fillText('Total Sewa', x, y - 14);
+                        c.ctx.fillStyle = token('--navy-900');
+                        c.ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
+                        c.ctx.fillText(@json($topVehicles->sum('booking_count')), x, y + 10);
+                        c.ctx.restore();
+                    }
+                };
+
+                const chart = new Chart(ctx, {
                     type: 'doughnut',
+                    plugins: [centerText],
                     data: {
                         labels: chartData.map(v => v.name),
                         datasets: [{
                             data: chartData.map(v => v.booking_count),
-                            backgroundColor: colors.slice(0, chartData.length),
-                            borderWidth: 0,
+                            backgroundColor: palette().slice(0, chartData.length),
+                            borderColor: token('--surface'),
+                            borderWidth: 2,
                             hoverOffset: 4
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '75%',
+                        cutout: '70%',
                         plugins: {
                             legend: {
-                                position: 'right',
+                                position: mobile.matches ? 'bottom' : 'right',
                                 labels: {
-                                    color: root.getPropertyValue('--tw-text-opacity') ? undefined : '#6b7280', 
+                                    color: token('--ink-muted'),
                                     usePointStyle: true,
-                                    padding: 20
+                                    padding: 16
                                 }
                             },
                             tooltip: {
@@ -193,6 +207,17 @@
                         }
                     }
                 });
+
+                // Warna ikut token saat tema diganti (kelas "dark" pada <html>) atau lebar layar berubah.
+                const sync = () => {
+                    chart.data.datasets[0].backgroundColor = palette().slice(0, chartData.length);
+                    chart.data.datasets[0].borderColor = token('--surface');
+                    chart.options.plugins.legend.labels.color = token('--ink-muted');
+                    chart.options.plugins.legend.position = mobile.matches ? 'bottom' : 'right';
+                    chart.update();
+                };
+                new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['class'] });
+                mobile.addEventListener('change', sync);
             }
         });
     </script>
