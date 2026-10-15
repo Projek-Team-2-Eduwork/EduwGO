@@ -200,3 +200,264 @@ textarea:focus {
     border-color: var(--navy-700);
     box-shadow: 0 0 0 1px var(--navy-700);
 }
+
+/* ===== Micro-interaction & komponen iterasi UI (EG-37) ===== */
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    /* Chip pilihan (radio tersembunyi + label): tipe kendaraan di filter, durasi di modal booking */
+    .chip-option {
+        position: relative;
+        display: inline-flex;
+        min-width: 0;
+    }
+
+    .chip-option > input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .chip-option > input:disabled {
+        cursor: not-allowed;
+    }
+
+    .chip-face {
+        display: inline-flex;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        border: 1px solid var(--border);
+        border-radius: 9999px;
+        background-color: var(--surface);
+        color: var(--navy-900);
+        padding: 0.375rem 0.875rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.25rem;
+        transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out, color 150ms ease-in-out, transform 150ms ease-in-out;
+    }
+
+    .chip-option > input:not(:disabled):hover + .chip-face {
+        border-color: var(--navy-700);
+        transform: translateY(-1px);
+    }
+
+    .chip-option > input:checked + .chip-face {
+        background-color: var(--navy-900);
+        border-color: var(--navy-900);
+        color: var(--surface);
+    }
+
+    .chip-option > input:focus-visible + .chip-face {
+        outline: 2px solid var(--navy-700);
+        outline-offset: 2px;
+    }
+
+    .chip-option > input:disabled + .chip-face {
+        border-style: dashed;
+        background-color: transparent;
+        color: var(--ink-muted);
+        opacity: 0.55;
+    }
+
+    /* Chip durasi: kotak, angka besar + satuan kecil */
+    .chip-face-day {
+        flex-direction: column;
+        gap: 0;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    /* Kartu kendaraan: terangkat 2px + bayangan saat hover/fokus */
+    .card-lift {
+        transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+    }
+
+    .card-lift:hover,
+    .card-lift:focus-within {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgb(15 26 46 / 0.12);
+    }
+
+    .dark .card-lift:hover,
+    .dark .card-lift:focus-within {
+        box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+    }
+
+    /* Skeleton loading */
+    .skeleton {
+        border-radius: 0.375rem;
+        background-color: var(--border);
+        animation: skeleton-pulse 1.2s ease-in-out infinite;
+    }
+
+    /* Preview tanggal selesai di modal durasi */
+    .preview-pop {
+        animation: preview-in 180ms ease-out;
+    }
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.9; }
+}
+
+@keyframes preview-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/*
+ * Tema flatpickr (picker tanggal & jam di filter) — hanya token EduwGo,
+ * di luar @layer + prefix "html" supaya menang terhadap CSS bawaan CDN (dimuat belakangan).
+ */
+html .flatpickr-wrapper {
+    display: block;
+}
+
+html .flatpickr-calendar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgb(15 26 46 / 0.18);
+    color: var(--navy-900);
+    font-family: inherit;
+    max-width: calc(100vw - 2rem);
+}
+
+html .flatpickr-calendar.arrowTop::before,
+html .flatpickr-calendar.arrowTop::after,
+html .flatpickr-calendar.arrowBottom::before,
+html .flatpickr-calendar.arrowBottom::after {
+    display: none;
+}
+
+html .flatpickr-months .flatpickr-month,
+html .flatpickr-current-month .flatpickr-monthDropdown-months,
+html .flatpickr-current-month input.cur-year,
+html span.flatpickr-weekday,
+html .flatpickr-time input,
+html .flatpickr-time .flatpickr-am-pm,
+html .flatpickr-time .flatpickr-time-separator {
+    background: transparent;
+    color: var(--navy-900);
+    fill: var(--navy-900);
+}
+
+html .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+    background-color: var(--surface);
+    color: var(--navy-900);
+}
+
+html .flatpickr-months .flatpickr-prev-month,
+html .flatpickr-months .flatpickr-next-month {
+    color: var(--navy-900);
+    fill: var(--navy-900);
+}
+
+html .flatpickr-months .flatpickr-prev-month svg,
+html .flatpickr-months .flatpickr-next-month svg {
+    fill: var(--navy-900);
+}
+
+html .flatpickr-months .flatpickr-prev-month:hover svg,
+html .flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--orange-500);
+}
+
+html span.flatpickr-weekday {
+    color: var(--ink-muted);
+    font-weight: 600;
+}
+
+html .flatpickr-day {
+    color: var(--navy-900);
+    border-radius: 0.5rem;
+    transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+}
+
+html .flatpickr-day:hover,
+html .flatpickr-day:focus {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+html .flatpickr-day.today {
+    border-color: var(--orange-500);
+}
+
+html .flatpickr-day.selected,
+html .flatpickr-day.selected:hover,
+html .flatpickr-day.selected:focus {
+    background: var(--navy-900);
+    border-color: var(--navy-900);
+    color: var(--surface);
+}
+
+html .flatpickr-day.flatpickr-disabled,
+html .flatpickr-day.flatpickr-disabled:hover,
+html .flatpickr-day.prevMonthDay,
+html .flatpickr-day.nextMonthDay {
+    color: var(--ink-muted);
+    opacity: 0.45;
+}
+
+html .flatpickr-time {
+    border-top-color: var(--border);
+}
+
+html .flatpickr-time input:hover,
+html .flatpickr-time input:focus,
+html .flatpickr-time .flatpickr-am-pm:hover {
+    background: var(--bg);
+}
+
+html .flatpickr-time .numInputWrapper span.arrowUp::after {
+    border-bottom-color: var(--navy-900);
+}
+
+html .flatpickr-time .numInputWrapper span.arrowDown::after {
+    border-top-color: var(--navy-900);
+}
+
+html .flatpickr-clear-btn {
+    display: block;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    padding: 0.5rem;
+    color: var(--navy-900);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+html .flatpickr-clear-btn:hover {
+    background: var(--bg);
+}
+
+/* Hormati preferensi kurangi gerakan: matikan transisi/animasi, hilangkan gerak kartu & chip */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .card-lift:hover,
+    .card-lift:focus-within,
+    .chip-option > input:not(:disabled):hover + .chip-face {
+        transform: none;
+    }
+}
