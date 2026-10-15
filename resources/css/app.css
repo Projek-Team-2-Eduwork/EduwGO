@@ -7,13 +7,14 @@
  * Palet dipetakan ke CSS variable; dark mode memakai class strategy (html.dark).
  */
 :root {
+    color-scheme: light;
     --bg:              #EDF0F6;
     --bg-gradient:     linear-gradient(180deg, #F5F7FB 0%, #E4E9F3 100%);
     --surface:         #FFFFFF;
     --navy-900:        #0A0F1D;
     --navy-700:        #1B2537;
     --ink-muted:       #465064;
-    --orange-500:      #4D7C0F;
+    --orange-500:      #3F6212;
     --accent-gradient: linear-gradient(135deg, #C6F659 0%, #A3E635 100%);
     --coral-300:       #DDD0FB;
     --border:          #D3D9E4;
@@ -21,6 +22,7 @@
 }
 
 .dark {
+    color-scheme: dark;
     --bg:              #0A0F1D;
     --bg-gradient:     linear-gradient(180deg, #101829 0%, #0A0F1D 100%);
     --surface:         #141B2C;
@@ -29,7 +31,7 @@
     --ink-muted:       #A6B0C3;
     --orange-500:      #C6F659;
     --accent-gradient: linear-gradient(135deg, #C6F659 0%, #A3E635 100%);
-    --coral-300:       #A855F7;
+    --coral-300:       #7C3AED;
     --border:          #232C42;
     --gold-tan:        #38BDF8;
 }
@@ -93,7 +95,7 @@
     .btn-secondary-edu:hover,
     .btn-secondary-edu:focus-visible {
         background-color: var(--orange-500);
-        color: #0A0F1D;
+        color: var(--surface);
     }
 
     /* Tombol destruktif (batalkan/hapus): merah, radius & bobot sama seperti tombol lain */
@@ -113,7 +115,7 @@
     /* Tombol WhatsApp: hijau khas WA, radius & bobot konsisten */
     .btn-wa-edu {
         border-radius: 0.5rem;
-        background-color: #16A34A;
+        background-color: #15803D;
         color: #FFFFFF;
         font-weight: 600;
         transition: background-color 150ms ease-in-out;
@@ -121,7 +123,7 @@
 
     .btn-wa-edu:hover,
     .btn-wa-edu:focus-visible {
-        background-color: #15803D;
+        background-color: #166534;
     }
 
     /* Ikon aksen oranye (hanya untuk ikon/kecil, sesuai spesifikasi) */

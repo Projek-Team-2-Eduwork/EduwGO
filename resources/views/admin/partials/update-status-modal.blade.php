@@ -30,7 +30,7 @@
                     <x-input-label for="reason_paid_{{ $booking->code }}" value="Alasan Pembatalan *" />
                     <textarea id="reason_paid_{{ $booking->code }}" name="reason" rows="2" required class="mt-1 w-full rounded-md shadow-sm"></textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('reason')" />
-                    <p class="mt-1 text-xs text-amber-600 dark:text-amber-500">Catat kesepakatan refund dari chat WA</p>
+                    <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">Catat kesepakatan refund dari chat WA</p>
                 </div>
                 <x-danger-button class="w-full justify-center">Batalkan Pesanan</x-danger-button>
             </form>

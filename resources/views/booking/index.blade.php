@@ -112,7 +112,7 @@
                 </div>
                 
                 <div class="mt-6">
-                    {{ $bookings->links() }}
+                    {{ $bookings->links('components.pagination') }}
                 </div>
             @endif
         </div>

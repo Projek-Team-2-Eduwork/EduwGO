@@ -62,7 +62,7 @@
             <div class="flex min-w-0 flex-1 flex-col">
                 {{-- Navbar atas --}}
                 <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-[var(--border)] px-4 sm:px-6" style="background-color: var(--surface);">
-                    <div class="flex items-center gap-3">
+                    <div class="flex min-w-0 items-center gap-3">
                         <button type="button" @click="drawer = true" class="p-2 text-[var(--ink-muted)] hover:bg-[var(--bg)] hover:text-[var(--navy-900)] lg:hidden" :aria-expanded="drawer.toString()" aria-controls="admin-sidebar" aria-label="Buka menu">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
@@ -72,7 +72,7 @@
                         @endisset
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex shrink-0 items-center gap-3">
                         <x-theme-toggle />
 
                         @auth

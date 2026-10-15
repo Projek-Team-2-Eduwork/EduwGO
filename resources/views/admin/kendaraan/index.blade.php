@@ -102,7 +102,7 @@
                 </div>
                 
                 <div class="mt-6">
-                    {{ $vehicles->links() }}
+                    {{ $vehicles->links('components.pagination') }}
                 </div>
             @endif
         </div>

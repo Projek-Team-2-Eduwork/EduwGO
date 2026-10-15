@@ -73,7 +73,7 @@
                                         <button @click="editMode = {{ $tempat->id }}" class="font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
                                         <form action="{{ route('admin.lokasi.destroy', $tempat->id) }}" method="POST" onsubmit="return confirm('Hapus lokasi ini?');">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="font-medium text-red-600 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
+                                            <button type="submit" class="font-medium text-red-600 dark:text-red-400 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -140,7 +140,7 @@
                                 <button @click="editMode = {{ $tempat->id }}" class="text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
                                 <form action="{{ route('admin.lokasi.destroy', $tempat->id) }}" method="POST" onsubmit="return confirm('Hapus lokasi ini?');">
                                     @csrf @method('DELETE')
-                                    <button class="text-sm font-medium text-red-600 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
+                                    <button class="text-sm font-medium text-red-600 dark:text-red-400 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
                                 </form>
                             </div>
                         </div>

@@ -3,7 +3,7 @@
     <h2 class="text-2xl">Tentang Penyewaan</h2>
     <p class="mt-2 text-sm">Kenali penyedia layanan sebelum menyewa motor.</p>
 
-    <div class="card-surface mt-6 grid gap-6 p-5 sm:p-6 md:grid-cols-[auto,1fr]">
+    <div class="card-surface mt-6 grid gap-6 p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
         <div class="flex items-start gap-4">
             @if ($profil['logo'])
                 <img src="{{ asset($profil['logo']) }}" alt="Logo {{ $profil['nama'] }}" class="h-14 w-auto rounded-lg object-contain" loading="lazy">
@@ -40,7 +40,7 @@
             </div>
         </dl>
 
-        <div>
+        <div class="md:col-span-2">
             <a href="{{ route('about') }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-xs">Selengkapnya</a>
         </div>
     </div>

@@ -35,7 +35,7 @@
                         :class="data.available ? 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700' : 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed'"
                         :title="!data.available ? 'Unit tidak tersedia di rentang ini' : ''">
                         <input type="radio" name="duration_days" :value="days" x-model="selectedDays"
-                            class="text-blue-600 border-gray-300 focus:ring-blue-500"
+                            class="border-[var(--border)] text-[var(--navy-900)] focus:ring-[var(--navy-700)]"
                             :disabled="!data.available">
                         <div class="ml-3 w-full flex justify-between items-center">
                             <div>
