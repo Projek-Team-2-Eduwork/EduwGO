@@ -91,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Halaman bayar sendiri (Xendit Payment Request) (EG-53)
     Route::get('/pembayaran/{code}', [BookingPaymentController::class, 'bayar'])->name('booking.bayar');
+    Route::post('/pembayaran/{code}/demo-bayar', [BookingPaymentController::class, 'demoBayar'])->name('booking.demo-bayar');
 
     // Halaman pesanan sukses, gagal, dan polling status pembayaran (EG-15)
     Route::get('/pesanan/{code}/berhasil', [BookingPaymentController::class, 'success'])->name('booking.success');

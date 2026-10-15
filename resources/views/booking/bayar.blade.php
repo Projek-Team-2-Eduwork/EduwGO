@@ -108,6 +108,15 @@
                        class="block w-full py-2 text-center text-sm font-medium text-[var(--navy-900)] underline">
                         Kembali ke Detail Pesanan
                     </a>
+                     @if (str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
+                        <form method="POST" action="{{ route('booking.demo-bayar', $booking->code) }}">
+                            @csrf
+                            <button type="submit"
+                                class="block w-full rounded-lg border border-dashed border-yellow-500 py-2 text-center text-xs font-semibold text-yellow-500">
+                                🎲 Demo: Tandai pembayaran berhasil (test mode)
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @endif
@@ -162,15 +171,40 @@
             Alpine.data('bayarPembayaran', (statusUrl, successUrl) => ({
                 checking: false,
                 message: '',
+                busy: false,
                 pollTimer: null,
+                fastUntil: 0,
+                lastCheck: 0,
 
-                async sudahBayar() {
-                    if (this.checking) {
+                init() {
+                    // Cek diam-diam terus-menerus: ngebut tiap 1,5 detik sesudah
+                    // klik "Saya Sudah Bayar" (biar langsung pindah begitu bayar
+                    // masuk), pelan ~8 detik kalau cuma ditinggal.
+                    this.sudahBayar(true);
+                    this.pollTimer = setInterval(() => this.sudahBayar(true), 1500);
+                },
+
+                async sudahBayar(silent = false) {
+                    if (this.busy) {
                         return;
                     }
 
-                    this.checking = true;
-                    this.message = '';
+                    const now = Date.now();
+                    const pollingCepat = now < this.fastUntil;
+
+                    // Mode diam-diam di luar masa polling cepat: cukup cek tiap 8 detik.
+                    if (silent && !pollingCepat && now - this.lastCheck < 8000) {
+                        return;
+                    }
+
+                    this.busy = true;
+                    this.lastCheck = now;
+
+                    if (!silent) {
+                        this.checking = true;
+                        this.message = '';
+                        this.fastUntil = now + 120000; // polling cepat 2 menit setelah klik
+                    }
 
                     try {
                         const res = await fetch(statusUrl, { headers: { Accept: 'application/json' } });
@@ -181,15 +215,16 @@
                             return;
                         }
 
-                        this.message = 'Pembayaran belum terdeteksi. Status dicek otomatis tiap 5 detik.';
-
-                        if (!this.pollTimer) {
-                            this.pollTimer = setInterval(() => this.sudahBayar(), 5000);
+                        if (!silent) {
+                            this.message = 'Belum terdeteksi. Tenang — halaman tetap memantau, begitu pembayaran masuk halaman langsung pindah sendiri.';
                         }
                     } catch (e) {
-                        this.message = 'Gagal memeriksa status pembayaran. Silakan coba lagi.';
+                        if (!silent) {
+                            this.message = 'Gagal memeriksa status pembayaran. Silakan coba lagi.';
+                        }
                     }
 
+                    this.busy = false;
                     this.checking = false;
                 }
             }));

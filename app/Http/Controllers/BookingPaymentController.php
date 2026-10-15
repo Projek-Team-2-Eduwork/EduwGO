@@ -172,6 +172,39 @@ class BookingPaymentController extends Controller
         return view('booking.failed', ['booking' => $booking]);
     }
 
+        /**
+     * Tombol demo (test mode only): menandai pembayaran berhasil lewat
+     * simulate API Xendit — biar demo gak perlu curl manual.
+     */
+    public function demoBayar(Request $request, $code, XenditService $xenditService)
+    {
+        // Hanya aktif di mode test (key xnd_devel) — di production 404.
+        if (! str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel')) {
+            abort(404);
+        }
+
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        $payment = $booking->payments()
+            ->where('method', 'xendit_payment_request')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if ($payment && $payment->gateway_reference) {
+            $xenditService->simulatePaymentRequest($payment->gateway_reference, (int) $payment->amount);
+        }
+
+        return redirect()->route('booking.bayar', [
+            'code' => $booking->code,
+            'metode' => $payment?->payment_channel ?? 'QRIS',
+        ]);
+    }
+
     public function status(Request $request, $code, XenditService $xenditService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();

@@ -430,12 +430,25 @@ class XenditService
     }
 
     /**
-     * Menyelaraskan status payment request dengan API Xendit tanpa menunggu
-     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56): kalo webhook telat
-     * nyampe (atau gak nyampe di mode test), status ke-deteksi juga. Aman dipanggil
-     * berkali-kali — applyInvoiceStatus idempoten.
+     * Menyelaraskan status pembayaran dengan API Xendit tanpa menunggu
+     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56) dan halaman
+     * berhasil: kalo webhook telat nyampe (atau gak nyampe — tunnel mati),
+     * status ke-deteksi juga. Aman dipanggil berkali-kali — idempoten.
      */
     public function syncPaymentStatus(Booking $booking): void
+    {
+        // Kedua jalur dijalankan berurutan; tiap jalur cuma menyentuh payment
+        // miliknya sendiri dan hanya menerapkan status terminal. Jadi booking
+        // dengan payment request pending TAPI invoice lama yang sudah PAID
+        // (mis. bekas ganti-ganti mode) tetap kebaca.
+        $this->syncPaymentRequestStatus($booking);
+        $this->syncInvoiceStatus($booking);
+    }
+
+    /**
+     * Menyelaraskan payment request (mode payment_request) — jalur utama.
+     */
+    private function syncPaymentRequestStatus(Booking $booking): void
     {
         $payment = Payment::where('booking_id', $booking->id)
             ->where('method', 'xendit_payment_request')
@@ -447,7 +460,6 @@ class XenditService
             return;
         }
 
-        // Mode invoice (rollback) gak punya payment request — jangan disentuh
         if (config('services.xendit.mode', 'invoice') !== 'payment_request') {
             return;
         }
@@ -481,6 +493,45 @@ class XenditService
     }
 
     /**
+     * Sinkron payment invoice lama (mis. sisa pengujian mode invoice)
+     * lewat GET /v2/invoices/{id} — pelengkap webhook.
+     */
+    private function syncInvoiceStatus(Booking $booking): void
+    {
+        $payment = Payment::where('booking_id', $booking->id)
+            ->where('method', 'xendit_invoice')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if (! $payment || ! $payment->gateway_reference) {
+            return;
+        }
+
+        try {
+            $invoice = $this->getInvoice($payment->gateway_reference);
+        } catch (Exception $e) {
+            Log::channel('xendit')->warning('Gagal menyelaraskan status invoice.', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        $status = strtoupper((string) ($invoice['status'] ?? ''));
+
+        if (! in_array($status, ['PAID', 'SETTLED', 'EXPIRED'], true)) {
+            return;
+        }
+
+        $this->paymentService->applyInvoiceStatus($payment, [
+            'status' => $status,
+            'paid_at' => $invoice['paid_at'] ?? null,
+        ]);
+    }
+
+    /**
      * Mengambil detail payment request dari Payments API v3 berdasarkan ID.
      *
      * @return array<string, mixed>
@@ -498,6 +549,35 @@ class XenditService
         }
 
         return $response->json();
+    }
+
+        /**
+     * Simulasikan pembayaran sukses untuk payment request (test mode).
+     * Hanya untuk key xnd_devel — di production mengembalikan false.
+     */
+    public function simulatePaymentRequest(string $reference, int $amount): bool
+    {
+        if (! str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel')) {
+            return false;
+        }
+
+        $response = Http::withBasicAuth(config('services.xendit.secret_key'), '')
+            ->withHeaders(['api-version' => '2024-11-11'])
+            ->timeout(10)
+            ->post("https://api.xendit.co/v3/payment_requests/{$reference}/simulate", [
+                'amount' => $amount,
+            ]);
+
+        if (! $response->successful()) {
+            Log::channel('xendit')->warning('Simulasi pembayaran demo gagal.', [
+                'reference' => $reference,
+                'http' => $response->status(),
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
