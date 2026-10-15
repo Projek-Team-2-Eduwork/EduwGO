@@ -109,7 +109,10 @@ class PaymentRequestTest extends TestCase
 
         Http::assertSent(fn ($request) => str_contains($request->url(), '/payment_requests')
             && $request['reference_id'] === 'BOOK-PR-001'
-            && $request['payment_methods'] === ['QRIS']
+            && $request['payment_method']['type'] === 'QR_CODE'
+            && $request['payment_method']['qr_code']['channel_code'] === 'QRIS'
+            && ! isset($request['payment_methods'])
+            && $request->header('api-version') === ['2022-07-31']
             && $request['amount'] === 150000);
 
         $this->assertDatabaseHas('payments', [

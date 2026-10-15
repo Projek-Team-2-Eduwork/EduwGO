@@ -106,21 +106,19 @@ class XenditService
             'amount' => (int) $booking->total_amount,
             'currency' => 'IDR',
             'description' => "Sewa {$booking->vehicle->name} {$durationDays} hari",
-            'payment_methods' => [$channel],
+            'country' => 'ID',
+            'payment_method' => $this->paymentMethodPayload($channel, $booking),
             'metadata' => [
                 'booking_id' => $booking->id,
                 'booking_code' => $booking->code,
             ],
         ];
 
-        if ($booking->user?->email) {
-            $payload['payer_email'] = $booking->user->email;
-        }
-
         // 3. Request ke Xendit
         $secretKey = config('services.xendit.secret_key', env('XENDIT_SECRET_KEY'));
 
         $response = Http::withBasicAuth($secretKey, '')
+            ->withHeaders(['api-version' => '2022-07-31'])
             ->post('https://api.xendit.co/payment_requests', $payload);
 
         if (! $response->successful()) {
@@ -149,10 +147,45 @@ class XenditService
             'gateway_url' => null, // Tidak ada hosted checkout — halaman bayar sendiri
             'gateway_payload' => json_encode($data),
             'amount' => $booking->total_amount,
-            'payment_channel' => $method['type'] ?? $channel,
+            'payment_channel' => $channel,
             'instructions' => $instructions,
             'expires_at' => Carbon::parse($expiresAt)->setTimezone(config('app.timezone')),
         ]);
+    }
+
+    /**
+     * Objek payment_method format Payment Request v3 per channel.
+     *
+     * @return array<string, mixed>
+     */
+    private function paymentMethodPayload(string $channel, Booking $booking): array
+    {
+        return match ($channel) {
+            'BANK_TRANSFER' => [
+                'type' => 'VIRTUAL_ACCOUNT',
+                'reusability' => 'ONE_TIME_USE',
+                'virtual_account' => [
+                    'channel_code' => 'BCA',
+                    'channel_properties' => ['customer_name' => $booking->user?->name ?? 'Pelanggan'],
+                ],
+            ],
+            'EWALLET' => [
+                'type' => 'EWALLET',
+                'reusability' => 'ONE_TIME_USE',
+                'ewallet' => [
+                    'channel_code' => 'DANA',
+                    'channel_properties' => [
+                        'success_return_url' => url('/'),
+                        'failure_return_url' => url('/'),
+                    ],
+                ],
+            ],
+            default => [
+                'type' => 'QR_CODE',
+                'reusability' => 'ONE_TIME_USE',
+                'qr_code' => ['channel_code' => 'QRIS'],
+            ],
+        };
     }
 
     /**
@@ -167,16 +200,16 @@ class XenditService
 
             return array_values(array_filter([
                 'Scan QRIS dengan aplikasi bank atau e-wallet apa pun.',
-                $qr['qr_string'] ?? null,
+                $qr['qr_string'] ?? $qr['channel_properties']['qr_string'] ?? null,
             ]));
         }
 
         if ($channel === 'BANK_TRANSFER') {
-            $bank = $method['bank_transfer'] ?? [];
+            $va = $method['virtual_account'] ?? [];
 
             return array_values(array_filter([
-                'Transfer sesuai nominal ke rekening berikut:',
-                strtoupper((string) ($bank['bank_code'] ?? '')).' '.($bank['account_number'] ?? '').' a.n. '.($bank['account_name'] ?? ''),
+                'Transfer sesuai nominal ke virtual account berikut:',
+                ($va['channel_code'] ?? '').' '.($va['channel_properties']['virtual_account_number'] ?? ''),
             ]));
         }
 
