@@ -21,32 +21,55 @@
                     :min="now()->format('Y-m-d\TH:i')" />
             </div>
 
-            <div class="mt-4" x-show="isLoading">
-                <p class="text-sm text-gray-500 dark:text-gray-400">Memuat ketersediaan...</p>
+            {{-- Skeleton chip saat ketersediaan dimuat --}}
+            <div class="mt-4" x-show="isLoading" x-cloak style="display: none" role="status">
+                <span class="sr-only">Memuat ketersediaan...</span>
+                <div class="grid grid-cols-5 gap-2" aria-hidden="true">
+                    <div class="skeleton h-14"></div>
+                    <div class="skeleton h-14"></div>
+                    <div class="skeleton h-14"></div>
+                    <div class="skeleton h-14"></div>
+                    <div class="skeleton h-14"></div>
+                </div>
             </div>
 
-            <div class="mt-4" x-show="error">
-                <p class="text-sm text-red-600 dark:text-red-400" x-text="error"></p>
+            <div class="mt-4" x-show="error" x-cloak style="display: none">
+                <p class="text-sm text-red-700 dark:text-red-300" role="alert" x-text="error"></p>
             </div>
 
-            <div class="mt-4 space-y-2" x-show="!isLoading && durations">
-                <template x-for="(data, days) in durations" :key="days">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer"
-                        :class="data.available ? 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700' : 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed'"
-                        :title="!data.available ? 'Unit tidak tersedia di rentang ini' : ''">
-                        <input type="radio" name="duration_days" :value="days" x-model="selectedDays"
-                            class="text-blue-600 border-gray-300 focus:ring-blue-500"
-                            :disabled="!data.available">
-                        <div class="ml-3 w-full flex justify-between items-center">
-                            <div>
-                                <span class="block text-sm font-medium text-gray-900 dark:text-gray-100" x-text="`${days} hari`"></span>
-                                <span class="block text-xs text-gray-500 dark:text-gray-400" x-text="`Selesai: ${formatDate(data.end_at)}`"></span>
+            <fieldset class="mt-4" x-show="!isLoading && durations" x-cloak style="display: none">
+                <legend class="text-sm font-medium text-[var(--navy-900)]">Durasi sewa</legend>
+
+                {{-- Chip 1..N hari; opsi bentrok (available=false dari API) tetap disable --}}
+                <div class="mt-2 grid gap-2" style="grid-template-columns: repeat(auto-fit, minmax(3.75rem, 1fr));">
+                    <template x-for="(data, days) in durations" :key="days">
+                        <label class="chip-option" :title="!data.available ? 'Unit tidak tersedia di rentang ini' : ''">
+                            <input type="radio" name="duration_days" :value="days" x-model="selectedDays" :disabled="!data.available">
+                            <span class="chip-face chip-face-day">
+                                <span class="text-lg font-bold leading-6" x-text="days"></span>
+                                <span class="text-xs font-medium" x-text="data.available ? 'hari' : 'penuh'"></span>
+                            </span>
+                        </label>
+                    </template>
+                </div>
+
+                {{-- Preview tanggal selesai: beranimasi tiap pilihan berubah --}}
+                <div class="mt-4 rounded-lg border border-[var(--border)] p-3" aria-live="polite">
+                    <template x-for="d in (selectedDays && durations && durations[selectedDays] ? [selectedDays] : [])" :key="d">
+                        <div class="preview-pop flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <span class="block text-xs">Selesai</span>
+                                <span class="block text-sm font-semibold text-[var(--navy-900)]" x-text="formatDate(durations[d].end_at)"></span>
                             </div>
-                            <div class="text-sm font-bold text-gray-900 dark:text-gray-100" x-text="formatPrice(pricePerDay * days)"></div>
+                            <div class="shrink-0 text-right">
+                                <span class="block text-xs" x-text="`${d} hari`"></span>
+                                <span class="block text-sm font-bold text-[var(--navy-900)]" x-text="formatPrice(pricePerDay * d)"></span>
+                            </div>
                         </div>
-                    </label>
-                </template>
-            </div>
+                    </template>
+                    <p class="text-sm" x-show="!selectedDays">Pilih durasi untuk melihat tanggal selesai dan total harga.</p>
+                </div>
+            </fieldset>
 
             <div class="mt-6 flex justify-end gap-3">
                 <x-secondary-button x-on:click="$dispatch('close')">

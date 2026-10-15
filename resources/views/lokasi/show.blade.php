@@ -9,7 +9,7 @@
 @endphp
 
 <x-app-layout :title="$lokasi->name">
-    <div class="mx-auto max-w-[1320px] space-y-6 px-4 pt-8 sm:px-6 lg:pt-12 xl:px-0" x-data="{ filterOpen: false }" x-on:keydown.escape.window="filterOpen = false">
+    <div class="mx-auto max-w-[1320px] space-y-6 px-4 pt-8 sm:px-6 lg:pt-12 xl:px-0" x-data="{ filterOpen: false, loading: false }" x-on:keydown.escape.window="filterOpen = false" x-on:pageshow.window="loading = false">
         <div>
             <h1 class="text-2xl">{{ $lokasi->name }}</h1>
             <p class="mt-2 text-sm">
@@ -44,10 +44,11 @@
                 :action="route('lokasi.show', $lokasi->slug)"
                 class="rounded-b-none lg:rounded-b-[inherit]"
                 x-on:change="if (window.matchMedia('(min-width: 1024px)').matches) $el.requestSubmit()"
+                x-on:submit="loading = true; filterOpen = false"
             >
-                <x-form.select name="type" label="Tipe kendaraan" placeholder="Semua" :options="$types" :value="$filter['type']" />
+                <x-form.chips name="type" label="Tipe kendaraan" placeholder="Semua" :options="$types" :value="$filter['type']" class="sm:col-span-2 lg:col-span-4" />
 
-                <x-form.datetime name="start_at" label="Tanggal & jam sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" />
+                <x-form.datetime name="start_at" label="Tanggal & jam sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" :picker="true" />
 
                 <x-form.select name="days" label="Durasi sewa" placeholder="Pilih durasi" :options="collect(range(1, $maxDays))->mapWithKeys(fn ($d) => [$d => $d.' hari'])->all()" :value="$filter['days']" />
 
@@ -88,6 +89,10 @@
             </p>
         @endif
 
+        {{-- Skeleton tampil saat filter dikirim (halaman sedang memuat ulang) --}}
+        <x-vehicle-grid-skeleton x-show="loading" x-cloak style="display: none" />
+
+        <div class="space-y-6" x-show="!loading">
         @if ($vehicles->isEmpty())
             @if ($timeFiltered)
                 <x-empty-state title="Tidak ada motor tersedia di waktu tersebut" description="Coba ganti tanggal, jam, tipe, atau durasi sewa." action-label="Reset filter" :action-href="route('lokasi.reset', $lokasi->slug)" />
@@ -107,6 +112,7 @@
 
             {{ $vehicles->links('components.pagination') }}
         @endif
+        </div>
     </div>
 
     @include('home.terms')
