@@ -8,6 +8,6 @@ class SettingPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 }

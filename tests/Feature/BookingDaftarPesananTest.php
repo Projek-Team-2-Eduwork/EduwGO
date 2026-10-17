@@ -144,7 +144,7 @@ class BookingDaftarPesananTest extends TestCase
 
         $type = VehicleType::create(['name' => 'Type 1', 'slug' => 'type-1']);
 
-        $vehicleA = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor A', 'slug' => 'motor-a', 'brand' => 'Honda', 'plate_number' => 'A1', 'price_per_day' => 100000]);
+        $vehicleA = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor A', 'slug' => 'motor-a', 'brand' => 'Honda', 'plate_number' => 'A1', 'price_per_day' => 100000]);
         $bookingA = Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleA->id, 'status' => BookingStatus::Paid]);
         Payment::factory()->create([
             'booking_id' => $bookingA->id,
@@ -154,7 +154,7 @@ class BookingDaftarPesananTest extends TestCase
             'paid_at' => now(),
         ]);
 
-        $vehicleB = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor B', 'slug' => 'motor-b', 'brand' => 'Honda', 'plate_number' => 'B1', 'price_per_day' => 100000]);
+        $vehicleB = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor B', 'slug' => 'motor-b', 'brand' => 'Honda', 'plate_number' => 'B1', 'price_per_day' => 100000]);
         $bookingB = Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleB->id, 'status' => BookingStatus::Paid]);
         Payment::factory()->create([
             'booking_id' => $bookingB->id,
@@ -162,7 +162,7 @@ class BookingDaftarPesananTest extends TestCase
             'amount' => 150000,
         ]);
 
-        $vehicleC = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor C', 'slug' => 'motor-c', 'brand' => 'Honda', 'plate_number' => 'C1', 'price_per_day' => 100000]);
+        $vehicleC = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor C', 'slug' => 'motor-c', 'brand' => 'Honda', 'plate_number' => 'C1', 'price_per_day' => 100000]);
         Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleC->id, 'status' => BookingStatus::Pending]);
 
         $response = $this->get(route('booking.index'));
@@ -185,7 +185,7 @@ class BookingDaftarPesananTest extends TestCase
 
         $type = VehicleType::create(['name' => 'Type 2', 'slug' => 'type-2']);
 
-        $vehicleA = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor D', 'slug' => 'motor-d', 'brand' => 'Honda', 'plate_number' => 'D1', 'price_per_day' => 100000]);
+        $vehicleA = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor D', 'slug' => 'motor-d', 'brand' => 'Honda', 'plate_number' => 'D1', 'price_per_day' => 100000]);
         $bookingWithPayment = Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleA->id, 'status' => BookingStatus::Paid]);
         Payment::factory()->create([
             'booking_id' => $bookingWithPayment->id,
@@ -193,7 +193,7 @@ class BookingDaftarPesananTest extends TestCase
             'method' => 'cash',
         ]);
 
-        $vehicleB = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor E', 'slug' => 'motor-e', 'brand' => 'Honda', 'plate_number' => 'E1', 'price_per_day' => 100000]);
+        $vehicleB = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor E', 'slug' => 'motor-e', 'brand' => 'Honda', 'plate_number' => 'E1', 'price_per_day' => 100000]);
         Booking::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicleB->id, 'status' => BookingStatus::Pending]);
 
         $response = $this->get(route('booking.index'));
@@ -209,7 +209,7 @@ class BookingDaftarPesananTest extends TestCase
         $userB = User::factory()->create();
 
         $type = VehicleType::create(['name' => 'Type 3', 'slug' => 'type-3']);
-        $vehicle = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor F', 'slug' => 'motor-f', 'brand' => 'Honda', 'plate_number' => 'F1', 'price_per_day' => 100000]);
+        $vehicle = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor F', 'slug' => 'motor-f', 'brand' => 'Honda', 'plate_number' => 'F1', 'price_per_day' => 100000]);
 
         Booking::factory()->create([
             'user_id' => $userA->id,
@@ -230,7 +230,7 @@ class BookingDaftarPesananTest extends TestCase
         $this->actingAs($user);
 
         $type = VehicleType::create(['name' => 'Type 4', 'slug' => 'type-4']);
-        $vehicle = Vehicle::create(['vehicle_type_id' => $type->id, 'name' => 'Motor G', 'slug' => 'motor-g', 'brand' => 'Honda', 'plate_number' => 'G1', 'price_per_day' => 100000]);
+        $vehicle = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor G', 'slug' => 'motor-g', 'brand' => 'Honda', 'plate_number' => 'G1', 'price_per_day' => 100000]);
 
         Booking::factory()->create([
             'user_id' => $user->id,

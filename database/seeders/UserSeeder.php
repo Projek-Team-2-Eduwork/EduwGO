@@ -2,18 +2,22 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
     /**
-     * Akun demo: 1 admin, 1 akun uji, dan penyewa demo untuk booking.
-     * Password semua akun: "password" (dari UserFactory).
+     * Akun demo: 1 superadmin, admin per cabang, 1 akun uji, dan penyewa demo untuk booking.
+     * Password semua akun: "password" (dari UserFactory). BranchSeeder harus jalan lebih dulu.
      */
     public function run(): void
     {
-        $this->account('Admin EduwGo', 'admin@eduwgo.test', '081200000001', 'admin');
+        $this->account('Superadmin EduwGo', 'superadmin@eduwgo.test', '081200000010', 'superadmin');
+        $this->account('Admin EduwGo', 'admin@eduwgo.test', '081200000001', 'admin', null, 'cabang-malang-kota');
+        $this->account('Admin Cabang Batu', 'admin.batu@eduwgo.test', '081200000011', 'admin', null, 'cabang-batu');
+        $this->account('Admin Cabang Surabaya', 'admin.surabaya@eduwgo.test', '081200000012', 'admin', null, 'cabang-surabaya');
         $this->account('Test User', 'test@example.com', '081200000002', 'user');
 
         $renters = [
@@ -30,7 +34,7 @@ class UserSeeder extends Seeder
         }
     }
 
-    private function account(string $name, string $email, string $phone, string $role, ?array $social = null): void
+    private function account(string $name, string $email, string $phone, string $role, ?array $social = null, ?string $branchSlug = null): void
     {
         $user = User::query()->firstOrNew(['email' => $email]);
 
@@ -41,6 +45,7 @@ class UserSeeder extends Seeder
             'social_account' => $social,
             'email_verified_at' => now(),
             'password' => 'password',
+            'branch_id' => $branchSlug ? Branch::query()->where('slug', $branchSlug)->value('id') : null,
         ])->save();
 
         $user->syncRoles($role);

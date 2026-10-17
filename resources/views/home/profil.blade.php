@@ -1,4 +1,3 @@
-{{-- Section profil perusahaan (EG-46). Sumber data: settings via $profil dari HomeController. --}}
 <section id="tentang-penyewaan" class="mx-auto max-w-[1320px] px-4 pt-12 sm:px-6 lg:pt-20 xl:px-0">
     <h2 class="text-2xl">Tentang Penyewaan</h2>
     <p class="mt-2 text-sm">Kenali penyedia layanan sebelum menyewa motor.</p>
@@ -18,27 +17,16 @@
             </div>
         </div>
 
-        <dl class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--orange-500);">Alamat</dt>
-                <dd class="mt-1 text-xs leading-relaxed">{{ $profil['alamat'] }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--orange-500);">Jam operasional</dt>
-                <dd class="mt-1 text-xs leading-relaxed">{{ $profil['jam'] }}</dd>
-            </div>
-            <div class="sm:col-span-2">
-                <dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--orange-500);">Kontak &amp; Media Sosial</dt>
-                <dd class="mt-2 flex flex-wrap gap-3">
-                    @if ($profil['waUrl'])
-                        <a href="{{ $profil['waUrl'] }}" target="_blank" rel="noopener" class="btn-secondary-edu inline-flex items-center px-4 py-2 text-xs">WhatsApp</a>
-                    @endif
-                    @foreach ($profil['sosmed'] as $label => $href)
-                        <a href="{{ $href }}" target="_blank" rel="noopener" class="btn-secondary-edu inline-flex items-center px-4 py-2 text-xs">{{ $label }}</a>
-                    @endforeach
-                </dd>
-            </div>
-        </dl>
+        <div class="grid gap-6 sm:grid-cols-2">
+            @forelse ($branches as $branch)
+                <section aria-labelledby="profil-cabang-{{ $branch->slug }}">
+                    <h4 id="profil-cabang-{{ $branch->slug }}" class="text-sm font-semibold">{{ $branch->name }}</h4>
+                    <x-branch-info :branch="$branch" class="mt-2" />
+                </section>
+            @empty
+                <p class="text-xs leading-relaxed sm:col-span-2">Alamat lokasi pengambilan akan diinformasikan oleh admin.</p>
+            @endforelse
+        </div>
 
         <div class="md:col-span-2">
             <a href="{{ route('about') }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-xs">Selengkapnya</a>

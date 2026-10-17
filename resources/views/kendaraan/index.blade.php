@@ -5,7 +5,7 @@
         'days' => $filter['days'],
     ], fn ($value) => filled($value));
 
-    $activeCount = collect([$filter['type'], $filter['lokasi'], $filter['start_at'], $filter['available'] ?: null, $filter['q']])->filter(fn ($v) => filled($v))->count();
+    $activeCount = collect([$filter['type'], $filter['start_at'], $filter['available'] ?: null, $filter['q']])->filter(fn ($v) => filled($v))->count();
 @endphp
 
 <x-app-layout title="Pilih Kendaraan">
@@ -13,6 +13,12 @@
         <div>
             <h1 class="text-2xl">Daftar Kendaraan</h1>
             <p class="mt-2 text-sm">Cari motor sesuai tipe dan waktu sewa. Hanya unit yang benar-benar tersedia yang ditampilkan saat waktu diisi.</p>
+            @if ($currentBranch)
+                <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                    <span>Motor di cabang:</span>
+                    <x-branch-picker align="left" />
+                </div>
+            @endif
         </div>
 
         {{-- Mobile: tombol Filter membuka bottom sheet; desktop: bar inline --}}
@@ -42,8 +48,6 @@
                 x-on:submit="loading = true; filterOpen = false"
             >
                 <x-form.chips name="type" label="Tipe kendaraan" placeholder="Semua" :options="$types" :value="$filter['type']" class="sm:col-span-2 lg:col-span-4" />
-
-                <x-form.select name="lokasi" label="Lokasi" placeholder="Semua" :options="$lokasiOptions" :value="$filter['lokasi']" />
 
                 <x-form.datetime name="start_at" label="Tanggal & jam sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" :picker="true" />
 

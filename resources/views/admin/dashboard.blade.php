@@ -50,12 +50,13 @@
                 <div class="card-surface col-span-1 p-6 lg:col-span-2">
                     <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <h3 class="font-bold">Pendapatan</h3>
-                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode]) }}" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">
+                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">
                             Export Excel
                         </a>
                     </div>
                     
                     <form method="GET" action="{{ route('admin.dashboard') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        @include('admin.partials.branch-filter')
                         <div>
                             <x-input-label for="dari" value="Tanggal Awal" />
                             <x-text-input id="dari" type="date" name="dari" value="{{ $dari }}" class="w-full mt-1 text-sm" />

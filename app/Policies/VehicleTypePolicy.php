@@ -9,21 +9,21 @@ class VehicleTypePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 
     public function update(User $user, VehicleType $vehicleType): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 
     public function delete(User $user, VehicleType $vehicleType): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 }

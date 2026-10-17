@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Database\Seeder;
@@ -10,7 +11,8 @@ use Illuminate\Support\Str;
 class VehicleSeeder extends Seeder
 {
     /**
-     * 10 motor nyata. Foto lokal: public/images/vehicles/<slug>.jpg
+     * 10 motor nyata, dibagi ke 3 cabang (BranchSeeder harus jalan lebih dulu).
+     * Foto lokal: public/images/vehicles/<slug>.jpg
      * (sumber & lisensi di public/images/vehicles/CREDITS.md).
      * tank_capacity kolom integer (liter), nilai spesifikasi dibulatkan.
      */
@@ -59,12 +61,17 @@ class VehicleSeeder extends Seeder
             ],
         ];
 
-        foreach ($motors as $motor) {
+        $branchSlugs = ['cabang-malang-kota', 'cabang-batu', 'cabang-surabaya'];
+        $branchIds = Branch::query()->whereIn('slug', $branchSlugs)->pluck('id', 'slug');
+        $perBranch = [0, 0, 0, 0, 1, 1, 1, 2, 2, 2];
+
+        foreach ($motors as $index => $motor) {
             $slug = Str::slug($motor['name']);
 
             Vehicle::query()->updateOrCreate(
                 ['slug' => $slug],
                 [
+                    'branch_id' => $branchIds[$branchSlugs[$perBranch[$index]]],
                     'vehicle_type_id' => VehicleType::query()->where('slug', Str::slug($motor['type']))->firstOrFail()->id,
                     'name' => $motor['name'],
                     'brand' => Str::before($motor['name'], ' '),
