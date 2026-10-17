@@ -15,9 +15,9 @@
             </p>
 
             <div class="mt-4">
-                <x-input-label for="start_at" value="Waktu Mulai" />
-                <x-text-input id="start_at" type="datetime-local" class="mt-1 block w-full"
+                <x-form.datetime name="start_at" label="Waktu Mulai" :picker="true"
                     x-model="startAt" @change="fetchDurations" step="300"
+                    x-init="$nextTick(() => $el._flatpickr?.setDate(startAt, false))"
                     :min="now()->format('Y-m-d\TH:i')" />
             </div>
 

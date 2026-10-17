@@ -73,6 +73,17 @@
                                 clear.textContent = 'Hapus pilihan';
                                 clear.addEventListener('click', () => { fp.clear(); fp.close(); });
                                 fp.calendarContainer.appendChild(clear);
+
+                                // Klik tanggal menutup; saat atur jam, jam pindah fokus ke menit, menit menutup.
+                                fp.calendarContainer.addEventListener('click', (e) => {
+                                    if (e.target.closest('.flatpickr-day') && !e.target.closest('.flatpickr-disabled')) {
+                                        fp.close();
+                                    }
+                                });
+                                ['change', 'increment'].forEach((evt) => {
+                                    fp.hourElement.addEventListener(evt, () => fp.minuteElement.focus());
+                                    fp.minuteElement.addEventListener(evt, () => setTimeout(() => fp.close(), 0));
+                                });
                             },
                         });
                     });
