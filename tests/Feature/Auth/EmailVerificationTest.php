@@ -23,7 +23,7 @@ class EmailVerificationTest extends TestCase
         $this->actingAs($user)
             ->get('/verify-email')
             ->assertStatus(200)
-            ->assertSee('Kode verifikasi');
+            ->assertSee('Masukkan Kode Verifikasi');
     }
 
     public function test_verification_email_contains_six_digit_code(): void
