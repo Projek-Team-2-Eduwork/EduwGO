@@ -23,6 +23,7 @@
             <!-- Filter -->
             <div class="card-surface p-4">
                 <form method="GET" action="{{ route('admin.pesanan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    @include('admin.partials.branch-filter', ['class' => 'md:col-span-1'])
                     <div class="md:col-span-1">
                         <x-input-label for="q" value="Cari Pesanan" />
                         <x-text-input id="q" name="q" value="{{ request('q') }}" placeholder="Nama / Motor / Kode" class="w-full mt-1" />

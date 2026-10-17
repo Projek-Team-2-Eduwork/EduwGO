@@ -48,6 +48,22 @@ class Booking extends Model
     }
 
     /**
+     * Batasi ke booking yang unitnya boleh dikelola user (lihat Vehicle::scopeManagedBy).
+     * Subquery withTrashed supaya booking unit yang sudah di-soft-delete tetap terlihat admin cabangnya.
+     */
+    public function scopeManagedBy(Builder $query, User $user): Builder
+    {
+        if ($user->isSuperadmin()) {
+            return $query;
+        }
+
+        return $query->whereIn(
+            $query->getModel()->qualifyColumn('vehicle_id'),
+            Vehicle::withTrashed()->managedBy($user)->select('id'),
+        );
+    }
+
+    /**
      * Booking yang masih memblokir unit (pending, paid, rented) — dipakai AvailabilityService.
      */
     public function scopeActive(Builder $query): Builder

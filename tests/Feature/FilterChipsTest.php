@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Location;
+use App\Models\Branch;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,13 +27,13 @@ class FilterChipsTest extends TestCase
             ->assertSee('Memuat kendaraan...');
     }
 
-    public function test_halaman_lokasi_memakai_chip_tipe_yang_sama(): void
+    public function test_halaman_cabang_memakai_chip_tipe_yang_sama(): void
     {
-        $lokasi = Location::factory()->create(['slug' => 'pusat']);
+        $cabang = Branch::factory()->create(['slug' => 'pusat']);
         $type = VehicleType::factory()->create(['name' => 'Trail']);
-        Vehicle::factory()->create(['vehicle_type_id' => $type->id, 'location_id' => $lokasi->id]);
+        Vehicle::factory()->create(['vehicle_type_id' => $type->id, 'branch_id' => $cabang->id]);
 
-        $this->get(route('lokasi.show', ['slug' => 'pusat', 'type' => $type->id]))
+        $this->get(route('cabang.show', ['slug' => 'pusat', 'type' => $type->id]))
             ->assertOk()
             ->assertSee('name="type" value="'.$type->id.'" checked', false);
     }

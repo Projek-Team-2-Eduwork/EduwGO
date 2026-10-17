@@ -4,6 +4,9 @@
     // Nomor belum diatur: arahkan ke wa.me tanpa nomor agar tidak menghasilkan tautan rusak.
     $waUrl = $waNumber ? 'https://wa.me/'.$waNumber.'?text='.rawurlencode('Halo, saya butuh bantuan.') : '//wa.me';
 
+    // Alamat, jam, kontak & sosmed per cabang aktif (cabang baru otomatis muncul)
+    $branches = app(\App\Services\BranchContext::class)->active();
+
     $socials = [
         'Instagram' => setting('social.instagram', '#'),
         'Facebook' => setting('social.facebook', '#'),
@@ -14,7 +17,7 @@
 
 <footer class="mt-20 border-t border-[var(--border)]" style="background-color: var(--surface);">
     <div class="mx-auto grid max-w-[1320px] gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-5 xl:px-0">
-        <div class="lg:col-span-2">
+        <div>
             <x-brand-logo class="h-9 w-auto" />
             <p class="mt-4 max-w-sm text-sm leading-relaxed">
                 {{ setting('brand.description', $brand.' menyediakan rental motor cepat, aman, dan terjangkau. Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.') }}
@@ -32,30 +35,36 @@
             </ul>
         </div>
 
-        <div>
-            <h3 class="text-sm font-bold">Socials</h3>
-            <ul class="mt-4 space-y-2 text-sm">
-                @foreach ($socials as $label => $href)
-                    <li><a href="{{ $href }}" target="_blank" rel="noopener" class="hover:text-[var(--orange-500)]">{{ $label }}</a></li>
-                @endforeach
-            </ul>
-        </div>
+        <div class="md:col-span-2 lg:col-span-3">
+            @if ($branches->isEmpty())
+                {{-- Belum ada cabang aktif: pakai kontak global dari Pengaturan Toko --}}
+                <h3 class="text-sm font-bold">Kontak</h3>
+                <ul class="mt-4 space-y-2 text-sm">
+                    @if ($address = setting('contact.address'))
+                        <li>{{ $address }}</li>
+                    @endif
+                    @if ($hours = setting('contact.hours'))
+                        <li>{{ $hours }}</li>
+                    @endif
+                    @foreach ($socials as $label => $href)
+                        <li><a href="{{ $href }}" target="_blank" rel="noopener" class="hover:text-[var(--orange-500)]">{{ $label }}</a></li>
+                    @endforeach
+                </ul>
+            @else
+                <h3 class="text-sm font-bold">Cabang Kami</h3>
+                <div class="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($branches as $branch)
+                        <div>
+                            <p class="text-sm font-semibold" style="color: var(--navy-900);">{{ $branch->name }}</p>
+                            <x-branch-info :branch="$branch" class="mt-2" />
+                        </div>
+                    @endforeach
+                </div>
+            @endif
 
-        <div>
-            <h3 class="text-sm font-bold">Kontak</h3>
-            <ul class="mt-4 space-y-2 text-sm">
-                @if ($address = setting('contact.address'))
-                    <li>{{ $address }}</li>
-                @endif
-                @if ($hours = setting('contact.hours'))
-                    <li>{{ $hours }}</li>
-                @endif
-                <li>
-                    <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn-secondary-edu mt-1 inline-flex items-center px-4 py-2 text-sm">
-                        Chat Admin
-                    </a>
-                </li>
-            </ul>
+            <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn-secondary-edu mt-6 inline-flex items-center px-4 py-2 text-sm">
+                Chat Admin
+            </a>
         </div>
     </div>
 

@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -21,15 +20,14 @@ class DashboardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'admin']);
-
         $this->seed(DatabaseSeeder::class);
     }
 
+    /** Superadmin: widget menghitung semua cabang, sama dengan query independen di bawah. */
     private function getAdmin()
     {
         $admin = User::factory()->create();
-        $admin->assignRole('admin');
+        $admin->assignRole('superadmin');
 
         return $admin;
     }
@@ -160,7 +158,8 @@ class DashboardTest extends TestCase
         $response->assertSee('Lihat semua');
     }
 
-    public function test_batas_maksimal_query_halaman_adalah_8()
+    // 8 query dasar + 1 query nama cabang admin di header layout (konstan, bukan N+1)
+    public function test_batas_maksimal_query_halaman_adalah_9()
     {
         $admin = $this->getAdmin();
 
@@ -172,6 +171,6 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
         $response->assertOk();
 
-        $this->assertLessThanOrEqual(8, count(DB::getQueryLog()));
+        $this->assertLessThanOrEqual(9, count(DB::getQueryLog()));
     }
 }

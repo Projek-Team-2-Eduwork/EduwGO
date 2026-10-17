@@ -38,8 +38,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Admin diarahkan ke dashboard admin, user biasa ke dashboard (home belum ada, dibuat di EG-23).
-        if ($request->user()->hasRole('admin')) {
+        // Superadmin & admin cabang diarahkan ke dashboard admin, user biasa ke dashboard.
+        if ($request->user()->isStaff()) {
             return redirect()->route('admin.dashboard');
         }
 

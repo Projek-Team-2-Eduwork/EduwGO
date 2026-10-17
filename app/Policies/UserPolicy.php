@@ -6,34 +6,29 @@ use App\Models\User;
 
 class UserPolicy
 {
+    /** Kelola pengguna & admin cabang: superadmin saja. */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 
     public function setRole(User $currentUser, User $targetUser, string $role): bool
     {
-        if (! $currentUser->hasRole('admin')) {
-            return false;
-        }
-        // Tidak boleh mencabut role admin dari dirinya sendiri
-        if ($currentUser->id === $targetUser->id && $role === 'user') {
+        if (! $currentUser->isSuperadmin()) {
             return false;
         }
 
-        return true;
+        // Tidak boleh mengubah role dirinya sendiri (cegah kehilangan akses superadmin)
+        return $currentUser->id !== $targetUser->id;
     }
 
     public function toggleActive(User $currentUser, User $targetUser): bool
     {
-        if (! $currentUser->hasRole('admin')) {
-            return false;
-        }
-        // Tidak boleh menonaktifkan akunnya sendiri
-        if ($currentUser->id === $targetUser->id) {
+        if (! $currentUser->isSuperadmin()) {
             return false;
         }
 
-        return true;
+        // Tidak boleh menonaktifkan akunnya sendiri
+        return $currentUser->id !== $targetUser->id;
     }
 }

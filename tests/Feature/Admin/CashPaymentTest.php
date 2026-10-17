@@ -17,7 +17,7 @@ class CashPaymentTest extends TestCase
     private function getAdmin()
     {
         Role::firstOrCreate(['name' => 'admin']);
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
         $admin->assignRole('admin');
 
         return $admin;

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\Branch;
 use App\Models\Setting;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
@@ -76,33 +77,40 @@ class HomeTest extends TestCase
         $this->assertSame($kecil, count(DB::getQueryLog()));
     }
 
-    public function test_section_profil_perusahaan_tampil_dengan_settings_terisi(): void
+    public function test_section_profil_menampilkan_data_tiap_cabang_aktif(): void
     {
         Setting::updateOrCreate(['key' => 'brand.description'], ['value' => 'Kami menyediakan motor terawat untuk perjalanan Anda.']);
-        Setting::updateOrCreate(['key' => 'contact.address'], ['value' => 'Jl. Test Alamat No. 7, Malang']);
-        Setting::updateOrCreate(['key' => 'contact.hours'], ['value' => 'Senin - Sabtu, 08.00 - 17.00']);
-        Setting::updateOrCreate(['key' => 'contact.whatsapp'], ['value' => '628123999888']);
-        Setting::updateOrCreate(['key' => 'social.instagram'], ['value' => 'https://instagram.com/eduwgo']);
+        Branch::factory()->create([
+            'name' => 'Cabang Uji A',
+            'address' => 'Jl. Test Alamat No. 7, Malang',
+            'phone' => '08123999888',
+            'operating_hours' => 'Senin - Sabtu, 08.00 - 17.00',
+            'social_links' => ['instagram' => 'https://instagram.com/eduwgo.a'],
+        ]);
+        Branch::factory()->create(['name' => 'Cabang Uji B', 'address' => 'Jl. Kedua No. 2, Batu', 'operating_hours' => 'Setiap hari, 09.00 - 18.00']);
+        Branch::factory()->create(['name' => 'Cabang Tutup', 'address' => 'Jl. Tutup', 'is_active' => false]);
 
         $this->get('/')
             ->assertOk()
             ->assertSee('Tentang Penyewaan')
             ->assertSee('Kami menyediakan motor terawat untuk perjalanan Anda.')
+            ->assertSee('Cabang Uji A')
             ->assertSee('Jl. Test Alamat No. 7, Malang')
             ->assertSee('Senin - Sabtu, 08.00 - 17.00')
             ->assertSee('https://wa.me/628123999888', false)
-            ->assertSee('https://instagram.com/eduwgo', false)
+            ->assertSee('https://instagram.com/eduwgo.a', false)
+            ->assertSee('Cabang Uji B')
+            ->assertSee('Jl. Kedua No. 2, Batu')
+            ->assertDontSee('Cabang Tutup')
             ->assertSee('Selengkapnya');
     }
 
-    public function test_section_profil_perusahaan_tampil_default_tanpa_settings(): void
+    public function test_section_profil_perusahaan_tampil_default_tanpa_cabang(): void
     {
         $this->get('/')
             ->assertOk()
             ->assertSee('Tentang Penyewaan')
             ->assertSee('EduwGo menyediakan rental motor cepat, aman, dan terjangkau')
-            ->assertSee('Alamat lokasi pengambilan akan diinformasikan oleh admin')
-            ->assertSee('Setiap hari, 08.00 – 20.00 WIB')
-            ->assertDontSee('https://wa.me/');
+            ->assertSee('Alamat lokasi pengambilan akan diinformasikan oleh admin');
     }
 }

@@ -3,6 +3,9 @@
         <div>
             <h2 class="text-2xl">Pilihan Motor Kami</h2>
             <p class="mt-2 text-sm">Pilih kendaraan yang paling sesuai dengan gaya perjalanan dan budget Anda. Semua motor terawat, siap jalan!</p>
+            @isset($currentBranch)
+                <p class="mt-1 text-sm">Menampilkan motor di <strong class="text-[var(--navy-900)]">{{ $currentBranch->name }}</strong>. Ganti cabang lewat menu di atas.</p>
+            @endisset
         </div>
         <a href="{{ url('/kendaraan') }}" class="shrink-0 text-sm font-semibold text-[var(--navy-900)] underline-offset-4 hover:underline">Lihat semua</a>
     </div>

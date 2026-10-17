@@ -9,11 +9,15 @@ use App\Models\VehicleType;
 
 class DashboardService
 {
-    public function topVehicles()
+    /**
+     * Semua widget menerima $branchId: null = semua cabang (superadmin), angka = satu cabang.
+     */
+    public function topVehicles(?int $branchId = null)
     {
         return Vehicle::query()
             ->selectRaw('vehicles.id, vehicles.name, COUNT(bookings.id) as booking_count')
             ->join('bookings', 'vehicles.id', '=', 'bookings.vehicle_id')
+            ->when($branchId !== null, fn ($q) => $q->where('vehicles.branch_id', $branchId))
             ->whereIn('bookings.status', ['paid', 'rented', 'returned'])
             ->groupBy('vehicles.id', 'vehicles.name')
             ->orderByDesc('booking_count')
@@ -21,11 +25,19 @@ class DashboardService
             ->get();
     }
 
-    public function stats()
+    public function stats(?int $branchId = null)
     {
-        $activeVehicles = Vehicle::where('is_active', true)->count();
+        $activeVehicles = Vehicle::where('is_active', true)
+            ->when($branchId !== null, fn ($q) => $q->where('branch_id', $branchId))
+            ->count();
 
-        $bookingStats = Booking::selectRaw('
+        // Booking milik unit di cabang itu (withTrashed: unit yang sudah dihapus tetap dihitung)
+        $inBranch = fn ($q) => $q->when(
+            $branchId !== null,
+            fn ($q) => $q->whereIn('vehicle_id', Vehicle::withTrashed()->where('branch_id', $branchId)->select('id')),
+        );
+
+        $bookingStats = Booking::query()->tap($inBranch)->selectRaw('
             SUM(CASE WHEN status IN ("pending", "paid", "rented") THEN 1 ELSE 0 END) as active_bookings,
             SUM(CASE WHEN status = "rented" THEN 1 ELSE 0 END) as rented_bookings
         ')->first();
@@ -39,11 +51,11 @@ class DashboardService
             'available_vehicles' => $availableVehicles,
             'active_bookings' => $activeBookings,
             'rented_bookings' => $rentedBookings,
-            'overdue_vehicles' => Booking::overdue()->count(),
+            'overdue_vehicles' => Booking::overdue()->tap($inBranch)->count(),
         ];
     }
 
-    public function revenue($from, $to, $typeId = null, $method = null)
+    public function revenue($from, $to, $typeId = null, $method = null, ?int $branchId = null)
     {
         $query = Payment::query()
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
@@ -51,9 +63,10 @@ class DashboardService
             ->where('bookings.status', '!=', 'cancelled')
             ->whereBetween('payments.paid_at', [$from, $to]);
 
-        if ($typeId) {
+        if ($typeId || $branchId !== null) {
             $query->join('vehicles', 'bookings.vehicle_id', '=', 'vehicles.id')
-                ->where('vehicles.vehicle_type_id', $typeId);
+                ->when($typeId, fn ($q) => $q->where('vehicles.vehicle_type_id', $typeId))
+                ->when($branchId !== null, fn ($q) => $q->where('vehicles.branch_id', $branchId));
         }
 
         if ($method) {
@@ -63,12 +76,13 @@ class DashboardService
         return (float) $query->sum('payments.amount');
     }
 
-    public function recentBookings()
+    public function recentBookings(?int $branchId = null)
     {
         return Booking::query()
             ->select('bookings.*', 'vehicles.name as vehicle_name', 'vehicles.image as vehicle_image', 'vehicle_types.name as vehicle_type_name')
             ->join('vehicles', 'bookings.vehicle_id', '=', 'vehicles.id')
             ->join('vehicle_types', 'vehicles.vehicle_type_id', '=', 'vehicle_types.id')
+            ->when($branchId !== null, fn ($q) => $q->where('vehicles.branch_id', $branchId))
             ->orderByDesc('bookings.created_at')
             ->limit(8)
             ->get();

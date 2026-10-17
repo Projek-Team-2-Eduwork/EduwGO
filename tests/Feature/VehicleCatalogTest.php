@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
-use App\Models\Location;
+use App\Models\Branch;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,9 +23,9 @@ class VehicleCatalogTest extends TestCase
         ], $attributes));
     }
 
-    private function location(string $name, string $slug): Location
+    private function branch(string $name, string $slug): Branch
     {
-        return Location::factory()->create(['name' => $name, 'slug' => $slug]);
+        return Branch::factory()->create(['name' => $name, 'slug' => $slug]);
     }
 
     private function book(Vehicle $vehicle, string $start, string $end, BookingStatus $status = BookingStatus::Paid): Booking
@@ -202,6 +202,7 @@ class VehicleCatalogTest extends TestCase
         $matic = VehicleType::factory()->create(['name' => 'Matic']);
         foreach (range(0, 12) as $i) {
             Vehicle::create([
+                'branch_id' => $this->defaultBranch()->id,
                 'vehicle_type_id' => $matic->id,
                 'name' => 'Motor '.str_pad($i, 2, '0', STR_PAD_LEFT),
                 'slug' => 'motor-'.$i,
@@ -323,6 +324,7 @@ class VehicleCatalogTest extends TestCase
         // Buat 13 unit (1 halaman = 12 + 1 page berikutnya)
         for ($i = 1; $i <= 13; $i++) {
             $unit = Vehicle::create([
+                'branch_id' => $this->defaultBranch()->id,
                 'vehicle_type_id' => $type->id,
                 'name' => "Unit Test {$i}",
                 'slug' => 'unit-test-'.$i,
@@ -348,63 +350,64 @@ class VehicleCatalogTest extends TestCase
         $this->assertSame(0, $separate->count());
     }
 
-    public function test_filter_lokasi_hanya_menampilkan_unit_lokasi(): void
+    public function test_katalog_default_hanya_unit_cabang_terpilih_bukan_semua_cabang(): void
     {
-        $a = $this->location('Cabang A', 'cabang-a');
-        $b = $this->location('Cabang B', 'cabang-b');
-        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
-        $this->vehicle('Motor Beta', null, ['location_id' => $b->id]);
+        // Cabang aktif pertama (urut nama) jadi default saat penyewa belum memilih
+        $a = $this->branch('Cabang A', 'cabang-a');
+        $b = $this->branch('Cabang B', 'cabang-b');
+        $this->vehicle('Motor Alpha', null, ['branch_id' => $a->id]);
+        $this->vehicle('Motor Beta', null, ['branch_id' => $b->id]);
 
-        $this->get('/kendaraan?lokasi=cabang-a')
-            ->assertOk()
-            ->assertSee('Motor Alpha')
-            ->assertDontSee('Motor Beta');
-    }
-
-    public function test_filter_lokasi_invalid_ditolak_dan_tidak_mengubah_sesi(): void
-    {
-        $a = $this->location('Cabang A', 'cabang-a');
-        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
-        $this->vehicle('Motor Gamma'); // otomatis lokasi-utama (factory)
-
-        $this->get('/kendaraan?lokasi=tidak-ada')->assertRedirect();
-
-        // Sesi tidak terkontaminasi: katalog normal menampilkan semua unit.
-        $this->get('/kendaraan')
-            ->assertOk()
-            ->assertSee('Motor Alpha')
-            ->assertSee('Motor Gamma');
-    }
-
-    public function test_filter_lokasi_bertahan_di_session(): void
-    {
-        $a = $this->location('Cabang A', 'cabang-a');
-        $b = $this->location('Cabang B', 'cabang-b');
-        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
-        $this->vehicle('Motor Beta', null, ['location_id' => $b->id]);
-
-        $this->get('/kendaraan?lokasi=cabang-a')->assertOk()->assertSee('Motor Alpha');
-
-        // Kembali tanpa parameter: filter lokasi tersimpan di session masih berlaku.
         $this->get('/kendaraan')
             ->assertOk()
             ->assertSee('Motor Alpha')
             ->assertDontSee('Motor Beta');
     }
 
-    public function test_reset_menghapus_filter_lokasi(): void
+    public function test_pilih_cabang_lewat_query_memfilter_katalog_dan_bertahan_di_session(): void
     {
-        $a = $this->location('Cabang A', 'cabang-a');
-        $b = $this->location('Cabang B', 'cabang-b');
-        $this->vehicle('Motor Alpha', null, ['location_id' => $a->id]);
-        $this->vehicle('Motor Beta', null, ['location_id' => $b->id]);
+        $a = $this->branch('Cabang A', 'cabang-a');
+        $b = $this->branch('Cabang B', 'cabang-b');
+        $this->vehicle('Motor Alpha', null, ['branch_id' => $a->id]);
+        $this->vehicle('Motor Beta', null, ['branch_id' => $b->id]);
 
-        $this->get('/kendaraan?lokasi=cabang-a')->assertDontSee('Motor Beta');
+        // ?cabang= memilih cabang lalu redirect ke URL bersih
+        $this->get('/kendaraan?cabang=cabang-b')->assertRedirect('/kendaraan');
+        $this->assertSame('cabang-b', session('branch'));
+
+        // Kembali tanpa parameter: cabang pilihan tetap berlaku
+        $this->get('/kendaraan')
+            ->assertOk()
+            ->assertSee('Motor Beta')
+            ->assertDontSee('Motor Alpha');
+    }
+
+    public function test_cabang_tidak_dikenal_atau_nonaktif_diabaikan(): void
+    {
+        $a = $this->branch('Cabang A', 'cabang-a');
+        Branch::factory()->create(['name' => 'Cabang Tutup', 'slug' => 'cabang-tutup', 'is_active' => false]);
+        $this->vehicle('Motor Alpha', null, ['branch_id' => $a->id]);
+
+        $this->get('/kendaraan?cabang=tidak-ada')->assertRedirect('/kendaraan');
+        $this->get('/kendaraan?cabang=cabang-tutup')->assertRedirect('/kendaraan');
+        $this->assertNull(session('branch'));
+
+        $this->get('/kendaraan')->assertOk()->assertSee('Motor Alpha');
+    }
+
+    public function test_reset_filter_tidak_mengubah_cabang_terpilih(): void
+    {
+        $a = $this->branch('Cabang A', 'cabang-a');
+        $b = $this->branch('Cabang B', 'cabang-b');
+        $this->vehicle('Motor Alpha', null, ['branch_id' => $a->id]);
+        $this->vehicle('Motor Beta', null, ['branch_id' => $b->id]);
+
+        $this->get('/kendaraan?cabang=cabang-b');
 
         $this->followingRedirects()
             ->get('/kendaraan/reset')
             ->assertOk()
-            ->assertSee('Motor Alpha')
-            ->assertSee('Motor Beta');
+            ->assertSee('Motor Beta')
+            ->assertDontSee('Motor Alpha');
     }
 }

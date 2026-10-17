@@ -33,7 +33,7 @@ class SettingTest extends TestCase
 
     public function test_admin_dapat_melihat_halaman_pengaturan(): void
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
 
         $this->get(route('admin.pengaturan.edit'))->assertOk();
     }
@@ -41,7 +41,7 @@ class SettingTest extends TestCase
     public function test_update_pengaturan_tersimpan_dan_mereset_cache(): void
     {
         Storage::fake('public');
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
 
         // Isi dulu cache settings agar membuktikan Cache::forget berjalan
         $this->assertEquals('EduwGo', setting('brand.name', 'EduwGo'));
@@ -69,7 +69,7 @@ class SettingTest extends TestCase
 
     public function test_ubah_brand_name_terlihat_di_title_navbar_dan_footer(): void
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
 
         $this->actingAs($admin)
             ->put(route('admin.pengaturan.update'), $this->validPayload())
@@ -84,7 +84,7 @@ class SettingTest extends TestCase
 
     public function test_ubah_warna_ter_render_sebagai_override_css(): void
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
 
         // Tanpa warna kustom → tidak ada blok override di HTML
         $this->get('/')->assertOk()->assertDontSee('--navy-900:', false);
@@ -104,7 +104,7 @@ class SettingTest extends TestCase
 
     public function test_ubah_buffer_dipakai_oleh_availability_service(): void
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
         $booking = Booking::factory()->paid()->create([
             'start_at' => '2026-11-10 10:00:00',
             'end_at' => '2026-11-10 12:00:00',
@@ -125,7 +125,7 @@ class SettingTest extends TestCase
 
     public function test_validasi_ditolak_jika_format_salah(): void
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
 
         $response = $this->put(route('admin.pengaturan.update'), [
             'brand_name' => 'Toko',

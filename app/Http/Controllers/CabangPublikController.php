@@ -3,37 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VehicleFilterRequest;
-use App\Models\Location;
+use App\Models\Branch;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
+use App\Services\BranchContext;
 use App\Support\RentalTerms;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
-class LokasiPublikController extends Controller
+class CabangPublikController extends Controller
 {
     /**
-     * Daftar lokasi aktif + jumlah unit aktif tiap lokasi (query tunggal, aman N+1). (EG-49)
+     * Daftar cabang aktif + jumlah unit aktif tiap cabang (query tunggal, aman N+1). (EG-49)
      */
-    public function index()
+    public function index(BranchContext $branches)
     {
-        $lokasi = Location::query()
-            ->where('is_active', true)
+        $cabang = Branch::query()
+            ->active()
             ->withCount(['vehicles as units_count' => fn (Builder $q) => $q->where('is_active', true)])
             ->orderBy('name')
             ->get();
 
-        return view('lokasi.index', ['lokasi' => $lokasi]);
+        return view('cabang.index', ['cabang' => $cabang, 'currentBranch' => $branches->current()]);
     }
 
     /**
-     * Unit satu lokasi: reuse logika filter katalog lewat AvailabilityService. (EG-49)
+     * Unit satu cabang: reuse logika filter katalog lewat AvailabilityService. (EG-49)
      */
     public function show(string $slug, VehicleFilterRequest $request, AvailabilityService $availability)
     {
-        $lokasi = Location::query()
+        $cabang = Branch::query()
             ->where('slug', $slug)
-            ->where('is_active', true)
+            ->active()
             ->firstOrFail();
 
         $filter = $request->validated();
@@ -66,7 +67,7 @@ class LokasiPublikController extends Controller
 
         $timeFiltered = $start !== null && $days !== null;
 
-        $vehicles = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $lokasi->id)
+        $vehicles = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $cabang->id)
             ->withCount(['bookings as booking_count' => fn (Builder $q) => $q->whereIn('status', ['paid', 'rented', 'returned'])])
             ->when($min !== null, fn ($q) => $q->where('price_per_day', '>=', $min))
             ->when($max !== null, fn ($q) => $q->where('price_per_day', '<=', $max))
@@ -76,8 +77,8 @@ class LokasiPublikController extends Controller
             ->when(! $popular && $sort === null, fn ($q) => $q->orderBy('name'))
             ->paginate(12)->withQueryString();
 
-        return view('lokasi.show', [
-            'lokasi' => $lokasi,
+        return view('cabang.show', [
+            'cabang' => $cabang,
             'vehicles' => $vehicles,
             'types' => VehicleType::query()->orderBy('name')->pluck('name', 'id'),
             'maxDays' => (int) $availability->maxDays(),
@@ -99,12 +100,12 @@ class LokasiPublikController extends Controller
     }
 
     /**
-     * Hapus filter session lalu kembali ke halaman lokasi polos.
+     * Hapus filter session lalu kembali ke halaman cabang polos.
      */
     public function resetFilter(Request $request, string $slug)
     {
         $request->session()->forget(['booking.filter', 'booking.start_at']);
 
-        return redirect()->route('lokasi.show', $slug);
+        return redirect()->route('cabang.show', $slug);
     }
 }

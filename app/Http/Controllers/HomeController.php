@@ -6,17 +6,19 @@ use App\Http\Requests\VehicleFilterRequest;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
+use App\Services\BranchContext;
 use App\Support\RentalTerms;
 
 class HomeController extends Controller
 {
     private const DEFAULT_TAGLINE = 'Rental Motor Cepat & Aman, Mulai Rp75.000/hari';
 
-    public function index(AvailabilityService $availability)
+    public function index(AvailabilityService $availability, BranchContext $branches)
     {
+        // Katalog ringkas hanya unit cabang terpilih, bukan semua cabang
         $vehicles = Vehicle::query()
             ->where('is_active', true)
-            ->whereNotNull('location_id')
+            ->where('branch_id', $branches->currentId())
             ->with('type')
             ->orderBy('name')
             ->limit(8)
@@ -39,6 +41,8 @@ class HomeController extends Controller
             'maxDays' => $availability->maxDays(),
             'minStart' => VehicleFilterRequest::earliestStart(),
             'profil' => $this->profil(),
+            'branches' => $branches->active(),
+            'currentBranch' => $branches->current(),
         ]);
     }
 
@@ -58,25 +62,15 @@ class HomeController extends Controller
     }
 
     /**
-     * Data section "Tentang Penyewaan" (EG-46); semua dari settings dengan fallback aman.
+     * Data section "Tentang Penyewaan" (EG-46): brand dari settings; alamat, jam, kontak & sosmed
+     * dari tiap cabang aktif (lihat partial home.profil).
      */
     private function profil(): array
     {
-        $waNumber = preg_replace('/\D+/', '', $this->textSetting('contact.whatsapp', ''));
-
         return [
             'logo' => $this->textSetting('brand.logo_light', ''),
             'nama' => $this->textSetting('brand.name', 'EduwGo'),
             'deskripsi' => $this->textSetting('brand.description', 'EduwGo menyediakan rental motor cepat, aman, dan terjangkau. Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.'),
-            'alamat' => $this->textSetting('contact.address', 'Alamat lokasi pengambilan akan diinformasikan oleh admin.'),
-            'jam' => $this->textSetting('contact.hours', 'Setiap hari, 08.00 – 20.00 WIB'),
-            'waUrl' => $waNumber !== '' ? 'https://wa.me/'.$waNumber : null,
-            'sosmed' => collect([
-                'Instagram' => setting('social.instagram'),
-                'Facebook' => setting('social.facebook'),
-                'TikTok' => setting('social.tiktok'),
-                'YouTube' => setting('social.youtube'),
-            ])->filter(fn ($href) => is_string($href) && trim($href) !== '' && $href !== '#'),
         ];
     }
 }

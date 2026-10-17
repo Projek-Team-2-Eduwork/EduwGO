@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\User;
+use App\Models\Vehicle;
 
 class BookingPolicy
 {
@@ -26,16 +27,29 @@ class BookingPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isStaff();
     }
 
+    /** Booking milik unit di cabang user (superadmin: semua). */
     public function adminView(User $user, Booking $booking): bool
     {
-        return $user->hasRole('admin');
+        return $this->manages($user, $booking);
     }
 
     public function adminUpdate(User $user, Booking $booking): bool
     {
-        return $user->hasRole('admin');
+        return $this->manages($user, $booking);
+    }
+
+    private function manages(User $user, Booking $booking): bool
+    {
+        if ($user->isSuperadmin()) {
+            return true;
+        }
+
+        // withTrashed: unit yang sudah di-soft-delete tetap milik cabangnya.
+        $branchId = Vehicle::withTrashed()->whereKey($booking->vehicle_id)->value('branch_id');
+
+        return $user->canManageBranch($branchId);
     }
 }

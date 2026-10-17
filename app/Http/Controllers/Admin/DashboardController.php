@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exports\PendapatanExport;
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Services\DashboardService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,7 +16,11 @@ class DashboardController extends Controller
     {
         $request->validate([
             'metode' => ['nullable', 'in:xendit_invoice,cash'],
+            'branch' => ['nullable', 'integer'],
         ]);
+
+        // Admin cabang selalu terkunci ke cabangnya; superadmin bisa memfilter cabang
+        $branchId = $request->user()->effectiveBranchId($request->integer('branch') ?: null);
 
         $dari = $request->input('dari', now()->startOfMonth()->toDateString());
         $sampai = $request->input('sampai', now()->endOfMonth()->toDateString());
@@ -25,11 +30,12 @@ class DashboardController extends Controller
         $from = Carbon::parse($dari)->startOfDay();
         $to = Carbon::parse($sampai)->endOfDay();
 
-        $topVehicles = $dashboardService->topVehicles();
-        $stats = $dashboardService->stats();
-        $revenue = $dashboardService->revenue($from, $to, $tipe, $metode);
-        $recentBookings = $dashboardService->recentBookings();
+        $topVehicles = $dashboardService->topVehicles($branchId);
+        $stats = $dashboardService->stats($branchId);
+        $revenue = $dashboardService->revenue($from, $to, $tipe, $metode, $branchId);
+        $recentBookings = $dashboardService->recentBookings($branchId);
         $vehicleTypes = $dashboardService->vehicleTypes();
+        $branches = $request->user()->isSuperadmin() ? Branch::orderBy('name')->pluck('name', 'id') : collect();
 
         return view('admin.dashboard', compact(
             'topVehicles',
@@ -41,6 +47,8 @@ class DashboardController extends Controller
             'sampai',
             'tipe',
             'metode',
+            'branchId',
+            'branches',
         ));
     }
 
@@ -51,18 +59,20 @@ class DashboardController extends Controller
             'sampai' => ['date'],
             'tipe' => ['nullable', 'integer'],
             'metode' => ['nullable', 'in:xendit_invoice,cash'],
+            'branch' => ['nullable', 'integer'],
         ]);
 
         $dari = $request->input('dari', now()->startOfMonth()->toDateString());
         $sampai = $request->input('sampai', now()->endOfMonth()->toDateString());
         $tipe = $request->input('tipe');
         $metode = $request->input('metode');
+        $branchId = $request->user()->effectiveBranchId($request->integer('branch') ?: null);
 
         $from = Carbon::parse($dari)->startOfDay();
         $to = Carbon::parse($sampai)->endOfDay();
 
         return Excel::download(
-            new PendapatanExport($from, $to, $tipe, $metode),
+            new PendapatanExport($from, $to, $tipe, $metode, $branchId),
             'pendapatan-'.$from->format('Y-m-d').'-'.$to->format('Y-m-d').'.xlsx'
         );
     }

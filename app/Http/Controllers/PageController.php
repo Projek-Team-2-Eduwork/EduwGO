@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\BranchContext;
+
 class PageController extends Controller
 {
     private const DEFAULT_TERMS = [
@@ -18,24 +20,16 @@ class PageController extends Controller
         return view('pages.terms', ['points' => $this->termsPoints()]);
     }
 
-    public function about()
+    public function about(BranchContext $branches)
     {
-        $socials = collect([
-            'Instagram' => setting('social.instagram'),
-            'Facebook' => setting('social.facebook'),
-            'TikTok' => setting('social.tiktok'),
-            'YouTube' => setting('social.youtube'),
-        ])->filter(fn ($href) => is_string($href) && $href !== '' && $href !== '#');
-
-        $waNumber = preg_replace('/\D+/', '', (string) setting('contact.whatsapp', ''));
-
         return view('pages.about', [
             'brand' => setting('brand.name', 'EduwGo'),
             'description' => setting('brand.description', 'EduwGo menyediakan rental motor cepat, aman, dan terjangkau. Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.'),
+            // Alamat, jam, kontak & sosmed dari tiap cabang aktif (cabang baru otomatis muncul)
+            'branches' => $branches->active(),
+            // Fallback bila belum ada cabang aktif
             'address' => setting('contact.address', 'Alamat lokasi pengambilan akan diinformasikan oleh admin.'),
             'hours' => setting('contact.hours', 'Setiap hari, 08.00 – 20.00 WIB'),
-            'socials' => $socials,
-            'waUrl' => $waNumber !== '' ? 'https://wa.me/'.$waNumber : null,
         ]);
     }
 

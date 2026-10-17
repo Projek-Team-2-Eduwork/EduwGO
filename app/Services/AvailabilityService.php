@@ -47,14 +47,14 @@ class AvailabilityService
     /**
      * Query unit tersedia pada rentang (Builder, aman dipanggil ->paginate() tanpa N+1).
      */
-    public function availableVehicles(CarbonInterface $start, int $days, ?int $typeId = null, ?string $search = null): Builder
+    public function availableVehicles(CarbonInterface $start, int $days, ?int $typeId = null, ?string $search = null, ?int $branchId = null): Builder
     {
         $end = $start->copy()->addDays($days);
         $buffer = $this->bufferMenit();
 
         return Vehicle::query()
             ->where('is_active', true)
-            ->whereNotNull('location_id')
+            ->when($branchId !== null, fn (Builder $query) => $query->where('branch_id', $branchId))
             ->with('type')
             ->when($typeId !== null, fn (Builder $query) => $query->where('vehicle_type_id', $typeId))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))
@@ -101,7 +101,7 @@ class AvailabilityService
     }
 
     /**
-     * Query katalog bersama (katalog utama & halaman lokasi): unit aktif + filter
+     * Query katalog bersama (katalog utama & halaman cabang): unit aktif satu cabang + filter
      * tipe, pencarian, dan ketersediaan pada rentang waktu tertentu. (EG-49)
      */
     public function catalogQuery(
@@ -110,11 +110,10 @@ class AvailabilityService
         ?int $typeId = null,
         ?string $search = null,
         bool $onlyAvailable = false,
-        ?int $locationId = null,
+        ?int $branchId = null,
     ): Builder {
         if ($start !== null && $days !== null) {
-            return $this->availableVehicles($start, $days, $typeId, $search)
-                ->when($locationId !== null, fn (Builder $query) => $query->where('location_id', $locationId));
+            return $this->availableVehicles($start, $days, $typeId, $search, $branchId);
         }
 
         // Status saat ini: sedang ada booking aktif yang berjalan.
@@ -122,7 +121,7 @@ class AvailabilityService
 
         return Vehicle::query()
             ->where('is_active', true)
-            ->when($locationId !== null, fn (Builder $query) => $query->where('location_id', $locationId))
+            ->when($branchId !== null, fn (Builder $query) => $query->where('branch_id', $branchId))
             ->with('type')
             ->when($typeId !== null, fn (Builder $query) => $query->where('vehicle_type_id', $typeId))
             ->when(filled($search), fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))

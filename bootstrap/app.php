@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SetCurrentBranch;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Menambahkan middleware EnsureUserIsActive ke grup 'web' agar mengecek di setiap request browser
         $middleware->appendToGroup('web', EnsureUserIsActive::class);
+
+        // Cabang terpilih penyewa (katalog/home/detail terfilter per cabang)
+        $middleware->appendToGroup('web', SetCurrentBranch::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

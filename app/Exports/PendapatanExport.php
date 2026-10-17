@@ -16,6 +16,7 @@ class PendapatanExport implements FromQuery, WithHeadings, WithMapping
         private $to,
         private $typeId,
         private $method = null,
+        private ?int $branchId = null,
     ) {}
 
     public function query(): Builder
@@ -29,6 +30,10 @@ class PendapatanExport implements FromQuery, WithHeadings, WithMapping
 
         if ($this->typeId) {
             $query->where('vehicles.vehicle_type_id', $this->typeId);
+        }
+
+        if ($this->branchId !== null) {
+            $query->where('vehicles.branch_id', $this->branchId);
         }
 
         if ($this->method) {
