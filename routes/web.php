@@ -41,6 +41,10 @@ Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->nam
 Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'durasi'])
     ->name('kendaraan.durasi');
 
+// API Internal: Jadwal terpakai per hari dalam sebulan untuk kalender ketersediaan (EG-41)
+Route::get('/api/kendaraan/{vehicle}/jadwal', [KendaraanController::class, 'jadwal'])
+    ->name('kendaraan.jadwal');
+
 // Webhook Xendit (EG-14): Endpoint eksternal, diverifikasi via x-callback-token, dikecualikan CSRF
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
