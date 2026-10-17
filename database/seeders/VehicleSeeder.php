@@ -61,7 +61,6 @@ class VehicleSeeder extends Seeder
             ],
         ];
 
-        // Tiap cabang punya unit berbeda: 4 di Malang Kota, 3 di Batu, 3 di Surabaya
         $branchSlugs = ['cabang-malang-kota', 'cabang-batu', 'cabang-surabaya'];
         $branchIds = Branch::query()->whereIn('slug', $branchSlugs)->pluck('id', 'slug');
         $perBranch = [0, 0, 0, 0, 1, 1, 1, 2, 2, 2];

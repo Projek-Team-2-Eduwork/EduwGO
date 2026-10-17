@@ -7,10 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Lokasi (EG-48) menjadi Cabang: kendaraan wajib milik satu cabang, cabang
-     * punya kontak/WA, jam operasional, dan media sosial sendiri.
-     */
     public function up(): void
     {
         Schema::rename('locations', 'branches');
@@ -24,7 +20,6 @@ return new class extends Migration
             $table->renameColumn('location_id', 'branch_id');
         });
 
-        // Unit lama tanpa lokasi masuk ke cabang pertama (dibuat bila belum ada cabang).
         if (DB::table('vehicles')->whereNull('branch_id')->exists()) {
             $branchId = DB::table('branches')->orderBy('id')->value('id') ?? DB::table('branches')->insertGetId([
                 'name' => 'Cabang Utama',

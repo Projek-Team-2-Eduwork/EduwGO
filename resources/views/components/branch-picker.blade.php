@@ -1,4 +1,3 @@
-{{-- Pemilih cabang penyewa. Katalog/home/detail terfilter ke cabang terpilih; cabang aktif baru otomatis masuk daftar. --}}
 @props(['align' => 'right'])
 
 @php

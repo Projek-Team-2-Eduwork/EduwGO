@@ -2,19 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Branch;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Branch>
- */
 class BranchFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -24,7 +15,6 @@ class BranchFactory extends Factory
             'operating_hours' => 'Setiap hari, 08.00 – 20.00 WIB',
             'social_links' => null,
             'is_active' => true,
-            // slug diisi model (booted) saat creating
         ];
     }
 }

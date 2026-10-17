@@ -8,9 +8,6 @@ use App\Models\Branch;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
-/**
- * Master cabang, dikelola terpusat oleh superadmin.
- */
 class CabangController extends Controller
 {
     public function index()
@@ -39,7 +36,6 @@ class CabangController extends Controller
     {
         Gate::authorize('update', $cabang);
 
-        // Slug TIDAK diregenerasi demi stabilitas (hook model hanya di event creating)
         $cabang->update($request->branchData());
 
         return back()->with('success', 'Cabang berhasil diperbarui.');

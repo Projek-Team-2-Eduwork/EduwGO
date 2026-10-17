@@ -9,7 +9,6 @@
             @if(session('error')) <x-alert type="error">{{ session('error') }}</x-alert> @endif
             @if($errors->any()) <x-alert type="error">{{ $errors->first() }}</x-alert> @endif
 
-            {{-- Tambah cabang --}}
             <div class="card-surface p-4">
                 <button type="button" @click="addOpen = ! addOpen" class="flex w-full items-center justify-between text-left text-sm font-semibold" :aria-expanded="addOpen.toString()">
                     <span>+ Tambah Cabang</span>

@@ -1,4 +1,3 @@
-{{-- Section profil perusahaan (EG-46). Brand dari settings ($profil), alamat/jam/kontak/sosmed dari cabang aktif ($branches). --}}
 <section id="tentang-penyewaan" class="mx-auto max-w-[1320px] px-4 pt-12 sm:px-6 lg:pt-20 xl:px-0">
     <h2 class="text-2xl">Tentang Penyewaan</h2>
     <p class="mt-2 text-sm">Kenali penyedia layanan sebelum menyewa motor.</p>
@@ -18,7 +17,6 @@
             </div>
         </div>
 
-        {{-- Satu blok per cabang aktif; cabang baru otomatis muncul --}}
         <div class="grid gap-6 sm:grid-cols-2">
             @forelse ($branches as $branch)
                 <section aria-labelledby="profil-cabang-{{ $branch->slug }}">

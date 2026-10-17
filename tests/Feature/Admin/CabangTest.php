@@ -34,7 +34,6 @@ class CabangTest extends TestCase
         $response->assertSessionHas('success');
         $branch = Branch::where('slug', 'cabang-malang-kota')->first();
         $this->assertNotNull($branch);
-        // Link kosong dibuang, yang terisi tersimpan
         $this->assertSame(['instagram' => 'https://instagram.com/malang'], $branch->social_links);
     }
 

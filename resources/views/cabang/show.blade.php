@@ -22,7 +22,6 @@
             <a href="{{ route('kendaraan.index', ['cabang' => $cabang->slug]) }}" class="btn-secondary-edu mt-3 inline-flex items-center px-4 py-2 text-sm">Jadikan cabang pilihan</a>
         </div>
 
-        {{-- Mobile: tombol Filter membuka bottom sheet; desktop: bar inline --}}
         <button type="button" class="btn-secondary-edu inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm lg:hidden" x-on:click="filterOpen = true" aria-haspopup="dialog">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
             Filter
@@ -65,7 +64,6 @@
                 <x-form.select name="urut" label="Urutkan" placeholder="Default (nama)"
                     :options="['populer' => 'Paling populer']" :value="$filter['urut']" />
 
-                {{-- Filter "hanya tersedia" didukung lewat ?available=1 (dibawa dari katalog), tidak ada di desain --}}
                 @if ($filter['available'])
                     <input type="hidden" name="available" value="1">
                 @endif
@@ -90,7 +88,6 @@
             </p>
         @endif
 
-        {{-- Skeleton tampil saat filter dikirim (halaman sedang memuat ulang) --}}
         <x-vehicle-grid-skeleton x-show="loading" x-cloak style="display: none" />
 
         <div class="space-y-6" x-show="!loading">

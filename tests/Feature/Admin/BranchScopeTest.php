@@ -13,9 +13,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
-/**
- * Admin cabang hanya melihat/mengelola data cabangnya; superadmin semua cabang.
- */
 class BranchScopeTest extends TestCase
 {
     use RefreshDatabase;
@@ -49,8 +46,6 @@ class BranchScopeTest extends TestCase
         return UploadedFile::fake()->createWithContent('motor.png', $png);
     }
 
-    // ----- kendaraan -----
-
     public function test_admin_cabang_hanya_melihat_kendaraan_cabangnya(): void
     {
         $this->unit($this->malang, 'Motor Malang');
@@ -82,7 +77,7 @@ class BranchScopeTest extends TestCase
             'name' => 'Motor Baru',
             'brand' => 'Honda',
             'vehicle_type_id' => VehicleType::factory()->create()->id,
-            'branch_id' => $this->batu->id, // dicoba masuk ke cabang lain
+            'branch_id' => $this->batu->id,
             'plate_number' => 'N 1234 AB',
             'price_per_day' => 90000,
             'image' => $this->pngUpload(),
@@ -137,8 +132,6 @@ class BranchScopeTest extends TestCase
         ])->assertSessionHasErrors('branch_id');
     }
 
-    // ----- pesanan -----
-
     public function test_admin_cabang_hanya_melihat_pesanan_cabangnya(): void
     {
         $this->booking($this->unit($this->malang, 'Motor Malang'), 'Penyewa Malang');
@@ -191,8 +184,6 @@ class BranchScopeTest extends TestCase
             ->assertDontSee('Penyewa Batu');
     }
 
-    // ----- dashboard -----
-
     public function test_dashboard_admin_cabang_hanya_menghitung_cabangnya(): void
     {
         $unitMalang = $this->unit($this->malang, 'Motor Malang');
@@ -217,7 +208,7 @@ class BranchScopeTest extends TestCase
         $this->assertCount(1, $service->topVehicles($this->batu->id));
 
         $this->actingAsAdmin($this->malang);
-        $this->get(route('admin.dashboard', ['branch' => $this->batu->id])) // param diabaikan untuk admin cabang
+        $this->get(route('admin.dashboard', ['branch' => $this->batu->id]))
             ->assertOk()
             ->assertSee('Rp 100.000')
             ->assertDontSee('Rp 350.000');
@@ -232,8 +223,6 @@ class BranchScopeTest extends TestCase
         $this->get(route('admin.kendaraan.index'))->assertOk()->assertDontSee('Motor Malang');
         $this->get(route('admin.kendaraan.create'))->assertForbidden();
     }
-
-    // ----- pengaturan -----
 
     public function test_admin_cabang_mengubah_profil_cabangnya_sendiri(): void
     {
@@ -251,7 +240,6 @@ class BranchScopeTest extends TestCase
         $this->malang->refresh();
         $this->assertSame('Jl. Baru No. 1', $this->malang->address);
         $this->assertSame(['instagram' => 'https://instagram.com/malang'], $this->malang->social_links);
-        // Nama & status aktif tetap urusan superadmin
         $this->assertSame('Cabang Malang', $this->malang->name);
         $this->assertTrue($this->malang->is_active);
     }

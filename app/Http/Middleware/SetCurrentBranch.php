@@ -7,10 +7,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Menentukan cabang terpilih penyewa. `?cabang=slug` (GET) memilih cabang lalu
- * redirect ke URL yang sama tanpa parameter itu.
- */
 class SetCurrentBranch
 {
     public function __construct(private BranchContext $branches) {}

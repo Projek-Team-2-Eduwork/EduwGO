@@ -1,4 +1,3 @@
-{{-- Cabang pemilik unit: superadmin memilih; admin cabang terkunci ke cabangnya (dipaksa di VehicleRequest). --}}
 @php($selected = old('branch_id', $current ?? null))
 <div>
     <x-input-label for="branch_id" value="Cabang *" />

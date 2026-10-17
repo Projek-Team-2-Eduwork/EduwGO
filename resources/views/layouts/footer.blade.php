@@ -37,7 +37,6 @@
 
         <div class="md:col-span-2 lg:col-span-3">
             @if ($branches->isEmpty())
-                {{-- Belum ada cabang aktif: pakai kontak global dari Pengaturan Toko --}}
                 <h3 class="text-sm font-bold">Kontak</h3>
                 <ul class="mt-4 space-y-2 text-sm">
                     @if ($address = setting('contact.address'))

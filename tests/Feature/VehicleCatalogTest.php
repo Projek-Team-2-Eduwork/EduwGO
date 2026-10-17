@@ -352,7 +352,6 @@ class VehicleCatalogTest extends TestCase
 
     public function test_katalog_default_hanya_unit_cabang_terpilih_bukan_semua_cabang(): void
     {
-        // Cabang aktif pertama (urut nama) jadi default saat penyewa belum memilih
         $a = $this->branch('Cabang A', 'cabang-a');
         $b = $this->branch('Cabang B', 'cabang-b');
         $this->vehicle('Motor Alpha', null, ['branch_id' => $a->id]);
@@ -371,11 +370,9 @@ class VehicleCatalogTest extends TestCase
         $this->vehicle('Motor Alpha', null, ['branch_id' => $a->id]);
         $this->vehicle('Motor Beta', null, ['branch_id' => $b->id]);
 
-        // ?cabang= memilih cabang lalu redirect ke URL bersih
         $this->get('/kendaraan?cabang=cabang-b')->assertRedirect('/kendaraan');
         $this->assertSame('cabang-b', session('branch'));
 
-        // Kembali tanpa parameter: cabang pilihan tetap berlaku
         $this->get('/kendaraan')
             ->assertOk()
             ->assertSee('Motor Beta')

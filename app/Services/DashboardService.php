@@ -9,9 +9,6 @@ use App\Models\VehicleType;
 
 class DashboardService
 {
-    /**
-     * Semua widget menerima $branchId: null = semua cabang (superadmin), angka = satu cabang.
-     */
     public function topVehicles(?int $branchId = null)
     {
         return Vehicle::query()
@@ -31,7 +28,6 @@ class DashboardService
             ->when($branchId !== null, fn ($q) => $q->where('branch_id', $branchId))
             ->count();
 
-        // Booking milik unit di cabang itu (withTrashed: unit yang sudah dihapus tetap dihitung)
         $inBranch = fn ($q) => $q->when(
             $branchId !== null,
             fn ($q) => $q->whereIn('vehicle_id', Vehicle::withTrashed()->where('branch_id', $branchId)->select('id')),

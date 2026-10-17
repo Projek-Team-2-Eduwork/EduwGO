@@ -24,7 +24,6 @@ class VehicleController extends Controller
             ->where('start_at', '<=', now())
             ->where('end_at', '>', now());
 
-        // Admin cabang hanya melihat unit cabangnya; superadmin semua cabang atau satu cabang (?branch=)
         $user = $request->user();
         $branchId = $user->effectiveBranchId($request->integer('branch') ?: null);
 
@@ -145,9 +144,6 @@ class VehicleController extends Controller
         return redirect()->route('admin.kendaraan.index')->with('success', $pesan);
     }
 
-    /**
-     * Pilihan cabang untuk form kendaraan: superadmin semua cabang, admin cabang hanya cabangnya.
-     */
     private function branchOptions()
     {
         $user = auth()->user();

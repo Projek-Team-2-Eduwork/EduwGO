@@ -19,7 +19,6 @@ class DashboardController extends Controller
             'branch' => ['nullable', 'integer'],
         ]);
 
-        // Admin cabang selalu terkunci ke cabangnya; superadmin bisa memfilter cabang
         $branchId = $request->user()->effectiveBranchId($request->integer('branch') ?: null);
 
         $dari = $request->input('dari', now()->startOfMonth()->toDateString());

@@ -17,7 +17,6 @@ class VehiclePolicy
         return $user->canManageBranch($vehicle->branch_id);
     }
 
-    /** Admin cabang harus sudah punya cabang; superadmin bebas. */
     public function create(User $user): bool
     {
         return $user->isSuperadmin() || ($user->isBranchAdmin() && $user->branch_id !== null);

@@ -54,52 +54,31 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Booking::class);
     }
 
-    /**
-     * Cabang tempat admin bertugas (null untuk penyewa & superadmin).
-     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Superadmin: mengelola semua cabang, admin, dan pengaturan global.
-     */
     public function isSuperadmin(): bool
     {
         return $this->hasRole('superadmin');
     }
 
-    /**
-     * Admin cabang (role `admin`): hanya data cabangnya sendiri.
-     */
     public function isBranchAdmin(): bool
     {
         return $this->hasRole('admin');
     }
 
-    /**
-     * Boleh masuk area /admin (superadmin atau admin cabang).
-     */
     public function isStaff(): bool
     {
         return $this->hasAnyRole(['superadmin', 'admin']);
     }
 
-    /**
-     * Cabang yang dipakai untuk membatasi data admin. Superadmin bebas memilih ($requested,
-     * null = semua cabang); admin cabang selalu cabangnya sendiri (0 bila belum punya cabang,
-     * sehingga tidak ada data yang cocok).
-     */
     public function effectiveBranchId(?int $requested = null): ?int
     {
         return $this->isSuperadmin() ? $requested : ($this->branch_id ?? 0);
     }
 
-    /**
-     * Boleh mengelola data milik cabang tertentu? Superadmin: semua cabang.
-     * Admin cabang: hanya cabangnya; admin tanpa cabang tidak punya akses data.
-     */
     public function canManageBranch(?int $branchId): bool
     {
         if ($this->isSuperadmin()) {

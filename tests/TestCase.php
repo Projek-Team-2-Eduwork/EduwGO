@@ -18,18 +18,11 @@ abstract class TestCase extends BaseTestCase
         Cache::flush();
     }
 
-    /**
-     * Cabang default tes: sama dengan cabang bawaan VehicleFactory.
-     */
     protected function defaultBranch(): Branch
     {
         return Branch::query()->firstOrCreate(['slug' => 'cabang-utama'], ['name' => 'Cabang Utama']);
     }
 
-    /**
-     * Admin cabang. Default: cabang `cabang-utama`, cabang yang sama dengan default VehicleFactory,
-     * sehingga unit buatan factory otomatis berada di cabang admin ini.
-     */
     protected function actingAsAdmin(?Branch $branch = null): User
     {
         Role::firstOrCreate(['name' => 'admin']);
@@ -43,9 +36,6 @@ abstract class TestCase extends BaseTestCase
         return $admin;
     }
 
-    /**
-     * Superadmin: semua cabang, tidak terikat ke cabang mana pun.
-     */
     protected function actingAsSuperadmin(): User
     {
         Role::firstOrCreate(['name' => 'superadmin']);

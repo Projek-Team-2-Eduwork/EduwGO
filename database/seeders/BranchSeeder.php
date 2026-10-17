@@ -7,11 +7,6 @@ use Illuminate\Database\Seeder;
 
 class BranchSeeder extends Seeder
 {
-    /**
-     * Cabang demo. Slug diisi eksplisit karena DatabaseSeeder memakai
-     * WithoutModelEvents (event creating model tidak berjalan saat seeding).
-     * Cabang baru yang dibuat superadmin otomatis muncul di Tentang, footer, dan pemilih cabang.
-     */
     public function run(): void
     {
         $branches = [

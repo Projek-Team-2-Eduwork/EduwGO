@@ -9,7 +9,7 @@ class BranchRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Autorisasi ditangani Controller via Gate
+        return true;
     }
 
     protected function prepareForValidation(): void
@@ -45,11 +45,6 @@ class BranchRequest extends FormRequest
         ];
     }
 
-    /**
-     * Data tervalidasi dengan link sosmed kosong dibuang.
-     *
-     * @return array<string, mixed>
-     */
     public function branchData(): array
     {
         $data = $this->validated();

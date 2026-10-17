@@ -6,11 +6,6 @@ use App\Models\Branch;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cookie;
 
-/**
- * Cabang yang sedang dipilih penyewa (session -> cookie -> cabang aktif pertama).
- * Katalog, home, dan detail selalu terfilter ke satu cabang, tidak pernah "semua cabang".
- * Singleton per request: daftar cabang aktif hanya di-query sekali.
- */
 class BranchContext
 {
     public const KEY = 'branch';
@@ -21,20 +16,13 @@ class BranchContext
 
     private bool $resolved = false;
 
-    /** @var array<int, string> slug kandidat berurutan (query/session/cookie) */
     private array $preferred = [];
 
-    /**
-     * @return Collection<int, Branch> cabang aktif, urut nama
-     */
     public function active(): Collection
     {
         return $this->active ??= Branch::query()->active()->orderBy('name')->get();
     }
 
-    /**
-     * Cabang terpilih; null hanya bila belum ada cabang aktif sama sekali.
-     */
     public function current(): ?Branch
     {
         if (! $this->resolved) {
@@ -59,21 +47,12 @@ class BranchContext
         return $this->current()?->id;
     }
 
-    /**
-     * Slug kandidat dari request, urut prioritas. Dipanggil middleware di awal tiap request,
-     * sekaligus membuang memo request sebelumnya (instance bisa hidup lintas request di tes/Octane).
-     *
-     * @param  array<int, string|null>  $slugs
-     */
     public function prefer(array $slugs): void
     {
         $this->active = null;
         $this->setPreferred($slugs);
     }
 
-    /**
-     * @param  array<int, string|null>  $slugs
-     */
     private function setPreferred(array $slugs): void
     {
         $this->preferred = $slugs;
@@ -81,9 +60,6 @@ class BranchContext
         $this->current = null;
     }
 
-    /**
-     * Simpan pilihan di session & cookie (1 tahun). False bila cabang tidak aktif.
-     */
     public function select(string $slug): bool
     {
         $branch = $this->active()->firstWhere('slug', $slug);
@@ -99,9 +75,6 @@ class BranchContext
         return true;
     }
 
-    /**
-     * Pindah ke cabang pemilik unit (mis. buka tautan detail motor cabang lain).
-     */
     public function selectBranchOf(int $branchId): void
     {
         $branch = $this->active()->firstWhere('id', $branchId);

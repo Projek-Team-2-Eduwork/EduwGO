@@ -7,7 +7,6 @@ use App\Models\User;
 
 class BranchPolicy
 {
-    /** Master cabang dikelola terpusat oleh superadmin. */
     public function viewAny(User $user): bool
     {
         return $user->isSuperadmin();
@@ -28,10 +27,6 @@ class BranchPolicy
         return $user->isSuperadmin();
     }
 
-    /**
-     * Admin cabang boleh mengubah profil cabangnya sendiri (alamat, kontak, jam, sosmed);
-     * nama, slug, dan status aktif tetap urusan superadmin.
-     */
     public function updateProfile(User $user, Branch $branch): bool
     {
         return $user->canManageBranch($branch->id);

@@ -32,9 +32,6 @@ class PenggunaController extends Controller
         return view('admin.pengguna.index', compact('users', 'branches'));
     }
 
-    /**
-     * Buat akun admin cabang baru langsung (email dianggap terverifikasi, password diset superadmin).
-     */
     public function store(Request $request)
     {
         Gate::authorize('viewAny', User::class);
@@ -52,7 +49,6 @@ class PenggunaController extends Controller
             'branch_id.required' => 'Pilih cabang untuk admin.',
         ]);
 
-        // forceFill: email_verified_at tidak masuk $fillable, password di-hash oleh cast.
         $admin = (new User)->forceFill($data + ['email_verified_at' => now(), 'is_active' => true]);
         $admin->save();
         $admin->assignRole('admin');
@@ -64,7 +60,6 @@ class PenggunaController extends Controller
     {
         $data = $request->validate([
             'role' => 'required|in:superadmin,admin,user',
-            // Admin cabang wajib punya cabang; role lain tidak terikat cabang.
             'branch_id' => 'required_if:role,admin|nullable|exists:branches,id',
         ]);
         Gate::authorize('setRole', [$pengguna, $data['role']]);

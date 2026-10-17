@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Cabang tempat seorang admin bertugas. Null untuk penyewa dan superadmin.
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
@@ -20,8 +17,6 @@ return new class extends Migration
                 ->restrictOnDelete();
         });
 
-        // Admin lama dulu mengelola semua unit; sekarang mereka ditempatkan di cabang pertama
-        // supaya tetap bisa bekerja. Naikkan ke superadmin lewat Kelola Pengguna bila perlu.
         $branchId = DB::table('branches')->orderBy('id')->value('id');
 
         if ($branchId !== null) {

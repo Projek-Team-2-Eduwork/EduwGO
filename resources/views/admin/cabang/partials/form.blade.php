@@ -1,4 +1,3 @@
-{{-- Form cabang (tambah & edit). $branch = null untuk tambah; $prefix membedakan id antar form di satu halaman. --}}
 @php
     $branch = $branch ?? null;
     $isNew = $branch === null;

@@ -1,4 +1,3 @@
-{{-- Ubah role pengguna; admin cabang wajib memilih cabang. --}}
 @php($current = $user->hasRole('superadmin') ? 'superadmin' : ($user->hasRole('admin') ? 'admin' : 'user'))
 <form action="{{ route('admin.pengguna.role', $user->id) }}" method="POST" x-data="{ role: '{{ $current }}' }" class="flex flex-wrap items-center gap-2" onsubmit="return confirm('Ubah role pengguna ini?')">
     @csrf

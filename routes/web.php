@@ -30,12 +30,10 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
 Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
 
-// Halaman cabang penyewaan publik (EG-49)
 Route::get('/cabang', [CabangPublikController::class, 'index'])->name('cabang.index');
 Route::get('/cabang/{slug}/reset', [CabangPublikController::class, 'resetFilter'])->name('cabang.reset');
 Route::get('/cabang/{slug}', [CabangPublikController::class, 'show'])->name('cabang.show');
 
-// Tautan lama /lokasi dialihkan ke /cabang
 Route::redirect('/lokasi', '/cabang', 301);
 Route::get('/lokasi/{slug}', fn (string $slug) => redirect()->route('cabang.show', ['slug' => $slug], 301));
 
@@ -113,7 +111,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Rute Area Admin
 // ==========================================
 
-// Area admin: superadmin (semua cabang) dan admin cabang (hanya cabangnya, dibatasi Policy + scope query)
 Route::middleware(['auth', 'verified', 'role:superadmin|admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
@@ -126,27 +123,21 @@ Route::middleware(['auth', 'verified', 'role:superadmin|admin'])->prefix('admin'
     Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
     Route::post('/pesanan/{code}/bayar-tunai', [PesananController::class, 'payCash'])->name('pesanan.pay-cash');
 
-    // Pengaturan cabang sendiri (admin cabang)
     Route::get('/pengaturan-cabang', [BranchSettingController::class, 'edit'])->name('pengaturan-cabang.edit');
     Route::put('/pengaturan-cabang', [BranchSettingController::class, 'update'])->name('pengaturan-cabang.update');
 
-    // CRUD Kendaraan Admin (EG-18), dibatasi per cabang
     Route::resource('kendaraan', AdminVehicleController::class);
 
-    // Khusus superadmin: pengaturan toko global, tipe kendaraan, pengguna/admin cabang, master cabang
     Route::middleware('role:superadmin')->group(function () {
-        // Pengaturan Toko (EG-30)
         Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
         Route::put('/pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
 
-        // Kelola Tipe Kendaraan & Pengguna (EG-31)
         Route::resource('tipe-kendaraan', TipeKendaraanController::class)->except(['create', 'show', 'edit']);
         Route::get('/pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
         Route::post('/pengguna', [PenggunaController::class, 'store'])->name('pengguna.store');
         Route::post('/pengguna/{pengguna}/role', [PenggunaController::class, 'setRole'])->name('pengguna.role');
         Route::post('/pengguna/{pengguna}/toggle', [PenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
 
-        // Master cabang (EG-48)
         Route::resource('cabang', CabangController::class)->except(['create', 'show', 'edit'])->parameters(['cabang' => 'cabang']);
     });
 });

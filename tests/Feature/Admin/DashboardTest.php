@@ -23,7 +23,6 @@ class DashboardTest extends TestCase
         $this->seed(DatabaseSeeder::class);
     }
 
-    /** Superadmin: widget menghitung semua cabang, sama dengan query independen di bawah. */
     private function getAdmin()
     {
         $admin = User::factory()->create();
@@ -158,7 +157,6 @@ class DashboardTest extends TestCase
         $response->assertSee('Lihat semua');
     }
 
-    // 8 query dasar + 1 query nama cabang admin di header layout (konstan, bukan N+1)
     public function test_batas_maksimal_query_halaman_adalah_9()
     {
         $admin = $this->getAdmin();

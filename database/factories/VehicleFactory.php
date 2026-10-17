@@ -35,7 +35,6 @@ class VehicleFactory extends Factory
 
         // Tipe motor memakai slug yang sama dengan VehicleTypeSeeder (firstOrCreate
         // di closure) supaya factory dan seeder tidak bentrok unique constraint.
-        // Cabang memakai firstOrCreate slug sama dengan BranchSeeder
         // supaya factory dan seeder tidak bentrok unique constraint.
         $type = $this->faker->randomElement(['Matic', 'Cub', 'Sport', 'Trail']);
 

@@ -8,9 +8,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-/**
- * Penyewa memilih cabang; home, katalog, dan detail terfilter ke cabang terpilih.
- */
 class BranchSelectionTest extends TestCase
 {
     use RefreshDatabase;
@@ -32,7 +29,6 @@ class BranchSelectionTest extends TestCase
 
     public function test_home_menampilkan_motor_cabang_terpilih_saja(): void
     {
-        // Default: cabang aktif pertama urut nama (Batu)
         $this->get('/')->assertOk()->assertSee('Motor Batu')->assertDontSee('Motor Malang');
 
         $this->get('/?cabang=malang')->assertRedirect('/');
@@ -66,7 +62,6 @@ class BranchSelectionTest extends TestCase
         Vehicle::factory()->create(['branch_id' => $this->malang->id, 'vehicle_type_id' => $unit->vehicle_type_id, 'name' => 'Rekomendasi Malang']);
         Vehicle::factory()->create(['branch_id' => $this->batu->id, 'vehicle_type_id' => $unit->vehicle_type_id, 'name' => 'Rekomendasi Batu']);
 
-        // Cabang terpilih awal Batu; buka detail motor Malang
         $this->get(route('kendaraan.detail', $unit))
             ->assertOk()
             ->assertSee('Rekomendasi Malang')

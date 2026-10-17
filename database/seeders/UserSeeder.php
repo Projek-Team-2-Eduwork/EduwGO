@@ -45,7 +45,6 @@ class UserSeeder extends Seeder
             'social_account' => $social,
             'email_verified_at' => now(),
             'password' => 'password',
-            // Hanya admin cabang yang terikat ke cabang
             'branch_id' => $branchSlug ? Branch::query()->where('slug', $branchSlug)->value('id') : null,
         ])->save();
 

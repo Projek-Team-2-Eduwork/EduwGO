@@ -1,4 +1,3 @@
-{{-- Badge role + nama cabang (admin cabang). Butuh relasi roles & branch ter-eager-load. --}}
 @php
     $isSuper = $user->hasRole('superadmin');
     $isAdmin = $user->hasRole('admin');

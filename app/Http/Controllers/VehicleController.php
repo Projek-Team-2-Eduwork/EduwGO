@@ -52,8 +52,6 @@ class VehicleController extends Controller
             $request->session()->put('booking.start_at', $start->format('Y-m-d\TH:i'));
         }
 
-        // Query katalog dibangun AvailabilityService (dipakai juga halaman cabang, EG-49);
-        // selalu terfilter ke cabang terpilih penyewa.
         $query = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $branches->currentId());
 
         // Terapkan Query Tambahan, Jumlah Pesanan (withCount) dan Pengurutan
@@ -102,10 +100,8 @@ class VehicleController extends Controller
 
     public function show(Vehicle $vehicle, AvailabilityService $availability, BranchContext $branches)
     {
-        // Motor nonaktif atau milik cabang nonaktif dianggap tidak ada; soft-deleted sudah 404 lewat route binding.
         abort_unless($vehicle->is_active && $branches->active()->contains('id', $vehicle->branch_id), 404);
 
-        // Tautan langsung ke motor cabang lain memindahkan cabang terpilih ke cabang motor itu.
         $branches->selectBranchOf($vehicle->branch_id);
 
         $vehicle->load('type');

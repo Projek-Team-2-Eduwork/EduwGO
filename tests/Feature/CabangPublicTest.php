@@ -119,7 +119,6 @@ class CabangPublicTest extends TestCase
 
     public function test_n1_query_tidak_bertambah_per_unit(): void
     {
-        // Panaskan cache settings dulu supaya hitungan query antar GET setara.
         setting('brand.name');
 
         $cabang = Branch::factory()->create();

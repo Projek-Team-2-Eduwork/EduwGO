@@ -47,10 +47,6 @@ class Booking extends Model
         return $this->hasOne(Payment::class)->latestOfMany();
     }
 
-    /**
-     * Batasi ke booking yang unitnya boleh dikelola user (lihat Vehicle::scopeManagedBy).
-     * Subquery withTrashed supaya booking unit yang sudah di-soft-delete tetap terlihat admin cabangnya.
-     */
     public function scopeManagedBy(Builder $query, User $user): Builder
     {
         if ($user->isSuperadmin()) {

@@ -13,9 +13,6 @@ use Illuminate\Http\Request;
 
 class CabangPublikController extends Controller
 {
-    /**
-     * Daftar cabang aktif + jumlah unit aktif tiap cabang (query tunggal, aman N+1). (EG-49)
-     */
     public function index(BranchContext $branches)
     {
         $cabang = Branch::query()
@@ -27,9 +24,6 @@ class CabangPublikController extends Controller
         return view('cabang.index', ['cabang' => $cabang, 'currentBranch' => $branches->current()]);
     }
 
-    /**
-     * Unit satu cabang: reuse logika filter katalog lewat AvailabilityService. (EG-49)
-     */
     public function show(string $slug, VehicleFilterRequest $request, AvailabilityService $availability)
     {
         $cabang = Branch::query()
@@ -44,13 +38,11 @@ class CabangPublikController extends Controller
         $search = $filter['q'] ?? null;
         $onlyAvailable = (bool) ($filter['available'] ?? false);
 
-        // Normalisasi input harga & urut (sama dengan katalog)
         $sort = in_array($filter['harga'] ?? null, ['termurah', 'termahal'], true) ? $filter['harga'] : null;
         $min = (isset($filter['harga_min']) && is_numeric($filter['harga_min']) && $filter['harga_min'] >= 0) ? (int) $filter['harga_min'] : null;
         $max = (isset($filter['harga_max']) && is_numeric($filter['harga_max']) && $filter['harga_max'] >= 0) ? (int) $filter['harga_max'] : null;
         $popular = in_array($filter['urut'] ?? null, ['populer'], true);
 
-        // Filter dibawa ke detail motor & modal durasi lewat session (sama dengan katalog)
         $request->session()->put('booking.filter', array_filter([
             'start_at' => $start?->format('Y-m-d\TH:i'),
             'days' => $days,
@@ -99,9 +91,6 @@ class CabangPublikController extends Controller
         ]);
     }
 
-    /**
-     * Hapus filter session lalu kembali ke halaman cabang polos.
-     */
     public function resetFilter(Request $request, string $slug)
     {
         $request->session()->forget(['booking.filter', 'booking.start_at']);

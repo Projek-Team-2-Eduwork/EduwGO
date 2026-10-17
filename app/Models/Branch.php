@@ -11,7 +11,6 @@ class Branch extends Model
 {
     use HasFactory;
 
-    /** Kunci media sosial yang didukung => label tampilan. */
     public const SOCIALS = [
         'instagram' => 'Instagram',
         'facebook' => 'Facebook',
@@ -26,10 +25,6 @@ class Branch extends Model
         'social_links' => 'array',
     ];
 
-    /**
-     * Slug otomatis dari nama saat CREATE saja; update tidak meregenerasi
-     * agar URL/filter yang sudah beredar tetap stabil.
-     */
     protected static function booted(): void
     {
         static::creating(function (Branch $branch) {
@@ -47,35 +42,21 @@ class Branch extends Model
         });
     }
 
-    /**
-     * Unit kendaraan milik cabang ini.
-     */
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class);
     }
 
-    /**
-     * Admin yang bertugas di cabang ini.
-     */
     public function admins(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
-    /**
-     * Cabang yang tampil ke penyewa.
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /**
-     * Link media sosial yang terisi: [label => url].
-     *
-     * @return array<string, string>
-     */
     public function socialLinks(): array
     {
         $links = [];
@@ -91,9 +72,6 @@ class Branch extends Model
         return $links;
     }
 
-    /**
-     * URL wa.me dari nomor kontak cabang (angka saja; 0 awal diganti 62), null bila kosong.
-     */
     public function whatsappUrl(?string $text = null): ?string
     {
         $digits = preg_replace('/\D+/', '', (string) $this->phone);

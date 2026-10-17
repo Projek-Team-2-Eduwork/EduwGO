@@ -36,10 +36,6 @@ class Vehicle extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Batasi ke unit yang boleh dikelola user: superadmin semua, admin cabang hanya
-     * cabangnya, selain itu kosong.
-     */
     public function scopeManagedBy(Builder $query, User $user): Builder
     {
         if ($user->isSuperadmin()) {

@@ -76,10 +76,6 @@ class PesananController extends Controller
         return view('admin.pesanan.index', compact('bookings', 'types', 'summary', 'branches'));
     }
 
-    /**
-     * Query booking yang boleh dilihat admin ini: admin cabang hanya cabangnya, superadmin semua
-     * cabang atau satu cabang lewat ?branch=.
-     */
     private function scopedQuery(Request $request): Builder
     {
         $user = $request->user();

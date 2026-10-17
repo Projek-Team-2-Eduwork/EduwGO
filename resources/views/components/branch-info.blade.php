@@ -1,4 +1,3 @@
-{{-- Alamat, jam operasional, kontak & media sosial satu cabang (halaman Tentang, footer, profil beranda). --}}
 @props(['branch', 'size' => 'sm'])
 
 @php

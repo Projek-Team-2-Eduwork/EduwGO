@@ -1,4 +1,3 @@
-{{-- Filter cabang khusus superadmin ($branches kosong untuk admin cabang, yang terkunci ke cabangnya). --}}
 @if (isset($branches) && $branches->isNotEmpty())
     <div class="{{ $class ?? '' }}">
         <x-input-label for="branch" value="Cabang" />

@@ -30,7 +30,6 @@ class BookingPolicy
         return $user->isStaff();
     }
 
-    /** Booking milik unit di cabang user (superadmin: semua). */
     public function adminView(User $user, Booking $booking): bool
     {
         return $this->manages($user, $booking);
@@ -47,7 +46,6 @@ class BookingPolicy
             return true;
         }
 
-        // withTrashed: unit yang sudah di-soft-delete tetap milik cabangnya.
         $branchId = Vehicle::withTrashed()->whereKey($booking->vehicle_id)->value('branch_id');
 
         return $user->canManageBranch($branchId);

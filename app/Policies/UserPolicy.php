@@ -6,7 +6,6 @@ use App\Models\User;
 
 class UserPolicy
 {
-    /** Kelola pengguna & admin cabang: superadmin saja. */
     public function viewAny(User $user): bool
     {
         return $user->isSuperadmin();
@@ -18,7 +17,6 @@ class UserPolicy
             return false;
         }
 
-        // Tidak boleh mengubah role dirinya sendiri (cegah kehilangan akses superadmin)
         return $currentUser->id !== $targetUser->id;
     }
 
@@ -28,7 +26,6 @@ class UserPolicy
             return false;
         }
 
-        // Tidak boleh menonaktifkan akunnya sendiri
         return $currentUser->id !== $targetUser->id;
     }
 }

@@ -38,7 +38,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Superadmin & admin cabang diarahkan ke dashboard admin, user biasa ke dashboard.
         if ($request->user()->isStaff()) {
             return redirect()->route('admin.dashboard');
         }

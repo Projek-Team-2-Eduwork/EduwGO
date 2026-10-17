@@ -15,7 +15,6 @@ class HomeController extends Controller
 
     public function index(AvailabilityService $availability, BranchContext $branches)
     {
-        // Katalog ringkas hanya unit cabang terpilih, bukan semua cabang
         $vehicles = Vehicle::query()
             ->where('is_active', true)
             ->where('branch_id', $branches->currentId())

@@ -6,17 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BranchProfileRequest;
 use Illuminate\Support\Facades\Gate;
 
-/**
- * Pengaturan cabang milik admin cabang: alamat, kontak/WA, jam operasional, media sosial.
- * Pengaturan toko global (brand, aturan sewa, S&K) tetap khusus superadmin.
- */
 class BranchSettingController extends Controller
 {
     public function edit()
     {
         $branch = auth()->user()->branch;
 
-        // Superadmin tidak terikat cabang: kelola semua cabang lewat master cabang
         if ($branch === null) {
             return auth()->user()->isSuperadmin()
                 ? redirect()->route('admin.cabang.index')

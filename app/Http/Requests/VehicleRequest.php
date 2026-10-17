@@ -14,7 +14,6 @@ class VehicleRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Admin cabang tidak bisa memilih/memindah cabang: unit selalu milik cabangnya.
         if ($this->user()?->isBranchAdmin()) {
             $this->merge(['branch_id' => $this->user()->branch_id]);
         }
