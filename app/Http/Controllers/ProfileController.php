@@ -51,7 +51,7 @@ class ProfileController extends Controller
         ]);
 
         if ($user->isDirty('email')) {
-            // Email berubah: paksa verifikasi ulang + kirim link verifikasi baru.
+            // Email berubah: paksa verifikasi ulang + kirim kode verifikasi baru.
             $user->email_verified_at = null;
             $user->save();
 
