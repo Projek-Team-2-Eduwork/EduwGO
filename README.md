@@ -9,7 +9,7 @@ Website rental motor. Tugas Bootcamp Programming Eduwork, tim 3 orang. UI mengik
 
 ## Stack
 
-Laravel 13, PHP 8.3, Breeze (Blade + Tailwind + Alpine), Laravel Sail (Docker), MySQL 8.4, Mailpit, phpMyAdmin, Xendit Invoice API.
+Laravel 13, PHP 8.3, Breeze (Blade + Tailwind + Alpine), Laravel Sail (Docker), MySQL 8.4, phpMyAdmin, Xendit Invoice API.
 
 ## Setup (5 langkah)
 
@@ -38,11 +38,10 @@ lalu lanjut dari langkah `cp .env.example .env` di atas.
 | Service | URL | Kegunaan |
 |---|---|---|
 | App | http://localhost | Aplikasi Laravel |
-| Mailpit | http://localhost:8025 | Lihat email yang terkirim (verifikasi, dll) |
 | phpMyAdmin | http://localhost:8080 | Lihat/edit database (server: `mysql`, user: `sail`, password: `password`) |
 | MySQL | `localhost:3306` | Untuk klien DB eksternal (TablePlus, dll) |
 
-Ubah port di `.env` (`APP_PORT`, `FORWARD_DB_PORT`, `FORWARD_MAILPIT_PORT`, `FORWARD_MAILPIT_DASHBOARD_PORT`, `FORWARD_PHPMYADMIN_PORT`) kalau bentrok dengan service lain di laptop.
+Ubah port di `.env` (`APP_PORT`, `FORWARD_DB_PORT`, `FORWARD_PHPMYADMIN_PORT`) kalau bentrok dengan service lain di laptop.
 
 ## Perintah sehari-hari
 
@@ -85,7 +84,7 @@ Admin juga bisa memaksa sinkronisasi status invoice lewat tombol "Cek Status Xen
 
 ## Email lewat Gmail SMTP
 
-Default lokal: email ditulis ke log / ditangkap Mailpit (http://localhost:8025). Untuk kirim email sungguhan lewat Gmail:
+Default lokal: email ditulis ke log (`storage/logs/laravel.log`), jadi kode verifikasi bisa dibaca di sana. Untuk kirim email sungguhan lewat Gmail:
 
 1. Pakai akun Gmail khusus proyek (jangan akun pribadi).
 2. Aktifkan **Verifikasi 2 langkah** di akun Google, lalu buat **App Password** di https://myaccount.google.com/apppasswords (16 karakter, tanpa spasi).
@@ -103,7 +102,7 @@ Default lokal: email ditulis ke log / ditangkap Mailpit (http://localhost:8025).
    ```
 
 4. Bersihkan cache config: `./vendor/bin/sail artisan config:clear`.
-5. Email status booking dikirim lewat queue (`QUEUE_CONNECTION=database`), jadi worker harus jalan: `./vendor/bin/sail artisan queue:work`. Setelah ubah `.env`/kode, jalankan `./vendor/bin/sail artisan queue:restart`. Di hosting tanpa worker (mis. Vercel) set `QUEUE_CONNECTION=sync`. Email verifikasi & reset password dikirim langsung, tidak butuh worker.
+5. Email status booking dikirim lewat queue (`QUEUE_CONNECTION=database`), jadi worker harus jalan: `./vendor/bin/sail artisan queue:work`. Setelah ubah `.env`/kode, jalankan `./vendor/bin/sail artisan queue:restart`. Di hosting tanpa worker (mis. Vercel) set `QUEUE_CONNECTION=sync`. Email verifikasi dikirim setelah halaman merespons dan reset password dikirim langsung, keduanya tidak butuh worker.
 
 Catatan:
 - Batas Gmail sekitar 500 email/hari; cukup untuk demo.

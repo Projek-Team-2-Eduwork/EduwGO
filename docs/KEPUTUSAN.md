@@ -28,7 +28,7 @@ Di luar scope (tidak dibuat): keranjang, denda, deposit, DP, refund via sistem, 
 |---|---|
 | Framework | Laravel 13, PHP 8.3 |
 | Frontend | Breeze: Blade + Tailwind + Alpine. Tanpa Inertia/Livewire/Vue/React |
-| Lokal | Laravel Sail (Docker): app (image kustom di `docker/8.3/`), MySQL 8.4, Mailpit, phpMyAdmin |
+| Lokal | Laravel Sail (Docker): app (image kustom di `docker/8.3/`), MySQL 8.4, phpMyAdmin |
 | Database | MySQL |
 | Timezone | `Asia/Jakarta` |
 | Locale | `id` |
