@@ -24,6 +24,7 @@
     <form
         method="POST"
         action="{{ route('verification.verify') }}"
+        x-ref="form"
         class="mt-8"
         x-data="{
             digits: ['', '', '', '', '', ''],
@@ -59,7 +60,7 @@
             maybeSubmit() {
                 if (this.submitting || this.digits.some(d => d === '')) return;
                 this.submitting = true;
-                this.$nextTick(() => this.$el.submit());
+                this.$nextTick(() => this.$refs.form.submit());
             },
         }"
     >
