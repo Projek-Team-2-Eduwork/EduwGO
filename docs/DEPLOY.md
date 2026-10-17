@@ -98,7 +98,7 @@ Environment di dashboard Vercel
 - [ ] `APP_KEY` (`php artisan key:generate --show` di lokal), `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`.
 - [ ] `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (+ SSL).
 - [ ] `LOG_CHANNEL=stderr`, `SESSION_DRIVER`, `CACHE_STORE`, `QUEUE_CONNECTION`, `FILESYSTEM_DISK` sesuai tabel bagian 2.
-- [ ] `MAIL_*` ke SMTP sungguhan (Mailpit hanya lokal).
+- [ ] `MAIL_*` ke SMTP sungguhan.
 - [ ] `XENDIT_SECRET_KEY` (test `xnd_development_*`), `XENDIT_CALLBACK_TOKEN`, `CRON_SECRET`.
 
 Rilis

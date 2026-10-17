@@ -44,7 +44,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $code = app(EmailVerificationCodeService::class)->issue($this);
 
-        $this->notify(new VerifyEmailCode($code));
+        // Kirim email setelah respons dikirim ke browser: SMTP bisa makan beberapa detik
+        // dan tidak perlu menahan halaman pendaftaran (tanpa butuh queue worker).
+        app()->terminating(fn () => $this->notify(new VerifyEmailCode($code)));
     }
 
     /**

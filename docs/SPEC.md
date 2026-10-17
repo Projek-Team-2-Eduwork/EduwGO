@@ -129,7 +129,7 @@ Layout: sidebar (Dashboard, Daftar Pesanan, Kendaraan, Tipe Kendaraan, Pengatura
 
 - Desain hanya pakai "Chat Admin" (WhatsApp) — tidak ada sistem notifikasi otomatis
 - Wajib: tombol Chat Admin di navbar ("Butuh bantuan?"), Menunggu Pembayaran, Berhasil, Gagal, Detail Pemesanan, Daftar Pesanan (untuk batal setelah lunas); link wa.me dengan pesan terisi otomatis (kode booking)
-- Iterasi (opsional, email via Mailpit/SMTP): booking dibuat (link bayar), pembayaran berhasil, expired, pengingat H-1 pengambilan, pengingat waktu selesai sewa
+- Iterasi (opsional, email via SMTP): booking dibuat (link bayar), pembayaran berhasil, expired, pengingat H-1 pengambilan, pengingat waktu selesai sewa
 - Admin: tombol Chat Penyewa di detail booking
 
 ## 5. Halaman Autentikasi [Figma: General > Buat Akun, Masuk]
@@ -238,7 +238,7 @@ pending ──bayar (webhook)──> paid ──admin serah terima──> rented
 ## 10. Keputusan (disepakati 2026-09-21)
 
 - Framework: Laravel 13, PHP 8.3, Breeze Blade + Tailwind + Alpine
-- Lokal: Laravel Sail (mysql + mailpit); Database: MySQL
+- Lokal: Laravel Sail (mysql); Database: MySQL
 - Timezone: Asia/Jakarta di config/app.php
 - Satuan sewa: 24 jam per hari, mulai dari tanggal+jam yang dipilih
 - Durasi: 1–5 hari (maks dari settings)
