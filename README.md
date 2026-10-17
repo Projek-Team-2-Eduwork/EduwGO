@@ -83,6 +83,34 @@ Untuk produksi, daftarkan cron ini:
 
 Admin juga bisa memaksa sinkronisasi status invoice lewat tombol "Cek Status Xendit" di halaman `/admin/pesanan/{kode}`.
 
+## Email lewat Gmail SMTP
+
+Default lokal: email ditulis ke log / ditangkap Mailpit (http://localhost:8025). Untuk kirim email sungguhan lewat Gmail:
+
+1. Pakai akun Gmail khusus proyek (jangan akun pribadi).
+2. Aktifkan **Verifikasi 2 langkah** di akun Google, lalu buat **App Password** di https://myaccount.google.com/apppasswords (16 karakter, tanpa spasi).
+3. Isi `.env` (contoh lengkap ada di `.env.example`):
+
+   ```env
+   MAIL_MAILER=smtp
+   MAIL_SCHEME=smtp
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USERNAME=akun-proyek@gmail.com
+   MAIL_PASSWORD=app-password-16-karakter
+   MAIL_FROM_ADDRESS="akun-proyek@gmail.com"
+   MAIL_FROM_NAME="${APP_NAME}"
+   ```
+
+4. Bersihkan cache config: `./vendor/bin/sail artisan config:clear`.
+5. Email status booking dikirim lewat queue (`QUEUE_CONNECTION=database`), jadi worker harus jalan: `./vendor/bin/sail artisan queue:work`. Setelah ubah `.env`/kode, jalankan `./vendor/bin/sail artisan queue:restart`. Di hosting tanpa worker (mis. Vercel) set `QUEUE_CONNECTION=sync`. Email verifikasi & reset password dikirim langsung, tidak butuh worker.
+
+Catatan:
+- Batas Gmail sekitar 500 email/hari; cukup untuk demo.
+- Email bisa masuk folder **spam** — cek di sana saat uji coba.
+- Alamat pengirim (`MAIL_FROM_ADDRESS`) harus sama dengan `MAIL_USERNAME`, kalau tidak Gmail menimpanya.
+- **Jangan commit `.env`** atau App Password. Kalau bocor, cabut di halaman App Password dan buat baru.
+
 ## Image Docker kustom
 
 Container `laravel.test` **tidak** memakai image bawaan Laravel Sail (berat: mongodb, postgres, playwright, swoole, dsb — tidak dipakai project ini). Dockerfile-nya ada di `docker/8.3/`, hanya berisi ekstensi yang dipakai: `pdo_mysql`, `mbstring`, `zip`, `exif`, `pcntl`, `bcmath`, `gd`, `redis`. Perintah `sail` tetap sama seperti Sail resmi.
