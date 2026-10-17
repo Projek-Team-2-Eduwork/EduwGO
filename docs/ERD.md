@@ -99,7 +99,7 @@ erDiagram
     }
 ```
 
-Tabel role/permission (`roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`) disediakan oleh `spatie/laravel-permission`, tidak digambar. Role yang dipakai hanya `admin` dan `user`.
+Tabel role/permission (`roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`) disediakan oleh `spatie/laravel-permission`, tidak digambar. Role yang dipakai: `superadmin`, `admin` (admin cabang, terikat `users.branch_id`), dan `user`. Tabel `branches` (ex `locations`) dan `vehicles.branch_id` belum digambar di diagram.
 
 ## Detail per tabel
 
