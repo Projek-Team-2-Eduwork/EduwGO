@@ -3,7 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\VerifyEmailCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
@@ -58,7 +58,7 @@ class RegistrationTest extends TestCase
         $this->assertTrue($user->hasRole('user'));
         $this->assertFalse($user->hasVerifiedEmail());
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailCode::class);
     }
 
     public function test_phone_with_62_prefix_is_accepted(): void

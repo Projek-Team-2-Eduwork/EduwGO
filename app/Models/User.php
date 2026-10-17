@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Notifications\VerifyEmailCode;
+use App\Services\EmailVerificationCodeService;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -33,6 +35,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'social_account' => 'array',
             'theme_preference' => 'string',
         ];
+    }
+
+    /**
+     * Kirim kode verifikasi 6 angka (menggantikan link verifikasi bawaan Laravel).
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $code = app(EmailVerificationCodeService::class)->issue($this);
+
+        $this->notify(new VerifyEmailCode($code));
     }
 
     /**

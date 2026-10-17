@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\VerifyEmailCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -88,7 +88,7 @@ class ProfileThemeTest extends TestCase
         $this->assertSame('email-baru@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailCode::class);
     }
 
     /**
