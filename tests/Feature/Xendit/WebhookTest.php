@@ -184,14 +184,16 @@ class WebhookTest extends TestCase
         $this->assertSame(0, $this->booking->histories()->count());
     }
 
-    public function test_invoice_tidak_dikenal_404_dan_tidak_mengubah_apapun()
+    public function test_invoice_tidak_dikenal_dianggap_ok_dan_tidak_mengubah_apapun()
     {
+        // Di-acknowledge 200 (EG-57) agar Xendit tidak mengulang kirim event lama,
+        // tanpa menyentuh payment/booking yang ada
         $this->webhook([
             'id' => 'inv_tidak_dikenal',
             'external_id' => 'BOOK-LAIN-999',
             'status' => 'PAID',
             'paid_at' => '2026-09-27T12:00:00.000Z',
-        ])->assertStatus(404);
+        ])->assertStatus(200);
 
         $this->assertSame('pending', $this->payment->refresh()->status);
         $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);

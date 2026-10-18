@@ -9,6 +9,21 @@
                 </div>
             @endif
 
+            {{-- Notifikasi sukses pembayaran (sekali baca, otomatis hilang) --}}
+            @if (session('bayar_berhasil'))
+                <div x-data="{ shown: true }" x-show="shown" x-init="setTimeout(() => { shown = false }, 8000)" x-transition.opacity
+                     class="mb-6 flex items-start justify-between rounded-r-lg border-l-4 border-green-500 bg-green-100 p-4 shadow-sm dark:bg-green-900/30" role="status">
+                    <div class="flex items-start">
+                        <svg class="mr-3 h-6 w-6 shrink-0 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div>
+                            <p class="font-bold text-green-800 dark:text-green-300">Pembayaran berhasil!</p>
+                            <p class="text-sm text-green-700 dark:text-green-400">Pesanan {{ $booking->code }} sudah lunas. Simpan kode booking ini, lalu ikuti langkah selanjutnya di bawah.</p>
+                        </div>
+                    </div>
+                    <button type="button" x-on:click="shown = false" class="ml-4 shrink-0 text-green-700 hover:opacity-70 dark:text-green-400" aria-label="Tutup notifikasi">&times;</button>
+                </div>
+            @endif
+
             <div class="card-surface overflow-hidden">
                 <div class="p-6 md:p-8">
                     
@@ -127,6 +142,31 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Langkah selanjutnya setelah pembayaran (EG-53) -->
+                    @if ($booking->status === App\Enums\BookingStatus::Paid)
+                        <div class="mb-8 pb-8 border-b border-[var(--border)]">
+                            <h3 class="text-lg font-bold mb-4">Langkah Selanjutnya</h3>
+                            <ol class="space-y-4">
+                                <li class="flex items-start gap-3 text-sm">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--orange-500)] text-xs font-bold text-white">1</span>
+                                    <span class="text-gray-600 dark:text-gray-300">Datang ke lokasi pengambilan sesuai alamat dan jam operasional di atas, mulai sewa <strong class="text-[var(--navy-900)]">{{ $booking->start_at->translatedFormat('D, d M Y H:i') }}</strong>.</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-sm">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--orange-500)] text-xs font-bold text-white">2</span>
+                                    <span class="text-gray-600 dark:text-gray-300">Bawa KTP atau SIM yang masih berlaku untuk verifikasi saat serah terima.</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-sm">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--orange-500)] text-xs font-bold text-white">3</span>
+                                    <span class="text-gray-600 dark:text-gray-300">Konfirmasi kedatangan lewat tombol Chat Admin, dan pantau Riwayat Pesanan untuk catatan dari admin.</span>
+                                </li>
+                                <li class="flex items-start gap-3 text-sm">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--orange-500)] text-xs font-bold text-white">4</span>
+                                    <span class="text-gray-600 dark:text-gray-300">Kembalikan unit sebelum <strong class="text-[var(--navy-900)]">{{ $booking->end_at->translatedFormat('D, d M Y H:i') }}</strong>, lalu minta admin menutup pesanan ini.</span>
+                                </li>
+                            </ol>
+                        </div>
+                    @endif
 
                     <!-- Footer & Aksi -->
                     <div class="flex flex-col-reverse md:flex-row justify-between items-center gap-4">

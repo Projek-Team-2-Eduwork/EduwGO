@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BookingPaymentController extends Controller
 {
@@ -27,6 +28,12 @@ class BookingPaymentController extends Controller
             return redirect()->route('booking.failed', $booking->code);
         }
 
+        // Mode Payment Request (EG-52/53): arahkan ke halaman bayar sendiri.
+        // Mode 'invoice' (default) tetap pakai halaman waiting lama — rollback aman.
+        if (config('services.xendit.mode', 'invoice') === 'payment_request') {
+            return redirect()->route('booking.bayar', $booking->code);
+        }
+
         try {
             $payment = $xenditService->createInvoice($booking);
         } catch (\Exception $e) {
@@ -34,6 +41,105 @@ class BookingPaymentController extends Controller
         }
 
         return view('booking.waiting', compact('booking', 'payment'));
+    }
+
+    /**
+     * Halaman bayar sendiri (Xendit Payment Request): pilih metode lalu lihat
+     * instruksi pembayaran (QR / nomor rekening) tanpa hosted checkout (EG-53).
+     */
+    public function bayar(Request $request, $code, XenditService $xenditService)
+    {
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        if ($booking->status !== BookingStatus::Pending) {
+            if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
+                return redirect()->route('booking.show', $booking->code)->with('bayar_berhasil', true);
+            }
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
+        // Metode yang dipilih penyewa (default QRIS) — nilai tak dikenal jatuh balik ke QRIS
+        $channel = strtoupper((string) $request->query('metode', 'QRIS'));
+
+        if (! isset(XenditService::CHANNELS[$channel])) {
+            $channel = match ($channel) {
+                'BANK_TRANSFER' => 'BCA_VIRTUAL_ACCOUNT',
+                'EWALLET' => 'SHOPEEPAY',
+                default => 'QRIS',
+            };
+        }
+
+        // Kartu kredit/debit tidak didukung Payments API v3 untuk negara ID
+        // (wajib card_details / PCI-DSS), jadi dialihkan ke checkout Xendit.
+        if ($channel === 'CREDIT_CARD') {
+            try {
+                $payment = $xenditService->createCardInvoice($booking);
+            } catch (\Exception $e) {
+                Log::channel('xendit')->error('Halaman bayar: gagal membuat invoice kartu.', [
+                    'booking' => $booking->code,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return view('booking.bayar', [
+                    'booking' => $booking,
+                    'payment' => null,
+                    'channel' => $channel,
+                    'channelLabel' => XenditService::CHANNELS[$channel]['label'] ?? $channel,
+                    'kategoriKanal' => XenditService::channelCatalog(),
+                    'steps' => [],
+                    'qrString' => null,
+                    'paymentUrl' => null,
+                    'error' => 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.',
+                ]);
+            }
+
+            if ($payment->gateway_url) {
+                return redirect()->away($payment->gateway_url);
+            }
+        }
+
+        // Payment request dibuat lazily saat halaman dibuka (idempoten per channel)
+        try {
+            $payment = $xenditService->createPaymentRequest($booking, $channel);
+        } catch (\Exception $e) {
+            Log::channel('xendit')->error('Halaman bayar: gagal membuat payment request.', [
+                'booking' => $booking->code,
+                'error' => $e->getMessage(),
+            ]);
+
+            return view('booking.bayar', [
+                'booking' => $booking,
+                'payment' => null,
+                'channel' => $channel,
+                'channelLabel' => XenditService::CHANNELS[$channel]['label'] ?? $channel,
+                'kategoriKanal' => XenditService::channelCatalog(),
+                'steps' => [],
+                'qrString' => null,
+                'paymentUrl' => null,
+                'error' => 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.',
+            ]);
+        }
+
+        // Susun tampilan (langkah, QR, tautan tombol) dari payload gateway.
+        // Instruksi dihitung ulang agar baris pembayaran lama ikut spesifik & rapi.
+        $tampilan = $xenditService->paymentPresentation($payment);
+
+        return view('booking.bayar', [
+            'booking' => $booking,
+            'payment' => $payment,
+            'channel' => $channel,
+            'channelLabel' => XenditService::CHANNELS[$channel]['label'] ?? $channel,
+            'kategoriKanal' => XenditService::channelCatalog(),
+            'steps' => $tampilan['steps'],
+            'qrString' => $tampilan['qr_string'],
+            'paymentUrl' => $tampilan['payment_url'],
+            'error' => null,
+        ]);
     }
 
     public function success(Request $request, $code)
@@ -74,7 +180,40 @@ class BookingPaymentController extends Controller
         return view('booking.failed', ['booking' => $booking]);
     }
 
-    public function status(Request $request, $code)
+    /**
+     * Tombol demo (test mode only): menandai pembayaran berhasil lewat
+     * simulate API Xendit — biar demo gak perlu curl manual.
+     */
+    public function demoBayar(Request $request, $code, XenditService $xenditService)
+    {
+        // Hanya aktif di mode test (key xnd_devel) — di production 404.
+        if (! str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel')) {
+            abort(404);
+        }
+
+        $booking = Booking::where('code', $code)->firstOrFail();
+
+        if ($booking->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        $payment = $booking->payments()
+            ->where('method', 'xendit_payment_request')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if ($payment && $payment->gateway_reference) {
+            $xenditService->simulatePaymentRequest($payment->gateway_reference, (int) $payment->amount);
+        }
+
+        return redirect()->route('booking.bayar', [
+            'code' => $booking->code,
+            'metode' => $payment?->payment_channel ?? 'QRIS',
+        ]);
+    }
+
+    public function status(Request $request, $code, XenditService $xenditService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -82,11 +221,26 @@ class BookingPaymentController extends Controller
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
         }
 
+        // Selaraskan dengan API Xendit bila masih pending (EG-56): polling "Saya
+        // Sudah Bayar" jadi tetap ke-deteksi walau webhook telat/putus di mode test
+        if ($booking->status === BookingStatus::Pending) {
+            $xenditService->syncPaymentStatus($booking);
+            $booking->refresh();
+        }
+
         $lunas = [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned];
+        $paid = in_array($booking->status, $lunas, true);
+
+        // Notifikasi sukses "sekali baca" untuk halaman detail pesanan. Diset di
+        // sini agar redirect JS halaman bayar (pembayaran baru terkonfirmasi)
+        // langsung menampilkan notifikasi di /pesanan/{code}.
+        if ($paid) {
+            session()->flash('bayar_berhasil', true);
+        }
 
         return response()->json([
             'status' => $booking->status->value,
-            'paid' => in_array($booking->status, $lunas, true),
+            'paid' => $paid,
         ]);
     }
 
