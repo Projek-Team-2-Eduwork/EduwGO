@@ -31,10 +31,10 @@
                     <div class="flex flex-col md:flex-row gap-6 mb-8 pb-8 border-b border-[var(--border)]">
                         <div class="w-full md:w-1/3">
                             @if($booking->vehicle?->image)
-                                <img src="{{ asset($booking->vehicle->image) }}" class="w-full h-48 object-cover rounded-lg bg-gray-100 dark:bg-gray-900 shadow-sm" alt="{{ $booking->vehicle->name }}" onerror="this.outerHTML='<div class=\'w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm\'><svg class=\'w-12 h-12 text-gray-400\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10\'></path></svg></div>'">
+                                <img src="{{ asset($booking->vehicle->image) }}" class="w-full h-48 object-cover rounded-lg bg-gray-100 dark:bg-gray-900 shadow-sm" alt="{{ $booking->vehicle->name }}" onerror="this.outerHTML='<div class=\'w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm\'><svg class=\'w-12 h-12 text-[var(--ink-muted)]\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10\'></path></svg></div>'">
                             @else
                                 <div class="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm">
-                                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    <svg class="w-12 h-12 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                 </div>
                             @endif
                         </div>
@@ -43,7 +43,7 @@
                                 <h2 class="text-2xl font-bold">{{ $booking->vehicle?->name ?? 'Kendaraan Dihapus' }}</h2>
                                 <x-badge-status :status="$booking->status" />
                             </div>
-                            <p class="text-gray-500 dark:text-gray-400 font-medium mb-1">{{ $booking->vehicle?->type?->name ?? '-' }}</p>
+                            <p class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)] font-medium mb-1">{{ $booking->vehicle?->type?->name ?? '-' }}</p>
                             <p class="text-gray-700 dark:text-gray-300 font-mono bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded inline-block self-start">{{ $booking->vehicle?->plate_number ?? '-' }}</p>
                         </div>
                     </div>
@@ -55,19 +55,19 @@
                             <h3 class="text-lg font-bold mb-4">Detail Pemesanan</h3>
                             <dl class="space-y-3 text-sm">
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">Nama Penyewa</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">Nama Penyewa</dt>
                                     <dd class="font-medium text-[var(--navy-900)]">{{ $booking->user->name }}</dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">WhatsApp</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">WhatsApp</dt>
                                     <dd class="font-medium text-[var(--navy-900)]">{{ $booking->user->phone ?? '-' }}</dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">ID Booking</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">ID Booking</dt>
                                     <dd class="font-mono font-medium text-[var(--orange-500)]">{{ $booking->code }}</dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">Tanggal Booking</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">Tanggal Booking</dt>
                                     <dd class="font-medium text-[var(--navy-900)]">{{ $booking->created_at->translatedFormat('D, d M Y H:i') }}</dd>
                                 </div>
                             </dl>
@@ -78,15 +78,15 @@
                             <h3 class="text-lg font-bold mb-4">Informasi Sewa</h3>
                             <dl class="space-y-3 text-sm mb-4">
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">Mulai Sewa</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">Mulai Sewa</dt>
                                     <dd class="font-medium text-[var(--navy-900)]">{{ $booking->start_at->translatedFormat('D, d M Y H:i') }}</dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">Selesai Sewa</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">Selesai Sewa</dt>
                                     <dd class="font-medium text-[var(--navy-900)]">{{ $booking->end_at->translatedFormat('D, d M Y H:i') }}</dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-gray-500 dark:text-gray-400">Durasi</dt>
+                                    <dt class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">Durasi</dt>
                                     <dd class="font-medium text-[var(--navy-900)]">{{ $booking->duration_days }} Hari</dd>
                                 </div>
                             </dl>
@@ -108,13 +108,13 @@
                                         <h4 class="flex items-center mb-1 text-sm font-bold">
                                             {{ App\Enums\BookingStatus::from($h->to_status)->label() }}
                                         </h4>
-                                        <time class="block mb-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+                                        <time class="block mb-1 text-xs font-normal text-[var(--ink-muted)] dark:text-[var(--ink-muted)]">
                                             {{ $h->created_at->translatedFormat('D, d M Y H:i') }} &middot; 
                                             Oleh: 
                                             @if($h->changed_by === null)
                                                 <span class="font-medium text-[var(--orange-500)]">Sistem</span>
                                             @elseif($h->changed_by === auth()->id())
-                                                <span class="font-medium text-green-600 dark:text-green-400">Anda</span>
+                                                <span class="font-medium text-green-700 dark:text-green-400">Anda</span>
                                             @else
                                                 <span class="font-medium text-blue-600 dark:text-blue-400">Admin</span>
                                             @endif
@@ -132,11 +132,11 @@
                             <h3 class="text-lg font-bold mb-4">Lokasi Pengambilan</h3>
                             <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-[var(--border)]">
                                 <div class="mb-4">
-                                    <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Alamat</span>
+                                    <span class="block text-xs font-semibold text-[var(--ink-muted)] dark:text-[var(--ink-muted)] uppercase tracking-wider mb-1">Alamat</span>
                                     <p class="text-sm text-gray-800 dark:text-gray-200">{{ setting('contact.address', '-') }}</p>
                                 </div>
                                 <div>
-                                    <span class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Jam Operasional</span>
+                                    <span class="block text-xs font-semibold text-[var(--ink-muted)] dark:text-[var(--ink-muted)] uppercase tracking-wider mb-1">Jam Operasional</span>
                                     <p class="text-sm text-gray-800 dark:text-gray-200">{{ setting('contact.hours', '-') }}</p>
                                 </div>
                             </div>

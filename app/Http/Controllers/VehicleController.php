@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VehicleFilterRequest;
-use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
+use App\Services\BranchContext;
 use App\Support\RentalTerms;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class VehicleController extends Controller
     /**
      * Katalog kendaraan + filter tipe, waktu mulai, durasi, ketersediaan, dan pencarian nama (EG-24).
      */
-    public function index(VehicleFilterRequest $request, AvailabilityService $availability)
+    public function index(VehicleFilterRequest $request, AvailabilityService $availability, BranchContext $branches)
     {
         $filter = $request->validated();
         $start = $request->startAt();
@@ -28,8 +28,6 @@ class VehicleController extends Controller
         $typeId = isset($filter['type']) ? (int) $filter['type'] : null;
         $search = $filter['q'] ?? null;
         $onlyAvailable = (bool) ($filter['available'] ?? false);
-        $lokasiSlug = $filter['lokasi'] ?? null;
-        $lokasiId = $lokasiSlug !== null ? (int) Location::query()->where('slug', $lokasiSlug)->value('id') : null;
         $timeFiltered = $start !== null && $days !== null;
 
         // Normalisasi input harga & urut (whitelist / abaikan yang invalid)
@@ -41,7 +39,6 @@ class VehicleController extends Controller
         // Filter waktu & tipe dibawa ke detail motor & modal durasi lewat session (+ query string di link).
         // Null tidak disimpan; min/max disimpan sebagai string supaya lolos rule 'string' saat di-merge balik.
         $request->session()->put('booking.filter', array_filter([
-            'lokasi' => $lokasiSlug,
             'start_at' => $start?->format('Y-m-d\TH:i'),
             'days' => $days,
             'type' => $typeId,
@@ -55,8 +52,7 @@ class VehicleController extends Controller
             $request->session()->put('booking.start_at', $start->format('Y-m-d\TH:i'));
         }
 
-        // Query katalog dibangun AvailabilityService (dipakai juga halaman lokasi, EG-49)
-        $query = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $lokasiId);
+        $query = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $branches->currentId());
 
         // Terapkan Query Tambahan, Jumlah Pesanan (withCount) dan Pengurutan
         $vehicles = $query
@@ -72,12 +68,12 @@ class VehicleController extends Controller
         return view('kendaraan.index', [
             'vehicles' => $vehicles,
             'types' => VehicleType::query()->orderBy('name')->pluck('name', 'id'),
-            'lokasiOptions' => Location::query()->where('is_active', true)->orderBy('name')->pluck('name', 'slug'),
+            'branchOptions' => $branches->active()->pluck('name', 'slug'),
+            'currentBranch' => $branches->current(),
             'maxDays' => (int) $availability->maxDays(),
             'minStart' => VehicleFilterRequest::earliestStart(),
             'filter' => [
                 'type' => $typeId,
-                'lokasi' => $lokasiSlug,
                 'start_at' => $start?->format('Y-m-d\TH:i'),
                 'days' => $days,
                 'available' => $onlyAvailable,
@@ -102,10 +98,11 @@ class VehicleController extends Controller
         return redirect()->route('kendaraan.index');
     }
 
-    public function show(Vehicle $vehicle, AvailabilityService $availability)
+    public function show(Vehicle $vehicle, AvailabilityService $availability, BranchContext $branches)
     {
-        // Motor nonaktif dianggap tidak ada; soft-deleted sudah 404 lewat route binding.
-        abort_unless($vehicle->is_active, 404);
+        abort_unless($vehicle->is_active && $branches->active()->contains('id', $vehicle->branch_id), 404);
+
+        $branches->selectBranchOf($vehicle->branch_id);
 
         $vehicle->load('type');
 
@@ -124,7 +121,7 @@ class VehicleController extends Controller
     }
 
     /**
-     * Motor sejenis (tipe sama, aktif, bukan unit ini). Bila filter katalog ada di
+     * Motor sejenis (tipe sama, cabang sama, aktif, bukan unit ini). Bila filter katalog ada di
      * session `booking.filter`, hanya yang tersedia di rentang itu.
      *
      * @return array{0: Collection<int, Vehicle>, 1: bool}
@@ -137,8 +134,8 @@ class VehicleController extends Controller
         $filtered = $start !== null && $days >= 1 && $days <= $availability->maxDays();
 
         $query = $filtered
-            ? $availability->availableVehicles($start, $days, $vehicle->vehicle_type_id)
-            : Vehicle::query()->where('is_active', true)->where('vehicle_type_id', $vehicle->vehicle_type_id)->with('type');
+            ? $availability->availableVehicles($start, $days, $vehicle->vehicle_type_id, null, $vehicle->branch_id)
+            : Vehicle::query()->where('is_active', true)->where('branch_id', $vehicle->branch_id)->where('vehicle_type_id', $vehicle->vehicle_type_id)->with('type');
 
         $items = $query
             ->whereKeyNot($vehicle->getKey())

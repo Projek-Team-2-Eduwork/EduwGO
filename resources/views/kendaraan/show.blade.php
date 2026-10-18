@@ -56,6 +56,9 @@
             </div>
         </div>
 
+        {{-- Kalender ketersediaan bulanan unit ini (EG-41) --}}
+        <x-availability-calendar :vehicle="$vehicle" />
+
         <section class="mt-12 lg:mt-16" aria-labelledby="rekomendasi-heading">
             <h2 id="rekomendasi-heading" class="text-2xl text-[var(--navy-900)]">Rekomendasi Kendaraan</h2>
             <p class="mt-2 text-sm">Pilih kendaraan yang paling sesuai dengan gaya perjalanan dan budget Anda. Semua motor terawat, siap jalan!</p>

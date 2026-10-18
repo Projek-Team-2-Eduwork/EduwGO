@@ -37,13 +37,14 @@
                             form="send-verification"
                             class="underline text-sm text-[var(--orange-500)] hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--navy-700)]"
                         >
-                            Klik di sini untuk mengirim ulang email verifikasi.
+                            Klik di sini untuk mengirim ulang kode verifikasi.
                         </button>
                     </p>
 
-                    @if (session('status') === 'verification-link-sent')
+                    @if (session('status') === 'verification-code-sent')
                         <p class="mt-2 font-medium text-sm text-[var(--orange-500)]">
-                            Link verifikasi baru sudah dikirim ke email kamu.
+                            Kode verifikasi baru sudah dikirim ke email kamu.
+                            <a href="{{ route('verification.notice') }}" class="underline">Masukkan kode</a>.
                         </p>
                     @endif
                 </div>

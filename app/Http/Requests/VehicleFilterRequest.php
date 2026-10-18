@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 
 class VehicleFilterRequest extends FormRequest
 {
-    private const FILTER_KEYS = ['type', 'lokasi', 'start_at', 'days', 'available', 'q', 'harga', 'harga_min', 'harga_max', 'urut'];
+    private const FILTER_KEYS = ['type', 'start_at', 'days', 'available', 'q', 'harga', 'harga_min', 'harga_max', 'urut'];
 
     public function authorize(): bool
     {
@@ -45,7 +45,6 @@ class VehicleFilterRequest extends FormRequest
     {
         return [
             'type' => ['nullable', 'integer', 'exists:vehicle_types,id'],
-            'lokasi' => ['nullable', 'string', 'max:100', 'exists:locations,slug'],
             'start_at' => ['nullable', 'date', 'required_with:days', 'after_or_equal:'.self::earliestStart()->toDateTimeString()],
             'days' => ['nullable', 'integer', 'required_with:start_at', 'min:1', 'max:'.(int) setting('booking.max_days', 5)],
             'available' => ['nullable', 'boolean'],
@@ -61,7 +60,6 @@ class VehicleFilterRequest extends FormRequest
     {
         return [
             'type.exists' => 'Tipe kendaraan tidak valid.',
-            'lokasi.exists' => 'Lokasi tidak valid.',
             'start_at.date' => 'Tanggal & jam mulai tidak valid.',
             'start_at.required_with' => 'Isi tanggal & jam mulai sewa.',
             'start_at.after_or_equal' => 'Waktu mulai tidak boleh di masa lalu.',

@@ -14,6 +14,10 @@ class VehicleRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if ($this->user()?->isBranchAdmin()) {
+            $this->merge(['branch_id' => $this->user()->branch_id]);
+        }
+
         if ($this->has('plate_number')) {
             $cleaned = preg_replace('/[^A-Za-z0-9 ]/', '', (string) $this->plate_number);
             $cleaned = trim(preg_replace('/\s+/', ' ', $cleaned));
@@ -33,7 +37,7 @@ class VehicleRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
             'vehicle_type_id' => ['required', 'exists:vehicle_types,id'],
-            'location_id' => ['nullable', 'exists:locations,id'],
+            'branch_id' => ['required', 'exists:branches,id'],
             'tank_capacity' => ['nullable', 'numeric', 'min:0'],
             'plate_number' => ['required', 'string', 'max:20', 'unique:vehicles,plate_number,'.$vehicleId],
             'price_per_day' => ['required', 'numeric', 'min:0'],

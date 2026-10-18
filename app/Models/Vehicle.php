@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,11 +29,22 @@ class Vehicle extends Model
     }
 
     /**
-     * Lokasi/branch tempat unit ini berada.
+     * Cabang pemilik unit ini.
      */
-    public function location(): BelongsTo
+    public function branch(): BelongsTo
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function scopeManagedBy(Builder $query, User $user): Builder
+    {
+        if ($user->isSuperadmin()) {
+            return $query;
+        }
+
+        return $user->isBranchAdmin() && $user->branch_id !== null
+            ? $query->where($query->getModel()->qualifyColumn('branch_id'), $user->branch_id)
+            : $query->whereRaw('1 = 0');
     }
 
     /**

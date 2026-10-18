@@ -8,20 +8,20 @@
     $activeCount = collect([$filter['type'], $filter['start_at'], $filter['available'] ?: null, $filter['q']])->filter(fn ($v) => filled($v))->count();
 @endphp
 
-<x-app-layout :title="$lokasi->name">
-    <div class="mx-auto max-w-[1320px] space-y-6 px-4 pt-8 sm:px-6 lg:pt-12 xl:px-0" x-data="{ filterOpen: false }" x-on:keydown.escape.window="filterOpen = false">
+<x-app-layout :title="$cabang->name">
+    <div class="mx-auto max-w-[1320px] space-y-6 px-4 pt-8 sm:px-6 lg:pt-12 xl:px-0" x-data="{ filterOpen: false, loading: false }" x-on:keydown.escape.window="filterOpen = false" x-on:pageshow.window="loading = false">
         <div>
-            <h1 class="text-2xl">{{ $lokasi->name }}</h1>
+            <h1 class="text-2xl">{{ $cabang->name }}</h1>
             <p class="mt-2 text-sm">
-                @if ($lokasi->address) {{ $lokasi->address }} @endif
-                @if ($lokasi->operating_hours)
-                    @if ($lokasi->address) <span aria-hidden="true">&middot;</span> @endif
-                    {{ $lokasi->operating_hours }}
+                @if ($cabang->address) {{ $cabang->address }} @endif
+                @if ($cabang->operating_hours)
+                    @if ($cabang->address) <span aria-hidden="true">&middot;</span> @endif
+                    {{ $cabang->operating_hours }}
                 @endif
             </p>
+            <a href="{{ route('kendaraan.index', ['cabang' => $cabang->slug]) }}" class="btn-secondary-edu mt-3 inline-flex items-center px-4 py-2 text-sm">Jadikan cabang pilihan</a>
         </div>
 
-        {{-- Mobile: tombol Filter membuka bottom sheet; desktop: bar inline --}}
         <button type="button" class="btn-secondary-edu inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm lg:hidden" x-on:click="filterOpen = true" aria-haspopup="dialog">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
             Filter
@@ -38,16 +38,17 @@
             x-bind:class="{ '!block': filterOpen }"
             x-bind:role="filterOpen ? 'dialog' : null"
             x-bind:aria-modal="filterOpen ? 'true' : null"
-            aria-label="Filter motor di lokasi ini"
+            aria-label="Filter motor di cabang ini"
         >
             <x-filter-bar
-                :action="route('lokasi.show', $lokasi->slug)"
+                :action="route('cabang.show', $cabang->slug)"
                 class="rounded-b-none lg:rounded-b-[inherit]"
                 x-on:change="if (window.matchMedia('(min-width: 1024px)').matches) $el.requestSubmit()"
+                x-on:submit="loading = true; filterOpen = false"
             >
-                <x-form.select name="type" label="Tipe kendaraan" placeholder="Semua" :options="$types" :value="$filter['type']" />
+                <x-form.chips name="type" label="Tipe kendaraan" placeholder="Semua" :options="$types" :value="$filter['type']" class="sm:col-span-2 lg:col-span-4" />
 
-                <x-form.datetime name="start_at" label="Tanggal & jam sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" />
+                <x-form.datetime name="start_at" label="Tanggal & jam sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" :picker="true" />
 
                 <x-form.select name="days" label="Durasi sewa" placeholder="Pilih durasi" :options="collect(range(1, $maxDays))->mapWithKeys(fn ($d) => [$d => $d.' hari'])->all()" :value="$filter['days']" />
 
@@ -63,20 +64,19 @@
                 <x-form.select name="urut" label="Urutkan" placeholder="Default (nama)"
                     :options="['populer' => 'Paling populer']" :value="$filter['urut']" />
 
-                {{-- Filter "hanya tersedia" didukung lewat ?available=1 (dibawa dari katalog), tidak ada di desain --}}
                 @if ($filter['available'])
                     <input type="hidden" name="available" value="1">
                 @endif
 
                 <x-slot name="actions" class="lg:hidden">
                     <x-primary-button class="flex-1 justify-center">Terapkan</x-primary-button>
-                    <a href="{{ route('lokasi.reset', $lokasi->slug) }}" class="btn-secondary-edu inline-flex flex-1 items-center justify-center px-4 py-2 text-sm">Reset</a>
+                    <a href="{{ route('cabang.reset', $cabang->slug) }}" class="btn-secondary-edu inline-flex flex-1 items-center justify-center px-4 py-2 text-sm">Reset</a>
                     <button type="button" class="btn-secondary-edu px-3 py-1.5 text-sm" x-on:click="filterOpen = false">Tutup</button>
                 </x-slot>
             </x-filter-bar>
 
             @if ($activeCount > 0)
-                <a href="{{ route('lokasi.reset', $lokasi->slug) }}" class="mt-2 hidden text-sm font-medium text-[var(--navy-900)] underline-offset-4 hover:underline lg:inline-block">Reset filter</a>
+                <a href="{{ route('cabang.reset', $cabang->slug) }}" class="mt-2 hidden text-sm font-medium text-[var(--navy-900)] underline-offset-4 hover:underline lg:inline-block">Reset filter</a>
             @endif
         </div>
 
@@ -88,11 +88,14 @@
             </p>
         @endif
 
+        <x-vehicle-grid-skeleton x-show="loading" x-cloak style="display: none" />
+
+        <div class="space-y-6" x-show="!loading">
         @if ($vehicles->isEmpty())
             @if ($timeFiltered)
-                <x-empty-state title="Tidak ada motor tersedia di waktu tersebut" description="Coba ganti tanggal, jam, tipe, atau durasi sewa." action-label="Reset filter" :action-href="route('lokasi.reset', $lokasi->slug)" />
+                <x-empty-state title="Tidak ada motor tersedia di waktu tersebut" description="Coba ganti tanggal, jam, tipe, atau durasi sewa." action-label="Reset filter" :action-href="route('cabang.reset', $cabang->slug)" />
             @else
-                <x-empty-state title="Belum ada motor di lokasi ini" description="Motor tidak ditemukan sesuai filter kamu." action-label="Reset filter" :action-href="route('lokasi.reset', $lokasi->slug)" />
+                <x-empty-state title="Belum ada motor di cabang ini" description="Motor tidak ditemukan sesuai filter kamu." action-label="Reset filter" :action-href="route('cabang.reset', $cabang->slug)" />
             @endif
         @else
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,6 +110,7 @@
 
             {{ $vehicles->links('components.pagination') }}
         @endif
+        </div>
     </div>
 
     @include('home.terms')

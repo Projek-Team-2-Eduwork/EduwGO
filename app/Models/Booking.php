@@ -47,6 +47,18 @@ class Booking extends Model
         return $this->hasOne(Payment::class)->latestOfMany();
     }
 
+    public function scopeManagedBy(Builder $query, User $user): Builder
+    {
+        if ($user->isSuperadmin()) {
+            return $query;
+        }
+
+        return $query->whereIn(
+            $query->getModel()->qualifyColumn('vehicle_id'),
+            Vehicle::withTrashed()->managedBy($user)->select('id'),
+        );
+    }
+
     /**
      * Booking yang masih memblokir unit (pending, paid, rented) — dipakai AvailabilityService.
      */

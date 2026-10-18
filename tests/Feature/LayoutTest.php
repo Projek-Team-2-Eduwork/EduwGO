@@ -25,7 +25,7 @@ class LayoutTest extends TestCase
     {
         $html = Blade::render('<x-app-layout><p>konten</p></x-app-layout>');
 
-        foreach (['EduwGo', 'konten', 'Pilih Kendaraan', 'Daftar Pesanan', 'Butuh bantuan?', 'Masuk', 'Socials', 'wa.me'] as $text) {
+        foreach (['EduwGo', 'konten', 'Pilih Kendaraan', 'Daftar Pesanan', 'Butuh bantuan?', 'Masuk', 'Kontak', 'wa.me'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
     }
@@ -44,7 +44,7 @@ class LayoutTest extends TestCase
 
     public function test_admin_melihat_layout_admin_dengan_sidebar(): void
     {
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
         $admin->assignRole('admin');
 
         $response = $this->actingAs($admin)->get('/admin/dashboard');

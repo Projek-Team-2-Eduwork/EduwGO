@@ -7,7 +7,9 @@ use App\Exceptions\InvalidTransitionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Models\Branch;
 use App\Models\Payment;
+use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\BookingService;
 use App\Services\PaymentService;
@@ -32,12 +34,12 @@ class PesananController extends Controller
 
         // Kartu ringkasan status: jumlah global per kategori (EG-51)
         $summary = [
-            'pending' => $this->countStatus('pending'),
-            'sukses' => $this->countStatus('sukses'),
-            'expired' => $this->countStatus('expired'),
+            'pending' => $this->countStatus($request, 'pending'),
+            'sukses' => $this->countStatus($request, 'sukses'),
+            'expired' => $this->countStatus($request, 'expired'),
         ];
 
-        $query = Booking::with(['user', 'vehicle.type', 'payments', 'histories.changer']);
+        $query = $this->scopedQuery($request)->with(['user', 'vehicle.type', 'payments', 'histories.changer']);
 
         // Filter Status — aturan tunggal direuse kartu ringkasan (EG-51)
         $this->applyStatusFilter($query, $request->input('status'));
@@ -69,8 +71,22 @@ class PesananController extends Controller
 
         $bookings = $query->orderBy('start_at', 'desc')->paginate(12)->withQueryString();
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
+        $branches = $request->user()->isSuperadmin() ? Branch::orderBy('name')->pluck('name', 'id') : collect();
 
-        return view('admin.pesanan.index', compact('bookings', 'types', 'summary'));
+        return view('admin.pesanan.index', compact('bookings', 'types', 'summary', 'branches'));
+    }
+
+    private function scopedQuery(Request $request): Builder
+    {
+        $user = $request->user();
+        $branchId = $request->integer('branch') ?: null;
+
+        return Booking::query()
+            ->managedBy($user)
+            ->when($user->isSuperadmin() && $branchId !== null, fn (Builder $q) => $q->whereIn(
+                'vehicle_id',
+                Vehicle::withTrashed()->where('branch_id', $branchId)->select('id'),
+            ));
     }
 
     /**
@@ -104,9 +120,9 @@ class PesananController extends Controller
     /**
      * Jumlah pesanan untuk satu nilai filter status (dipakai kartu ringkasan).
      */
-    private function countStatus(string $status): int
+    private function countStatus(Request $request, string $status): int
     {
-        $query = clone Booking::query();
+        $query = $this->scopedQuery($request);
         $this->applyStatusFilter($query, $status);
 
         return $query->count();
@@ -172,6 +188,8 @@ class PesananController extends Controller
     public function cekStatus(string $code, Request $request): RedirectResponse
     {
         $booking = Booking::where('code', $code)->firstOrFail();
+        Gate::authorize('adminUpdate', $booking);
+
         $payment = $booking->latestPayment;
 
         if (! $payment || $payment->status !== 'pending') {

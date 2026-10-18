@@ -17,7 +17,11 @@ Disepakati 21 September 2026. Kalau mau mengubah, diskusikan bertiga dulu, lalu 
 | 1 booking | 1 motor. Tidak ada keranjang |
 | Identitas penyewa | Dicek fisik saat pengambilan (sesuai S&K), tidak ada upload KTP |
 | Notifikasi | Hanya tombol Chat Admin (WhatsApp). Email opsional di Fase 3 |
-| Role | `admin` dan `user` saja, tidak ada kasir |
+| Role | `superadmin`, `admin`, dan `user`; tidak ada kasir (diubah dari "admin dan user saja" saat fitur multi-cabang) |
+| `superadmin` | Mengelola semua cabang: master cabang, pengguna & admin cabang, pengaturan toko global, tipe kendaraan; melihat data semua cabang |
+| `admin` | Admin per cabang (`users.branch_id`): hanya kendaraan, pesanan, dashboard, dan pengaturan cabangnya. Admin tanpa cabang tidak melihat data apa pun |
+| `user` | Penyewa. Memilih cabang; katalog, home, dan detail terfilter ke cabang terpilih, tidak pernah "semua cabang" |
+| Cabang | Tabel `branches` (alamat, kontak/WA, jam operasional, sosmed, `is_active`), dikelola terpusat oleh superadmin. Kendaraan milik satu cabang (`vehicles.branch_id`). Availability, buffer, dan snapshot harga tetap per kendaraan |
 | Kode booking | `EG.000001` (6 digit, urut) |
 
 Di luar scope (tidak dibuat): keranjang, denda, deposit, DP, refund via sistem, perpanjangan, blacklist, ulasan/rating, upload KTP, kasir, export PDF/Excel, backup DB, pembatalan mandiri setelah Lunas, Google login.
@@ -28,12 +32,12 @@ Di luar scope (tidak dibuat): keranjang, denda, deposit, DP, refund via sistem, 
 |---|---|
 | Framework | Laravel 13, PHP 8.3 |
 | Frontend | Breeze: Blade + Tailwind + Alpine. Tanpa Inertia/Livewire/Vue/React |
-| Lokal | Laravel Sail (Docker): app (image kustom di `docker/8.3/`), MySQL 8.4, Mailpit, phpMyAdmin |
+| Lokal | Laravel Sail (Docker): app (image kustom di `docker/8.3/`), MySQL 8.4, phpMyAdmin |
 | Database | MySQL |
 | Timezone | `Asia/Jakarta` |
 | Locale | `id` |
 | Payment | Xendit Invoice API (`xendit/xendit-php`), sandbox dulu |
-| Role | `spatie/laravel-permission` |
+| Role | `spatie/laravel-permission` (3 role, lihat bagian 1) + Policy; pembatasan data per cabang lewat scope query `managedBy` (bukan global scope) |
 | Chart | Chart.js via CDN |
 | Dark mode | Tailwind `darkMode: 'class'`, warna via CSS variable |
 | Brand | Nama default **EduwGo**, bisa diubah dari Pengaturan. Palet & tipografi di `docs/SPEC.md` bagian 8 |

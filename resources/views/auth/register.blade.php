@@ -1,8 +1,8 @@
 <x-guest-layout>
     <h1 class="text-3xl sm:text-4xl">Buat Akun</h1>
-    <p class="mt-2 text-sm">Daftar untuk mulai menyewa motor. Kami akan mengirim email verifikasi.</p>
+    <p class="mt-2 text-sm">Daftar untuk mulai menyewa motor. Kami akan mengirim kode verifikasi ke email Anda.</p>
 
-    <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-4" x-data>
+    <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-4" x-data="{ submitting: false }" x-on:submit="if (submitting) { $event.preventDefault() } else { submitting = true }">
         @csrf
 
         <div>
@@ -46,7 +46,7 @@
             <x-input-error :messages="$errors->get('terms')" class="mt-2 !text-red-600 dark:!text-red-400" />
         </div>
 
-        <button type="submit" class="btn-primary-edu w-full px-6 py-3 text-sm">Buat Akun</button>
+        <button type="submit" class="btn-primary-edu w-full px-6 py-3 text-sm disabled:opacity-60 disabled:cursor-wait" x-bind:disabled="submitting" x-text="submitting ? 'Memproses...' : 'Buat Akun'">Buat Akun</button>
 
         <p class="text-sm text-center">
             Sudah punya akun?

@@ -25,6 +25,7 @@
                     <div class="flex-1">
                         <x-text-input name="q" value="{{ request('q') }}" placeholder="Cari nama atau plat..." aria-label="Cari nama atau plat" class="w-full" />
                     </div>
+                    @include('admin.partials.branch-filter', ['class' => 'md:self-end'])
                     <div>
                         <select name="tipe" aria-label="Filter tipe kendaraan" class="w-full rounded-md shadow-sm">
                             <option value="">Semua Tipe</option>
@@ -43,7 +44,7 @@
                     </div>
                     <div>
                         <x-primary-button type="submit">Filter</x-primary-button>
-                        @if(request()->hasAny(['q', 'tipe', 'status']))
+                        @if(request()->hasAny(['q', 'tipe', 'status', 'branch']))
                             <a href="{{ route('admin.kendaraan.index') }}" class="ml-2 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Reset</a>
                         @endif
                     </div>
@@ -77,7 +78,7 @@
                             </div>
                             <div class="p-4 flex flex-col flex-grow">
                                 <h3 class="text-lg font-bold">{{ $vehicle->name }}</h3>
-                                <p class="mb-2 text-sm">{{ $vehicle->type?->name ?? '-' }}</p>
+                                <p class="mb-2 text-sm">{{ $vehicle->type?->name ?? '-' }}@if($branches->isNotEmpty()) &middot; {{ $vehicle->branch?->name }}@endif</p>
                                 
                                 <div class="mt-auto flex items-center justify-between pt-4">
                                     <div class="rounded bg-[var(--bg)] px-2 py-1 font-mono text-sm">
@@ -102,7 +103,7 @@
                 </div>
                 
                 <div class="mt-6">
-                    {{ $vehicles->links() }}
+                    {{ $vehicles->links('components.pagination') }}
                 </div>
             @endif
         </div>

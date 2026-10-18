@@ -8,32 +8,24 @@ class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperadmin();
     }
 
     public function setRole(User $currentUser, User $targetUser, string $role): bool
     {
-        if (! $currentUser->hasRole('admin')) {
-            return false;
-        }
-        // Tidak boleh mencabut role admin dari dirinya sendiri
-        if ($currentUser->id === $targetUser->id && $role === 'user') {
+        if (! $currentUser->isSuperadmin()) {
             return false;
         }
 
-        return true;
+        return $currentUser->id !== $targetUser->id;
     }
 
     public function toggleActive(User $currentUser, User $targetUser): bool
     {
-        if (! $currentUser->hasRole('admin')) {
-            return false;
-        }
-        // Tidak boleh menonaktifkan akunnya sendiri
-        if ($currentUser->id === $targetUser->id) {
+        if (! $currentUser->isSuperadmin()) {
             return false;
         }
 
-        return true;
+        return $currentUser->id !== $targetUser->id;
     }
 }

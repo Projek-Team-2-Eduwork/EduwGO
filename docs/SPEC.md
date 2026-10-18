@@ -97,13 +97,21 @@ Layout: sidebar (Dashboard, Daftar Pesanan, Kendaraan, Tipe Kendaraan, Pengatura
 
 ### Pengaturan Toko
 - Brand: nama (default EduwGo), logo terang & logo gelap, tagline hero, favicon
-- Kontak: nomor WhatsApp admin, alamat lokasi pengambilan, jam operasional, link sosial media footer
+- Kontak: nomor WhatsApp admin (tombol Chat Admin, global). Alamat, jam operasional, kontak, dan sosmed per cabang kini dikelola di Kelola Cabang; field alamat/jam/sosmed global hanya cadangan bila belum ada cabang aktif
+- Hanya superadmin; admin cabang mengubah profil cabangnya di Pengaturan Cabang (`/admin/pengaturan-cabang`)
 - Aturan: durasi maksimal sewa (default 5 hari), durasi invoice Xendit (default 60 menit), buffer antar sewa (default 60 menit), teks Syarat & Ketentuan
 - Warna primer & aksen bisa di-override dari sini (opsional, default palet EduwGo)
 
 ### Kelola User (minimal)
-- Daftar penyewa: nama, WA, jumlah booking; buat akun admin tambahan
-- Role hanya 2: admin & user (tidak ada kasir)
+- Hanya superadmin. Daftar pengguna: nama, WA, jumlah booking; form "Buat Admin Cabang" (nama, email, WA, cabang, password); ubah role + pilih cabang per pengguna; aktif/nonaktif akun
+- Role ada 3: `superadmin`, `admin` (admin cabang, wajib punya cabang), `user` (tidak ada kasir). Superadmin tidak bisa mengubah role/menonaktifkan akunnya sendiri
+
+### Multi-Cabang & Hak Akses
+- Cabang (`branches`) dikelola superadmin di menu Cabang (CRUD, aktif/nonaktif; tidak bisa dihapus bila masih punya unit/admin)
+- Hak akses: superadmin = semua cabang + master cabang + pengguna + pengaturan global + tipe kendaraan. Admin cabang = kendaraan, pesanan, dashboard, export, dan profil cabangnya saja (cabang lain 403). Superadmin bisa memfilter dashboard/pesanan/kendaraan per cabang (`?branch=`)
+- Konsumen: memilih cabang lewat navbar/katalog (session + cookie); default cabang aktif pertama; home, katalog, rekomendasi, dan detail terfilter per cabang. Buka detail motor cabang lain memindahkan cabang terpilih. Tetap bisa booking motor cabang mana pun
+- `/tentang`, footer, dan profil di home menampilkan alamat, jam operasional, kontak & sosmed tiap cabang aktif (cabang baru otomatis muncul)
+- Rute publik cabang: `/cabang`, `/cabang/{slug}` (`/lokasi*` dialihkan 301)
 
 ## 3. Integrasi Payment Gateway (Xendit)
 
@@ -129,7 +137,7 @@ Layout: sidebar (Dashboard, Daftar Pesanan, Kendaraan, Tipe Kendaraan, Pengatura
 
 - Desain hanya pakai "Chat Admin" (WhatsApp) — tidak ada sistem notifikasi otomatis
 - Wajib: tombol Chat Admin di navbar ("Butuh bantuan?"), Menunggu Pembayaran, Berhasil, Gagal, Detail Pemesanan, Daftar Pesanan (untuk batal setelah lunas); link wa.me dengan pesan terisi otomatis (kode booking)
-- Iterasi (opsional, email via Mailpit/SMTP): booking dibuat (link bayar), pembayaran berhasil, expired, pengingat H-1 pengambilan, pengingat waktu selesai sewa
+- Iterasi (opsional, email via SMTP): booking dibuat (link bayar), pembayaran berhasil, expired, pengingat H-1 pengambilan, pengingat waktu selesai sewa
 - Admin: tombol Chat Penyewa di detail booking
 
 ## 5. Halaman Autentikasi [Figma: General > Buat Akun, Masuk]
@@ -138,7 +146,7 @@ Layout: sidebar (Dashboard, Daftar Pesanan, Kendaraan, Tipe Kendaraan, Pengatura
 - Buat Akun: nama, email, nomor WhatsApp, password + konfirmasi, checkbox setuju S&K
 - Verifikasi Email: wajib sebelum checkout (cegah akun spam kunci unit)
 - Lupa & Reset Password (Breeze)
-- Redirect setelah login: admin → /admin/dashboard, user → halaman sebelumnya / home
+- Redirect setelah login: superadmin & admin cabang → /admin/dashboard, user → halaman sebelumnya / home
 - Google login: tombol "Masuk dengan Google" ada di Figma, tetapi Google login di luar scope (lihat bagian 9), jadi tidak dibuat
 
 ## 6. Alur Status Booking (State Machine)
@@ -158,9 +166,10 @@ pending ──bayar (webhook)──> paid ──admin serah terima──> rented
 
 ## 7. Struktur Data (Ringkas)
 
-- users: name, email, phone (WA), social_account, password, email_verified_at, theme_preference (light|dark|system); role via spatie (admin|user)
+- users: name, email, phone (WA), social_account, password, email_verified_at, theme_preference (light|dark|system); role via spatie (superadmin|admin|user); branch_id (nullable, hanya admin cabang)
+- branches: name, slug, address, phone (kontak/WA), operating_hours, social_links (json: instagram, facebook, tiktok, youtube), is_active
 - vehicle_types: name, slug (Matic, Cub, ...)
-- vehicles: vehicle_type_id, name, slug, brand, plate_number (unique), tank_capacity, price_per_day, image, description, is_active, deleted_at; usulan: equipment (json, daftar teks perlengkapan, untuk detail motor di Figma; belum ada di migration)
+- vehicles: branch_id, vehicle_type_id, name, slug, brand, plate_number (unique), tank_capacity, price_per_day, image, description, is_active, deleted_at; usulan: equipment (json, daftar teks perlengkapan, untuk detail motor di Figma; belum ada di migration)
 - bookings: code (EG.000001), user_id, vehicle_id, start_at (datetime), end_at (datetime), duration_days, price_per_day (snapshot), total_amount, status, customer_name, customer_phone, notes, cancel_reason
 - booking_status_histories: booking_id, from_status, to_status, changed_by (null = sistem), note
 - payments: booking_id, method, gateway_reference, gateway_url, gateway_payload, amount, status, paid_at, expires_at
@@ -231,14 +240,14 @@ pending ──bayar (webhook)──> paid ──admin serah terima──> rented
 - Keranjang / multi motor per booking
 - Denda, deposit, DP, refund via sistem, perpanjangan, blacklist, ulasan/rating
 - Upload KTP/SIM (identitas dicek fisik saat pengambilan, sesuai S&K)
-- Role kasir, laporan export PDF/Excel, backup DB (boleh ditambah kalau waktu sisa)
+- Role kasir (role yang ada: superadmin, admin, user), laporan export PDF/Excel, backup DB (boleh ditambah kalau waktu sisa)
 - Pembatalan mandiri oleh user setelah Lunas
 - Google login
 
 ## 10. Keputusan (disepakati 2026-09-21)
 
 - Framework: Laravel 13, PHP 8.3, Breeze Blade + Tailwind + Alpine
-- Lokal: Laravel Sail (mysql + mailpit); Database: MySQL
+- Lokal: Laravel Sail (mysql); Database: MySQL
 - Timezone: Asia/Jakarta di config/app.php
 - Satuan sewa: 24 jam per hari, mulai dari tanggal+jam yang dipilih
 - Durasi: 1–5 hari (maks dari settings)

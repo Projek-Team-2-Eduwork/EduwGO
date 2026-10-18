@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\VehicleRequest;
-use App\Models\Location;
+use App\Models\Branch;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\AvailabilityService;
@@ -24,7 +24,11 @@ class VehicleController extends Controller
             ->where('start_at', '<=', now())
             ->where('end_at', '>', now());
 
-        $query = Vehicle::query()->with('type');
+        $user = $request->user();
+        $branchId = $user->effectiveBranchId($request->integer('branch') ?: null);
+
+        $query = Vehicle::query()->managedBy($user)->with(['type', 'branch'])
+            ->when($user->isSuperadmin() && $branchId !== null, fn (Builder $q) => $q->where('branch_id', $branchId));
         $query->withExists(['bookings as is_rented' => $running]);
 
         // Filter Status
@@ -55,16 +59,18 @@ class VehicleController extends Controller
         $vehicles = $query->orderBy('name')->paginate(12)->withQueryString();
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
 
-        return view('admin.kendaraan.index', compact('vehicles', 'types'));
+        $branches = $user->isSuperadmin() ? Branch::orderBy('name')->pluck('name', 'id') : collect();
+
+        return view('admin.kendaraan.index', compact('vehicles', 'types', 'branches'));
     }
 
     public function create()
     {
         Gate::authorize('create', Vehicle::class);
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
-        $locations = Location::orderBy('name')->pluck('name', 'id');
+        $branches = $this->branchOptions();
 
-        return view('admin.kendaraan.create', compact('types', 'locations'));
+        return view('admin.kendaraan.create', compact('types', 'branches'));
     }
 
     public function store(VehicleRequest $request)
@@ -87,7 +93,7 @@ class VehicleController extends Controller
     {
         Gate::authorize('view', $kendaraan);
 
-        $kendaraan->load('type');
+        $kendaraan->load(['type', 'branch']);
 
         $jadwal = $availabilityService->bookedRanges($kendaraan, now()->subDay(), now()->addDays(30));
         $bufferMenit = (int) setting('booking.buffer_minutes', 60);
@@ -99,9 +105,9 @@ class VehicleController extends Controller
     {
         Gate::authorize('update', $kendaraan);
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
-        $locations = Location::orderBy('name')->pluck('name', 'id');
+        $branches = $this->branchOptions();
 
-        return view('admin.kendaraan.edit', compact('kendaraan', 'types', 'locations'));
+        return view('admin.kendaraan.edit', compact('kendaraan', 'types', 'branches'));
     }
 
     public function update(VehicleRequest $request, Vehicle $kendaraan)
@@ -136,6 +142,16 @@ class VehicleController extends Controller
         }
 
         return redirect()->route('admin.kendaraan.index')->with('success', $pesan);
+    }
+
+    private function branchOptions()
+    {
+        $user = auth()->user();
+
+        return Branch::query()
+            ->when(! $user->isSuperadmin(), fn (Builder $q) => $q->whereKey($user->branch_id))
+            ->orderBy('name')
+            ->pluck('name', 'id');
     }
 
     /**

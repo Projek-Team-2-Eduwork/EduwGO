@@ -32,16 +32,7 @@
                             </select>
                             <x-input-error class="mt-2" :messages="$errors->get('vehicle_type_id')" />
                         </div>
-                        <div>
-                            <x-input-label for="location_id" value="Lokasi" />
-                            <select id="location_id" name="location_id" class="mt-1 block w-full rounded-md shadow-sm">
-                                <option value="">Tanpa lokasi (tidak tampil di katalog)</option>
-                                @foreach($locations as $id => $name)
-                                    <option value="{{ $id }}" {{ old('location_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error class="mt-2" :messages="$errors->get('location_id')" />
-                        </div>
+                        @include('admin.kendaraan.partials.branch-field', ['current' => null])
                         <div>
                             <x-input-label for="tank_capacity" value="Kapasitas Tangki (Liter)" />
                             <x-text-input id="tank_capacity" name="tank_capacity" type="number" step="0.1" class="mt-1 block w-full" :value="old('tank_capacity')" />

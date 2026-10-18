@@ -9,7 +9,7 @@
     $href = $href ?? route('kendaraan.detail', $vehicle);
 @endphp
 
-<article {{ $attributes->merge(['class' => 'card-surface group flex flex-col p-4 transition duration-150 hover:-translate-y-0.5 hover:shadow-md']) }}>
+<article {{ $attributes->merge(['class' => 'card-surface card-lift group flex flex-col p-4']) }}>
     <div class="min-w-0">
         <h3 class="truncate text-base font-bold">
             <a href="{{ $href }}">{{ $vehicle->name }}</a>

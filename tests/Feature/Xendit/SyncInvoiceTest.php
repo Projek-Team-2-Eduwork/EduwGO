@@ -23,7 +23,7 @@ class SyncInvoiceTest extends TestCase
 
     public function test_sinkronisasi_ke_paid_sukses()
     {
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
         $admin->assignRole('admin');
 
         $booking = Booking::factory()->pending()->create();
@@ -73,7 +73,7 @@ class SyncInvoiceTest extends TestCase
 
     public function test_halaman_show_tampil_dengan_tombol_cek_status()
     {
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
         $admin->assignRole('admin');
 
         $booking = Booking::factory()->pending()->create();
@@ -92,7 +92,7 @@ class SyncInvoiceTest extends TestCase
 
     public function test_tombol_tidak_tampil_jika_bukan_pending()
     {
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
         $admin->assignRole('admin');
 
         $booking = Booking::factory()->paid()->create();

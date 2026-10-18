@@ -53,10 +53,10 @@ $maxWidth = [
         x-show="show"
         class="fixed inset-0 transform transition-all"
         x-on:click="show = false"
-        x-transition:enter="ease-out duration-300"
+        x-transition:enter="ease-out duration-150"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-200"
+        x-transition:leave="ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
     >
@@ -68,12 +68,12 @@ $maxWidth = [
         role="dialog"
         aria-modal="true"
         class="card-surface relative mb-6 transform overflow-hidden shadow-xl transition-all sm:mx-auto sm:w-full {{ $maxWidth }}"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        x-transition:enter="ease-out duration-150"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
     >
         {{ $slot }}
     </div>
