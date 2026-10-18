@@ -92,12 +92,18 @@ class XenditService
      */
     public const CHANNELS = [
         'BCA_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'BCA Virtual Account'],
+        'BNI_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'BNI Virtual Account'],
+        'BRI_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'BRI Virtual Account'],
+        'MANDIRI_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'Mandiri Virtual Account'],
+        'PERMATA_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'Permata Virtual Account'],
+        'CIMB_VIRTUAL_ACCOUNT' => ['category' => 'Virtual Account', 'label' => 'CIMB Niaga Virtual Account'],
         'CREDIT_CARD' => ['category' => 'Kartu Kredit', 'label' => 'Visa / Mastercard'],
         'SHOPEEPAY' => ['category' => 'E-Wallet', 'label' => 'ShopeePay'],
         'DANA' => ['category' => 'E-Wallet', 'label' => 'DANA'],
         'OVO' => ['category' => 'E-Wallet', 'label' => 'OVO'],
         'LINKAJA' => ['category' => 'E-Wallet', 'label' => 'LinkAja!'],
         'ASTRAPAY' => ['category' => 'E-Wallet', 'label' => 'AstraPay'],
+        'GOPAY' => ['category' => 'E-Wallet', 'label' => 'GoPay'],
         'QRIS' => ['category' => 'QR', 'label' => 'QRIS'],
         'ALFAMART' => ['category' => 'Retail Outlet', 'label' => 'Alfamart'],
         'INDOMARET' => ['category' => 'Retail Outlet', 'label' => 'Indomaret'],
@@ -106,27 +112,31 @@ class XenditService
     /**
      * Menyusun katalog channel per kategori untuk ditampilkan halaman bayar
      * (EG-55, gaya gateway). Tiap channel membawa channel_code (untuk link
-     * ?metode=), label tampilan, dan ikon SVG inline.
+     * ?metode=), label tampilan, dan logo brand SVG inline (EG-56).
      *
-     * @return array<int, array{name: string, channels: array<int, array{code: string, label: string, icon: string}>}>
+     * @return array<int, array{name: string, channels: array<int, array{code: string, label: string, logo: array<int, string>, icon: string}>}>
      */
     public static function channelCatalog(): array
     {
-        $icons = [
-            'Virtual Account' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6a2 2 0 012-2h14a2 2 0 012 2M3 6v12a2 2 0 002 2h14a2 2 0 002-2V6m-18 6h18"/>',
-            'Kartu Kredit' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6a2 2 0 012-2h14a2 2 0 012 2M3 6v12a2 2 0 002 2h14a2 2 0 002-2V6m-18 6h18"/>',
-            'E-Wallet' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6a2 2 0 012-2h14a2 2 0 012 2M3 6v12a2 2 0 002 2h14a2 2 0 002-2V6m-18 6h18"/>',
-            'QR' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h6v6H4zM14 6h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>',
-            'Retail Outlet' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4 21V9l8-6 8 6v12M9 21v-6h6v6"/>',
-        ];
+        $logos = self::channelLogos();
+        $files = self::channelLogoFiles();
 
         $grouped = [];
 
         foreach (self::CHANNELS as $code => $meta) {
+            $urls = [];
+
+            foreach ($files[$code] ?? [] as $file) {
+                if (is_file(public_path($file))) {
+                    $urls[] = asset($file);
+                }
+            }
+
             $grouped[$meta['category']][] = [
                 'code' => $code,
                 'label' => $meta['label'],
-                'icon' => $icons[$meta['category']] ?? $icons['QR'],
+                'logo' => $urls,
+                'icon' => $logos[$code] ?? $logos['QRIS'],
             ];
         }
 
@@ -145,6 +155,64 @@ class XenditService
         }
 
         return $catalog;
+    }
+
+    /**
+     * Logo brand per channel_code (chip putih pada halaman bayar, EG-56).
+     * Ditulis sebagai SVG inline (tanpa aset eksternal) agar tetap tampil
+     * saat offline dan ikut ter-cache blade.
+     *
+     * @return array<string, string>
+     */
+    public static function channelLogos(): array
+    {
+        return [
+            'BCA_VIRTUAL_ACCOUNT' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BCA"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" font-style="italic" fill="#0060AF">BCA</text></svg>',
+            'BNI_VIRTUAL_ACCOUNT' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BNI"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800" fill="#F15A22">BNI</text></svg>',
+            'BRI_VIRTUAL_ACCOUNT' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BRI"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800" fill="#00529C">BRI</text></svg>',
+            'MANDIRI_VIRTUAL_ACCOUNT' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mandiri"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#003A70">mandiri</text></svg>',
+            'PERMATA_VIRTUAL_ACCOUNT' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Permata"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#0064FF">Permata</text></svg>',
+            'CIMB_VIRTUAL_ACCOUNT' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CIMB Niaga"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#790008">CIMB Niaga</text></svg>',
+            'CREDIT_CARD' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Visa Mastercard"><circle cx="22" cy="18" r="11" fill="#EB001B"/><circle cx="34" cy="18" r="11" fill="#F79E1B"/><ellipse cx="28" cy="18" rx="5" ry="9.2" fill="#FF5F00"/></svg>',
+            'SHOPEEPAY' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ShopeePay"><text x="28" y="22" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#EE4D2D">ShopeePay</text></svg>',
+            'DANA' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DANA"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800" fill="#118EEA">DANA</text></svg>',
+            'OVO' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OVO"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="800" fill="#4C3494">OVO</text></svg>',
+            'LINKAJA' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LinkAja"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" fill="#E31E24">LinkAja</text></svg>',
+            'ASTRAPAY' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AstraPay"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#0A3A85">AstraPay</text></svg>',
+            'GOPAY' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GoPay"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800" fill="#00AED6">gopay</text></svg>',
+            'QRIS' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QRIS"><g fill="#E31E24"><rect x="14" y="7" width="9" height="9" rx="1.5"/><rect x="16.5" y="9.5" width="4" height="4" fill="#fff"/><rect x="33" y="7" width="9" height="9" rx="1.5"/><rect x="35.5" y="9.5" width="4" height="4" fill="#fff"/><rect x="14" y="20" width="9" height="9" rx="1.5"/><rect x="16.5" y="22.5" width="4" height="4" fill="#fff"/><rect x="33" y="20" width="4" height="4"/><rect x="39" y="20" width="4" height="4"/><rect x="33" y="26" width="4" height="4"/><rect x="39" y="26" width="4" height="4"/></g></svg>',
+            'ALFAMART' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Alfamart"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" font-style="italic" fill="#E31E24">Alfamart</text></svg>',
+            'INDOMARET' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Indomaret"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#E31E24">Indomaret</text></svg>',
+        ];
+    }
+
+    /**
+     * File logo resmi (relatif ke folder public) per channel_code, EG-56.
+     * Bila salah satu file tidak ada, halaman bayar otomatis jatuh ke
+     * SVG inline dari channelLogos() agar tetap tampil.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public static function channelLogoFiles(): array
+    {
+        return [
+            'BCA_VIRTUAL_ACCOUNT' => ['images/payment/bca.svg'],
+            'BNI_VIRTUAL_ACCOUNT' => ['images/payment/bni.svg'],
+            'BRI_VIRTUAL_ACCOUNT' => ['images/payment/bri.svg'],
+            'MANDIRI_VIRTUAL_ACCOUNT' => ['images/payment/mandiri.svg'],
+            'PERMATA_VIRTUAL_ACCOUNT' => ['images/payment/permata.svg'],
+            'CIMB_VIRTUAL_ACCOUNT' => ['images/payment/cimb-niaga.svg'],
+            'CREDIT_CARD' => ['images/payment/visa.svg', 'images/payment/mastercard.svg'],
+            'SHOPEEPAY' => ['images/payment/shopeepay.svg'],
+            'DANA' => ['images/payment/dana.svg'],
+            'OVO' => ['images/payment/ovo.svg'],
+            'LINKAJA' => ['images/payment/linkaja.svg'],
+            'ASTRAPAY' => ['images/payment/astrapay.png'],
+            'GOPAY' => ['images/payment/gopay.svg'],
+            'QRIS' => ['images/payment/qris.svg'],
+            'ALFAMART' => ['images/payment/alfamart.svg'],
+            'INDOMARET' => ['images/payment/indomaret.svg'],
+        ];
     }
 
     /**
@@ -240,36 +308,174 @@ class XenditService
         $paymentCode = $this->actionValue($actions, 'PAYMENT_CODE');
         $label = self::CHANNELS[$channel]['label'] ?? $channel;
 
+        // QRIS: langkah scan + string QR (dipisah ke kanvas saat ditampilkan)
         if ($channel === 'QRIS') {
-            $steps = ['Scan QRIS dengan aplikasi bank atau e-wallet apa pun.'];
-        } elseif (str_contains($channel, '_VIRTUAL_ACCOUNT')) {
-            $bank = strtoupper(str_replace('_VIRTUAL_ACCOUNT', '', $channel));
-            $bankName = (string) ($data['channel_properties']['display_name'] ?? config('app.name'));
-
-            $steps = [
-                'Transfer sesuai nominal ke rekening berikut:',
-                $bank.' '.((string) $vaNumber).' a.n. '.$bankName,
-            ];
-        } elseif ($paymentCode) {
-            // Retail outlet (Alfamart / Indomaret): tampilkan kode pembayaran
-            $steps = [
-                'Buka aplikasi '.$label.' atau datang ke gerai terdekat.',
-                'Sebutkan kode pembayaran berikut kepada kasir:',
-                'Kode pembayaran: '.$paymentCode,
-                'Setelah bayar, klik "Saya Sudah Bayar".',
-            ];
-        } else {
-            $steps = array_values(array_filter([
-                $payUrl ? 'Selesaikan pembayaran lewat '.$label.': '.$payUrl : 'Buka aplikasi '.$label.' untuk menyelesaikan pembayaran.',
-                'Setelah pembayaran selesai, klik "Saya Sudah Bayar".',
+            return array_values(array_filter([
+                'Scan QRIS dengan aplikasi bank atau e-wallet apa pun.',
+                'Pilih menu Scan / Bayar QRIS di aplikasi tersebut, lalu arahkan kamera ke QR di halaman ini.',
+                'Pastikan nama merchant dan nominalnya sudah sesuai, lalu konfirmasi dengan PIN kamu.',
+                'Pembayaran terverifikasi otomatis. Kalau statusnya belum berubah, klik "Saya Sudah Bayar".',
+                $qrString,
             ]));
         }
 
-        if ($qrString) {
-            $steps[] = $qrString;
+        // Virtual Account: nomor rekening + langkah transfer per bank
+        if (str_contains($channel, '_VIRTUAL_ACCOUNT')) {
+            $bank = str_replace(' Virtual Account', '', $label);
+            $bankName = (string) ($data['channel_properties']['display_name'] ?? config('app.name'));
+
+            return array_values(array_filter([
+                'Buka m-banking '.$bank.' (menu Transfer → Virtual Account) atau ATM '.$bank.'.',
+                'Masukkan nomor Virtual Account berikut:',
+                $bank.' '.((string) $vaNumber).' a.n. '.$bankName,
+                'Masukkan nominal persis sesuai total pembayaran, lalu selesaikan transaksinya.',
+                'Simpan bukti transfer, lalu klik "Saya Sudah Bayar".',
+            ]));
         }
 
-        return $steps;
+        // Retail outlet (Alfamart / Indomaret): kode bayar ditunjukkan ke kasir
+        if ($paymentCode) {
+            return array_values(array_filter([
+                'Datang ke gerai '.$label.' terdekat atau buka aplikasi '.$label.'.',
+                'Sebutkan kode pembayaran berikut kepada kasir:',
+                'Kode pembayaran: '.$paymentCode,
+                'Bayar tunai sebesar total pembayaran, lalu simpan struknya sebagai bukti.',
+                'Setelah bayar, klik "Saya Sudah Bayar".',
+            ]));
+        }
+
+        // E-wallet: langkah di aplikasi + tautan pembayaran (tombol di halaman bayar)
+        return array_values(array_filter([
+            'Buka aplikasi '.$label.' di HP kamu.',
+            $payUrl
+                ? 'Tekan tombol "Buka Pembayaran '.$label.'" di halaman ini, lalu lanjutkan di aplikasi.'
+                : 'Pilih menu Bayar, lalu masukkan nominal persis sesuai total pembayaran.',
+            'Konfirmasi pembayaran dan masukkan PIN '.$label.' kamu.',
+            'Setelah selesai, klik "Saya Sudah Bayar".',
+        ]));
+    }
+
+    /**
+     * Menyiapkan tampilan halaman bayar (langkah, QR, tautan tombol) dari payload
+     * tersimpan. Langkah selalu dihitung ulang dari aksi gateway supaya baris
+     * pembayaran lama ikut memakai kalimat instruksi terbaru (EG-55).
+     *
+     * Catatan: e-wallet seperti ShopeePay di sandbox ikut mengirim aksi QR_STRING.
+     * QR hanya ditampilkan untuk kanal QRIS agar metode lain tidak terlihat
+     * seperti memakai QRIS.
+     *
+     * @return array{steps: array<int, string>, qr_string: string|null, payment_url: string|null}
+     */
+    public function paymentPresentation(Payment $payment): array
+    {
+        $channel = (string) $payment->payment_channel;
+        $payload = $payment->gateway_payload;
+
+        if (is_string($payload)) {
+            $payload = json_decode($payload, true);
+        }
+
+        $payload = is_array($payload) ? $payload : [];
+        $actions = is_array($payload['actions'] ?? null) ? $payload['actions'] : [];
+        $stored = is_array($payment->instructions ?? null) ? $payment->instructions : [];
+
+        $steps = $actions === [] ? $stored : $this->buildPaymentInstructions($channel, $actions, $payload);
+
+        $rawQr = $this->actionValue($actions, 'QR_STRING');
+        $qrString = $channel === 'QRIS' ? $rawQr : null;
+        $paymentUrl = $channel === 'QRIS'
+            ? null
+            : ($this->actionValue($actions, 'DEEPLINK_URL') ?? $this->actionValue($actions, 'WEB_URL'));
+
+        $bersih = [];
+
+        foreach ($steps as $step) {
+            if (! is_string($step)) {
+                continue;
+            }
+
+            // String QR jangan ikut jadi butir langkah (QRIS tampil lewat kanvas,
+            // kanal lain tidak menampilkan QR sama sekali).
+            if ($rawQr !== null && $step === $rawQr) {
+                continue;
+            }
+
+            // QR EMV pada baris pembayaran lama dipindah ke kanvas QR.
+            if ($channel === 'QRIS' && str_starts_with($step, '000201')) {
+                $qrString ??= $step;
+
+                continue;
+            }
+
+            $bersih[] = $step;
+        }
+
+        return [
+            'steps' => array_values($bersih),
+            'qr_string' => $qrString,
+            'payment_url' => $paymentUrl,
+        ];
+    }
+
+    /**
+     * Kartu kredit/debit dialihkan ke halaman checkout Xendit (Invoice API v2).
+     * Payments API v3 menolak CREDIT_CARD untuk negara ID karena wajib mengirim
+     * card_details (cakupan PCI-DSS), jadi form kartu tetap di-host Xendit.
+     */
+    public function createCardInvoice(Booking $booking): Payment
+    {
+        // 1. Idempotensi: pakai invoice kartu pending yang masih berlaku
+        $existingPayment = Payment::where('booking_id', $booking->id)
+            ->where('method', 'xendit_invoice')
+            ->where('payment_channel', 'CREDIT_CARD')
+            ->where('status', 'pending')
+            ->where('expires_at', '>', Carbon::now())
+            ->first();
+
+        if ($existingPayment) {
+            return $existingPayment;
+        }
+
+        // 2. Kalkulasi durasi & load relasi
+        $booking->loadMissing(['user', 'vehicle']);
+        $durationDays = $booking->start_at->diffInDays($booking->end_at) ?: 1;
+
+        $payload = [
+            'external_id' => $booking->code,
+            'amount' => $booking->total_amount,
+            'payer_email' => $booking->user->email,
+            'description' => "Sewa {$booking->vehicle->name} {$durationDays} hari",
+            'invoice_duration' => ((int) setting('booking.invoice_minutes', 60)) * 60,
+            'success_redirect_url' => route('booking.success', $booking->code),
+            'failure_redirect_url' => route('booking.failed', $booking->code),
+            'currency' => 'IDR',
+            'payment_methods' => ['CREDIT_CARD'],
+        ];
+
+        // 3. Request ke Xendit Invoice API v2
+        $secretKey = config('services.xendit.secret_key', env('XENDIT_SECRET_KEY'));
+
+        $response = Http::withBasicAuth($secretKey, '')
+            ->post('https://api.xendit.co/v2/invoices', $payload);
+
+        if (! $response->successful()) {
+            throw new Exception('Gagal membuat invoice kartu Xendit: '.$response->body());
+        }
+
+        $data = $response->json();
+
+        // 4. Simpan log Payment (status booking tetap di BookingService)
+        return Payment::create([
+            'booking_id' => $booking->id,
+            'method' => 'xendit_invoice',
+            'status' => 'pending',
+            'gateway_reference' => $data['id'],
+            'gateway_url' => $data['invoice_url'],
+            'gateway_payload' => $data,
+            'amount' => $booking->total_amount,
+            'payment_channel' => 'CREDIT_CARD',
+            'expires_at' => Carbon::parse($data['expiry_date'])->setTimezone(config('app.timezone')),
+        ]);
     }
 
     /**
@@ -331,6 +537,11 @@ class XenditService
             'success_return_url' => route('booking.success', $booking->code),
             'failure_return_url' => route('booking.failed', $booking->code),
         ];
+
+        // GoPay mewajibkan URL pembatalan di samping URL sukses/gagal
+        if ($channel === 'GOPAY') {
+            $returnUrls['cancel_return_url'] = route('booking.failed', $booking->code);
+        }
 
         // OVO mewajibkan nomor HP pembeli dalam format E.164 (+62..., tanpa nol depan)
         if ($channel === 'OVO') {
@@ -430,12 +641,25 @@ class XenditService
     }
 
     /**
-     * Menyelaraskan status payment request dengan API Xendit tanpa menunggu
-     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56): kalo webhook telat
-     * nyampe (atau gak nyampe di mode test), status ke-deteksi juga. Aman dipanggil
-     * berkali-kali — applyInvoiceStatus idempoten.
+     * Menyelaraskan status pembayaran dengan API Xendit tanpa menunggu
+     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56) dan halaman
+     * berhasil: kalo webhook telat nyampe (atau gak nyampe — tunnel mati),
+     * status ke-deteksi juga. Aman dipanggil berkali-kali — idempoten.
      */
     public function syncPaymentStatus(Booking $booking): void
+    {
+        // Kedua jalur dijalankan berurutan; tiap jalur cuma menyentuh payment
+        // miliknya sendiri dan hanya menerapkan status terminal. Jadi booking
+        // dengan payment request pending TAPI invoice lama yang sudah PAID
+        // (mis. bekas ganti-ganti mode) tetap kebaca.
+        $this->syncPaymentRequestStatus($booking);
+        $this->syncInvoiceStatus($booking);
+    }
+
+    /**
+     * Menyelaraskan payment request (mode payment_request) — jalur utama.
+     */
+    private function syncPaymentRequestStatus(Booking $booking): void
     {
         $payment = Payment::where('booking_id', $booking->id)
             ->where('method', 'xendit_payment_request')
@@ -447,7 +671,6 @@ class XenditService
             return;
         }
 
-        // Mode invoice (rollback) gak punya payment request — jangan disentuh
         if (config('services.xendit.mode', 'invoice') !== 'payment_request') {
             return;
         }
@@ -481,6 +704,45 @@ class XenditService
     }
 
     /**
+     * Sinkron payment invoice lama (mis. sisa pengujian mode invoice)
+     * lewat GET /v2/invoices/{id} — pelengkap webhook.
+     */
+    private function syncInvoiceStatus(Booking $booking): void
+    {
+        $payment = Payment::where('booking_id', $booking->id)
+            ->where('method', 'xendit_invoice')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if (! $payment || ! $payment->gateway_reference) {
+            return;
+        }
+
+        try {
+            $invoice = $this->getInvoice($payment->gateway_reference);
+        } catch (Exception $e) {
+            Log::channel('xendit')->warning('Gagal menyelaraskan status invoice.', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        $status = strtoupper((string) ($invoice['status'] ?? ''));
+
+        if (! in_array($status, ['PAID', 'SETTLED', 'EXPIRED'], true)) {
+            return;
+        }
+
+        $this->paymentService->applyInvoiceStatus($payment, [
+            'status' => $status,
+            'paid_at' => $invoice['paid_at'] ?? null,
+        ]);
+    }
+
+    /**
      * Mengambil detail payment request dari Payments API v3 berdasarkan ID.
      *
      * @return array<string, mixed>
@@ -498,6 +760,35 @@ class XenditService
         }
 
         return $response->json();
+    }
+
+    /**
+     * Simulasikan pembayaran sukses untuk payment request (test mode).
+     * Hanya untuk key xnd_devel — di production mengembalikan false.
+     */
+    public function simulatePaymentRequest(string $reference, int $amount): bool
+    {
+        if (! str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel')) {
+            return false;
+        }
+
+        $response = Http::withBasicAuth(config('services.xendit.secret_key'), '')
+            ->withHeaders(['api-version' => '2024-11-11'])
+            ->timeout(10)
+            ->post("https://api.xendit.co/v3/payment_requests/{$reference}/simulate", [
+                'amount' => $amount,
+            ]);
+
+        if (! $response->successful()) {
+            Log::channel('xendit')->warning('Simulasi pembayaran demo gagal.', [
+                'reference' => $reference,
+                'http' => $response->status(),
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
