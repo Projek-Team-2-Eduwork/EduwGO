@@ -74,6 +74,35 @@ class BookingPaymentController extends Controller
             };
         }
 
+        // Kartu kredit/debit tidak didukung Payments API v3 untuk negara ID
+        // (wajib card_details / PCI-DSS), jadi dialihkan ke checkout Xendit.
+        if ($channel === 'CREDIT_CARD') {
+            try {
+                $payment = $xenditService->createCardInvoice($booking);
+            } catch (\Exception $e) {
+                Log::channel('xendit')->error('Halaman bayar: gagal membuat invoice kartu.', [
+                    'booking' => $booking->code,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return view('booking.bayar', [
+                    'booking' => $booking,
+                    'payment' => null,
+                    'channel' => $channel,
+                    'channelLabel' => XenditService::CHANNELS[$channel]['label'] ?? $channel,
+                    'kategoriKanal' => XenditService::channelCatalog(),
+                    'steps' => [],
+                    'qrString' => null,
+                    'paymentUrl' => null,
+                    'error' => 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.',
+                ]);
+            }
+
+            if ($payment->gateway_url) {
+                return redirect()->away($payment->gateway_url);
+            }
+        }
+
         // Payment request dibuat lazily saat halaman dibuka (idempoten per channel)
         try {
             $payment = $xenditService->createPaymentRequest($booking, $channel);
@@ -87,49 +116,28 @@ class BookingPaymentController extends Controller
                 'booking' => $booking,
                 'payment' => null,
                 'channel' => $channel,
+                'channelLabel' => XenditService::CHANNELS[$channel]['label'] ?? $channel,
                 'kategoriKanal' => XenditService::channelCatalog(),
                 'steps' => [],
                 'qrString' => null,
+                'paymentUrl' => null,
                 'error' => 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.',
             ]);
         }
 
-        // Pisahkan string QR dari langkah instruksi. Sumber utama: aksi QR_STRING
-        // pada gateway_payload (mode test Xendit tidak memakai prefix EMV 000201);
-        // fallback lama dipertahankan untuk baris payment format lawas.
-        $steps = is_array($payment->instructions ?? null) ? $payment->instructions : [];
-        $payload = $payment->gateway_payload ?? null;
-
-        // Baris lama bisa tersimpan double-encoded (string JSON dalam kolom json)
-        if (is_string($payload)) {
-            $payload = json_decode($payload, true);
-        }
-
-        $payload = is_array($payload) ? $payload : [];
-        $qrString = null;
-
-        foreach (is_array($payload['actions'] ?? null) ? $payload['actions'] : [] as $action) {
-            if (($action['descriptor'] ?? null) === 'QR_STRING' && ! empty($action['value'])) {
-                $qrString = (string) $action['value'];
-
-                break;
-            }
-        }
-
-        foreach ($steps as $index => $step) {
-            if (is_string($step) && ($step === $qrString || str_starts_with($step, '000201'))) {
-                $qrString ??= $step;
-                unset($steps[$index]);
-            }
-        }
+        // Susun tampilan (langkah, QR, tautan tombol) dari payload gateway.
+        // Instruksi dihitung ulang agar baris pembayaran lama ikut spesifik & rapi.
+        $tampilan = $xenditService->paymentPresentation($payment);
 
         return view('booking.bayar', [
             'booking' => $booking,
             'payment' => $payment,
             'channel' => $channel,
+            'channelLabel' => XenditService::CHANNELS[$channel]['label'] ?? $channel,
             'kategoriKanal' => XenditService::channelCatalog(),
-            'steps' => array_values($steps),
-            'qrString' => $qrString,
+            'steps' => $tampilan['steps'],
+            'qrString' => $tampilan['qr_string'],
+            'paymentUrl' => $tampilan['payment_url'],
             'error' => null,
         ]);
     }
@@ -172,7 +180,7 @@ class BookingPaymentController extends Controller
         return view('booking.failed', ['booking' => $booking]);
     }
 
-        /**
+    /**
      * Tombol demo (test mode only): menandai pembayaran berhasil lewat
      * simulate API Xendit — biar demo gak perlu curl manual.
      */

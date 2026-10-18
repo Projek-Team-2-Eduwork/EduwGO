@@ -31,20 +31,27 @@
             <div class="space-y-5">
                 @foreach ($kategoriKanal as $kategori)
                     <div>
-                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $kategori['name'] }}</p>
+                        <div class="mb-2 flex items-center gap-3">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $kategori['name'] }}</p>
+                            <span class="flex-1 border-t border-[var(--border)]"></span>
+                        </div>
 
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             @foreach ($kategori['channels'] as $kanal)
                                 <a href="{{ route('booking.bayar', ['code' => $booking->code, 'metode' => $kanal['code']]) }}"
                                    @class([
-                                       'flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition',
-                                       'border-[var(--orange-500)] bg-[var(--orange-500)]/10 ring-2 ring-[var(--orange-500)]' => $channel === $kanal['code'],
-                                       'border-[var(--border)] hover:border-[var(--navy-900)]' => $channel !== $kanal['code'],
-                                   ])>
-                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white" style="background-color: {{ $channel === $kanal['code'] ? 'var(--orange-500)' : 'var(--navy-900)' }};">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">{!! $kanal['icon'] !!}</svg>
+                                        'flex flex-col items-center gap-2 rounded-xl border px-3 py-3 text-center text-sm font-medium transition',
+                                        'border-[var(--orange-500)] bg-[var(--orange-500)]/10 ring-2 ring-[var(--orange-500)]' => $channel === $kanal['code'],
+                                        'border-[var(--border)] hover:border-[var(--navy-900)]' => $channel !== $kanal['code'],
+                                    ])>
+                                    <span class="flex h-9 w-24 items-center justify-center gap-1 rounded-lg border border-[var(--border)] bg-white px-2 py-1">
+                                        @forelse ($kanal['logo'] as $logo)
+                                            <img src="{{ $logo }}" alt="" class="h-full min-w-0 flex-1 object-contain" loading="lazy">
+                                        @empty
+                                            {!! $kanal['icon'] !!}
+                                        @endforelse
                                     </span>
-                                    <span>{{ $kanal['label'] }}</span>
+                                    <span class="leading-tight">{{ $kanal['label'] }}</span>
                                 </a>
                             @endforeach
                         </div>
@@ -77,13 +84,26 @@
         @else
             {{-- Instruksi pembayaran --}}
             <div class="card-surface p-6" x-data="bayarPembayaran({{ json_encode(route('booking.status', $booking->code)) }}, {{ json_encode(route('booking.show', $booking->code)) }})">
-                <h2 class="mb-4 font-semibold text-[var(--navy-900)]">Instruksi Pembayaran</h2>
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="font-semibold text-[var(--navy-900)]">Instruksi Pembayaran</h2>
+                    @if (($channelLabel ?? null) !== null)
+                        <span class="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-semibold text-[var(--navy-900)]">{{ $channelLabel }}</span>
+                    @endif
+                </div>
 
                 @if ($qrString)
                     <div class="mb-4 rounded-xl bg-white p-4 text-center">
                         <canvas id="qr-canvas" width="224" height="224" class="mx-auto h-56 w-56"></canvas>
-                        <p class="mt-2 break-all text-xs text-gray-500">{{ $qrString }}</p>
+                        <p class="mt-2 text-xs text-gray-500">Kalau QR-nya tidak muncul, pakai kode cadangan ini:</p>
+                        <p class="break-all text-xs text-gray-500">{{ $qrString }}</p>
                     </div>
+                @endif
+
+                @if ($paymentUrl)
+                    <a href="{{ $paymentUrl }}" target="_blank" rel="noopener"
+                       class="btn-secondary-edu mb-4 flex w-full items-center justify-center py-3 text-sm">
+                        Buka Pembayaran {{ $channelLabel ?? '' }}
+                    </a>
                 @endif
 
                 <ol class="mb-6 space-y-2 text-sm">
@@ -108,7 +128,7 @@
                        class="block w-full py-2 text-center text-sm font-medium text-[var(--navy-900)] underline">
                         Kembali ke Detail Pesanan
                     </a>
-                     @if (str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
+                    @if (str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
                         <form method="POST" action="{{ route('booking.demo-bayar', $booking->code) }}">
                             @csrf
                             <button type="submit"
@@ -122,15 +142,19 @@
         @endif
     </div>
 
+@push('scripts')
     @if ($qrString)
         <script type="module">
-            import QRCode from '{{ asset('js/qrcode.esm.js') }}';
+            const canvas = document.getElementById('qr-canvas');
 
-            QRCode.toCanvas(document.getElementById('qr-canvas'), @json($qrString), { width: 224, margin: 1 });
+            if (canvas) {
+                import('{{ asset('js/qrcode.esm.js') }}')
+                    .then(({ default: QRCode }) => QRCode.toCanvas(canvas, @json($qrString), { width: 224, margin: 1 }))
+                    .catch((error) => console.error('Gagal memuat QRIS', error));
+            }
         </script>
     @endif
 
-    @push('scripts')
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('hitungMundur', (expiryIso, failUrl) => ({
@@ -171,64 +195,42 @@
             Alpine.data('bayarPembayaran', (statusUrl, successUrl) => ({
                 checking: false,
                 message: '',
-                busy: false,
                 pollTimer: null,
-                fastUntil: 0,
-                lastCheck: 0,
 
-                init() {
-                    // Cek diam-diam terus-menerus: ngebut tiap 1,5 detik sesudah
-                    // klik "Saya Sudah Bayar" (biar langsung pindah begitu bayar
-                    // masuk), pelan ~8 detik kalau cuma ditinggal.
-                    this.sudahBayar(true);
-                    this.pollTimer = setInterval(() => this.sudahBayar(true), 1500);
-                },
-
-                async sudahBayar(silent = false) {
-                    if (this.busy) {
+                async sudahBayar() {
+                    if (this.checking) {
                         return;
                     }
 
-                    const now = Date.now();
-                    const pollingCepat = now < this.fastUntil;
+                    this.checking = true;
 
-                    // Mode diam-diam di luar masa polling cepat: cukup cek tiap 8 detik.
-                    if (silent && !pollingCepat && now - this.lastCheck < 8000) {
-                        return;
-                    }
-
-                    this.busy = true;
-                    this.lastCheck = now;
-
-                    if (!silent) {
-                        this.checking = true;
-                        this.message = '';
-                        this.fastUntil = now + 120000; // polling cepat 2 menit setelah klik
-                    }
-
+                    // 1. Ambil status dulu (bo bisa lambat, biar nge-triggger polling)
+                    let dataPaid = false;
                     try {
                         const res = await fetch(statusUrl, { headers: { Accept: 'application/json' } });
                         const data = await res.json();
-
-                        if (data.paid) {
-                            window.location.href = successUrl;
-                            return;
-                        }
-
-                        if (!silent) {
-                            this.message = 'Belum terdeteksi. Tenang — halaman tetap memantau, begitu pembayaran masuk halaman langsung pindah sendiri.';
-                        }
+                        if (data.paid) dataPaid = true;
                     } catch (e) {
-                        if (!silent) {
-                            this.message = 'Gagal memeriksa status pembayaran. Silakan coba lagi.';
-                        }
+                        // gagal koneksi — biarin aja, tetap lanjut proses bawah
                     }
 
-                    this.busy = false;
+                    // 2. Kalau udah dibayar → tampil pop up sukses + redirect
+                    if (dataPaid) {
+                        if (confirm('Pembayaran Berhasil ✓\n\nHalaman akan dialihkan ke detail pesanan lunas.')) {
+                            window.location.href = successUrl;
+                        }
+                        return;
+                    }
+
+                    // 3. Kalau belum dibayar → pesan + mulai polling 5 detik
+                    this.message = 'Pembayaran sedang diverifikasi (max 5 detik). Silakan tunggu notifikasi.';
+                    if (!this.pollTimer) {
+                        this.pollTimer = setInterval(() => this.sudahBayar(), 5000);
+                    }
                     this.checking = false;
                 }
-            }));
+            }))
         });
     </script>
-    @endpush
+@endpush
 </x-app-layout>
