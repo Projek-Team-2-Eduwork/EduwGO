@@ -86,7 +86,7 @@
                 </nav>
 
                 <div class="flex flex-1 items-center justify-center px-4 pb-10 sm:px-8">
-                    <div class="w-full max-w-md">
+                    <div class="anim-masuk w-full max-w-md">
                         {{ $slot }}
                     </div>
                 </div>

@@ -18,23 +18,48 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @include('layouts.partials.head', ['title' => $title ?? 'Admin'])
+
+        {{-- Anti-flash: pasang mode "rail" sidebar sebelum render (khusus desktop) --}}
+        <script>
+            (function () {
+                try {
+                    if (localStorage.getItem('admin-rail') === '1') {
+                        document.documentElement.setAttribute('data-admin-rail', '');
+                    }
+                } catch (e) {}
+            })();
+        </script>
     </head>
     <body class="font-sans antialiased">
-        <div x-data="{ drawer: false }" @keydown.escape.window="drawer = false" class="min-h-screen lg:flex">
+        <div
+            x-data="{
+                drawer: false,
+                rail: document.documentElement.hasAttribute('data-admin-rail'),
+                toggleRail() {
+                    this.rail = ! this.rail;
+                    document.documentElement.toggleAttribute('data-admin-rail', this.rail);
+                    try { localStorage.setItem('admin-rail', this.rail ? '1' : '0'); } catch (e) {}
+                },
+            }"
+            @keydown.escape.window="drawer = false"
+            class="min-h-screen lg:flex"
+        >
             {{-- Backdrop drawer (mobile) --}}
             <div x-show="drawer" x-transition.opacity @click="drawer = false" style="display: none;" class="fixed inset-0 z-40 bg-[var(--navy-900)] opacity-60 lg:hidden" aria-hidden="true"></div>
 
-            {{-- Sidebar: statis di desktop, drawer di mobile --}}
+            {{-- Sidebar: rail di desktop, drawer di mobile --}}
             <aside
                 id="admin-sidebar"
-                class="fixed inset-y-0 start-0 z-50 flex w-64 -translate-x-full flex-col border-e border-[var(--border)] transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 rtl:translate-x-full lg:rtl:translate-x-0"
+                class="fixed inset-y-0 start-0 z-50 flex w-64 -translate-x-full flex-col border-e border-[var(--border)] transition-[width,transform] duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 rtl:translate-x-full lg:rtl:translate-x-0"
                 :class="drawer ? '!translate-x-0' : ''"
                 style="background-color: var(--surface);"
                 aria-label="Menu admin"
             >
-                <div class="flex h-16 shrink-0 items-center justify-between px-5">
-                    <a href="{{ route('admin.dashboard') }}" aria-label="{{ setting('brand.name', 'EduwGo') }}">
-                        <x-brand-logo class="h-8 w-auto" />
+                <div class="admin-sidebar-head flex h-16 shrink-0 items-center justify-between px-5">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5" aria-label="{{ setting('brand.name', 'EduwGo') }}">
+                        {{-- Monogram: hanya tampil saat sidebar mode rail --}}
+                        <span class="admin-brand-rail h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-extrabold text-[#0A0F1D]" style="background-image: var(--accent-gradient);" aria-hidden="true">{{ mb_strtoupper(mb_substr(setting('brand.name', 'EduwGo'), 0, 1)) }}</span>
+                        <x-brand-logo class="admin-brand-text h-8 w-auto" />
                     </a>
 
                     <button type="button" @click="drawer = false" class="p-2 text-[var(--ink-muted)] hover:text-[var(--navy-900)] lg:hidden" aria-label="Tutup menu">
@@ -46,9 +71,11 @@
                     @foreach ($menu as $item)
                         <a href="{{ $item['href'] }}"
                            @if ($item['active']) aria-current="page" @endif
-                           class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition {{ $item['active'] ? 'bg-[var(--navy-900)] text-[var(--surface)]' : 'text-[var(--ink-muted)] hover:bg-[var(--bg)] hover:text-[var(--navy-900)]' }}">
+                           data-label="{{ $item['label'] }}"
+                           :title="rail ? $el.dataset.label : null"
+                           class="admin-nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $item['active'] ? 'bg-[var(--navy-900)] text-[var(--surface)]' : 'text-[var(--ink-muted)] hover:bg-[var(--bg)] hover:text-[var(--navy-900)]' }}">
                             <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $item['icon'] }}" /></svg>
-                            {{ $item['label'] }}
+                            <span class="admin-nav-label truncate">{{ $item['label'] }}</span>
                         </a>
                     @endforeach
                 </nav>
@@ -56,9 +83,9 @@
                 <div class="border-t border-[var(--border)] px-3 py-4">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--navy-900)]">
+                        <button type="submit" data-label="Log Out" :title="rail ? $el.dataset.label : null" class="admin-logout flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--navy-900)]">
                             <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9m4 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7" /></svg>
-                            Log Out
+                            <span class="admin-nav-label truncate">Log Out</span>
                         </button>
                     </form>
                 </div>
@@ -67,8 +94,25 @@
             <div class="flex min-w-0 flex-1 flex-col">
                 {{-- Navbar atas --}}
                 <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-[var(--border)] px-4 sm:px-6" style="background-color: var(--surface);">
-                    <div class="flex min-w-0 items-center gap-3">
-                        <button type="button" @click="drawer = true" class="p-2 text-[var(--ink-muted)] hover:bg-[var(--bg)] hover:text-[var(--navy-900)] lg:hidden" :aria-expanded="drawer.toString()" aria-controls="admin-sidebar" aria-label="Buka menu">
+                    <div class="flex min-w-0 items-center gap-2 sm:gap-3">
+                        {{-- Tombol buka/tutup sidebar (desktop) --}}
+                        <button type="button" @click="toggleRail()"
+                                :aria-expanded="(! rail).toString()"
+                                aria-controls="admin-sidebar"
+                                aria-label="Buka atau tutup menu samping"
+                                class="hidden shrink-0 rounded-lg p-2 text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--navy-900)] lg:inline-flex">
+                            <svg x-show="! rail" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="4" width="18" height="16" rx="2" />
+                                <path d="M9 4v16M15 9.5 12.5 12l2.5 2.5" />
+                            </svg>
+                            <svg x-show="rail" style="display: none;" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="4" width="18" height="16" rx="2" />
+                                <path d="M9 4v16M12.5 9.5 15 12l-2.5 2.5" />
+                            </svg>
+                        </button>
+
+                        {{-- Tombol drawer (mobile) --}}
+                        <button type="button" @click="drawer = true" class="rounded-lg p-2 text-[var(--ink-muted)] hover:bg-[var(--bg)] hover:text-[var(--navy-900)] lg:hidden" :aria-expanded="drawer.toString()" aria-controls="admin-sidebar" aria-label="Buka menu">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
 
