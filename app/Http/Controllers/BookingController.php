@@ -48,12 +48,17 @@ class BookingController extends Controller
     public function show(Request $request, $code)
     {
         $booking = Booking::where('code', $code)
-            ->with(['vehicle.type', 'histories.changer', 'user'])
+            ->with(['vehicle.type', 'histories.changer', 'user', 'latestPayment'])
             ->firstOrFail();
 
         Gate::authorize('view', $booking);
 
-        return view('booking.show', compact('booking'));
+        // Panel status & ringkasan pembayaran butuh transaksi terakhir,
+        // sedangkan timeline butuh riwayat urut dari paling lama.
+        $payment = $booking->latestPayment;
+        $riwayat = $booking->histories->sortBy('created_at')->values();
+
+        return view('booking.show', compact('booking', 'payment', 'riwayat'));
     }
 
     /**
