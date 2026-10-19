@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Notifications\VerifyEmailCode;
 use App\Services\EmailVerificationCodeService;
 use Database\Factories\UserFactory;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -75,17 +76,17 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isSuperadmin(): bool
     {
-        return $this->hasRole('superadmin');
+        return $this->hasRole(RoleSeeder::SUPERADMIN);
     }
 
     public function isBranchAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasRole(RoleSeeder::ADMIN);
     }
 
     public function isStaff(): bool
     {
-        return $this->hasAnyRole(['superadmin', 'admin']);
+        return $this->hasAnyRole(RoleSeeder::STAFF);
     }
 
     public function effectiveBranchId(?int $requested = null): ?int

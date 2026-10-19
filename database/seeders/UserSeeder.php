@@ -14,11 +14,11 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->account('Superadmin EduwGo', 'superadmin@eduwgo.test', '081200000010', 'superadmin');
-        $this->account('Admin EduwGo', 'admin@eduwgo.test', '081200000001', 'admin', null, 'cabang-malang-kota');
-        $this->account('Admin Cabang Batu', 'admin.batu@eduwgo.test', '081200000011', 'admin', null, 'cabang-batu');
-        $this->account('Admin Cabang Surabaya', 'admin.surabaya@eduwgo.test', '081200000012', 'admin', null, 'cabang-surabaya');
-        $this->account('Test User', 'test@example.com', '081200000002', 'user');
+        $this->account('Superadmin EduwGo', 'superadmin@eduwgo.test', '081200000010', RoleSeeder::SUPERADMIN);
+        $this->account('Admin EduwGo', 'admin@eduwgo.test', '081200000001', RoleSeeder::ADMIN, null, 'cabang-malang-kota');
+        $this->account('Admin Cabang Batu', 'admin.batu@eduwgo.test', '081200000011', RoleSeeder::ADMIN, null, 'cabang-batu');
+        $this->account('Admin Cabang Surabaya', 'admin.surabaya@eduwgo.test', '081200000012', RoleSeeder::ADMIN, null, 'cabang-surabaya');
+        $this->account('Test User', 'test@example.com', '081200000002', RoleSeeder::USER);
 
         $renters = [
             ['Rani Putri Maharani', 'rani.putri@example.com', '081234560001', 'rani.putri'],
@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($renters as [$name, $email, $phone, $instagram]) {
-            $this->account($name, $email, $phone, 'user', ['instagram' => $instagram]);
+            $this->account($name, $email, $phone, RoleSeeder::USER, ['instagram' => $instagram]);
         }
     }
 
