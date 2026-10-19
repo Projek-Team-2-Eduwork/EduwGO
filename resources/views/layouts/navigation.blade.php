@@ -10,9 +10,14 @@
     ];
 @endphp
 
-<nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-[var(--border)]" style="background-color: var(--surface);" aria-label="Navigasi utama">
-    <div class="mx-auto max-w-[1320px] px-4 sm:px-6 xl:px-0">
-        <div class="flex h-16 items-center justify-between gap-4 lg:h-[100px]">
+<nav x-data="{ open: false, shrunk: false }"
+     x-init="shrunk = window.scrollY > 32"
+     x-on:scroll.window.passive="shrunk = window.scrollY > 32"
+     :class="{ 'is-shrunk': shrunk }"
+     class="navbar-edu sticky top-0 z-40"
+     aria-label="Navigasi utama">
+    <div class="navbar-edu-inner mx-auto max-w-[1320px] px-4 sm:px-6 xl:px-0">
+        <div class="navbar-edu-bar flex items-center justify-between gap-4">
             <div class="flex items-center gap-12">
                 <a href="{{ url('/') }}" class="shrink-0" aria-label="{{ setting('brand.name', 'EduwGo') }}">
                     <x-brand-logo class="block h-9 w-auto" />
@@ -88,7 +93,9 @@
     </div>
 
     <!-- Menu mobile -->
-    <div id="mobile-menu" x-show="open" x-transition style="display: none;" class="border-t border-[var(--border)] lg:hidden">
+    <div id="mobile-menu" x-show="open" x-transition style="display: none;"
+         class="navbar-edu-panel lg:hidden"
+         :class="shrunk ? 'mx-4 mb-3 rounded-2xl border border-[var(--border)] shadow-lg' : 'border-t border-[var(--border)]'">
         <div class="space-y-1 pb-3 pt-2">
             @foreach ($menu as $item)
                 <x-responsive-nav-link :href="$item['href']" :active="$item['active']">{{ $item['label'] }}</x-responsive-nav-link>

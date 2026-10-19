@@ -244,4 +244,28 @@ class BookingDaftarPesananTest extends TestCase
         $response->assertSee('Rp 0');
         $response->assertDontSee('Belum ada pesanan');
     }
+
+    public function test_14_daftar_pesanan_tetap_tampil_saat_kendaraan_sudah_dihapus()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $type = VehicleType::create(['name' => 'Type 5', 'slug' => 'type-5']);
+        $vehicle = Vehicle::create(['branch_id' => $this->defaultBranch()->id, 'vehicle_type_id' => $type->id, 'name' => 'Motor H', 'slug' => 'motor-h', 'brand' => 'Honda', 'plate_number' => 'H1', 'price_per_day' => 100000]);
+
+        $booking = Booking::factory()->create([
+            'user_id' => $user->id,
+            'vehicle_id' => $vehicle->id,
+            'status' => BookingStatus::Paid,
+        ]);
+
+        // Admin menghapus unit yang punya riwayat pesanan → unit ter-soft delete.
+        $vehicle->delete();
+
+        $response = $this->get(route('booking.index'));
+
+        $response->assertOk();
+        $response->assertSee($booking->code);
+        $response->assertSee('Motor H');
+    }
 }

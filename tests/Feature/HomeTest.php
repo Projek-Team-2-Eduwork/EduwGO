@@ -20,7 +20,7 @@ class HomeTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Rental Motor Cepat &amp; Aman, Mulai Rp75.000/hari', false)
+            ->assertSeeInOrder(['Rental Motor Cepat &amp; Aman, Mulai', 'Rp75.000', '/hari'], false)
             ->assertSee('Mulai Perjalanan Anda dalam 3 Langkah')
             ->assertSee('Syarat &amp; Ketentuan Rental Motor', false)
             ->assertSee('minimal 1x24 jam', false)

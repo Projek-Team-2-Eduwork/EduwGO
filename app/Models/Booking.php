@@ -27,9 +27,15 @@ class Booking extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Kendaraan yang disewa.
+     *
+     * withTrashed(): unit yang dihapus admin (soft delete) tetap harus muncul di
+     * riwayat pesanan, kalau tidak $booking->vehicle jadi null dan halaman pesanan error.
+     */
     public function vehicle()
     {
-        return $this->belongsTo(Vehicle::class); // Pastikan Model Vehicle ada (EG-4 berasumsi fondasi public udah siap)
+        return $this->belongsTo(Vehicle::class)->withTrashed();
     }
 
     public function histories()
