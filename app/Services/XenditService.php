@@ -124,13 +124,7 @@ class XenditService
         $grouped = [];
 
         foreach (self::CHANNELS as $code => $meta) {
-            $urls = [];
-
-            foreach ($files[$code] ?? [] as $file) {
-                if (is_file(public_path($file))) {
-                    $urls[] = asset($file);
-                }
-            }
+            $urls = self::channelLogoUrls($code);
 
             $grouped[$meta['category']][] = [
                 'code' => $code,
@@ -213,6 +207,46 @@ class XenditService
             'ALFAMART' => ['images/payment/alfamart.svg'],
             'INDOMARET' => ['images/payment/indomaret.svg'],
         ];
+    }
+
+    /**
+     * URL logo brand sebuah channel_code yang filenya benar-benar ada
+     * (dipakai chip logo di halaman bayar & detail pesanan). Kosong bila
+     * channel-nya tidak dikenal atau file logo belum tersedia.
+     *
+     * @return array<int, string>
+     */
+    public static function channelLogoUrls(?string $channel): array
+    {
+        $urls = [];
+
+        foreach (self::channelLogoFiles()[$channel] ?? [] as $file) {
+            if (is_file(public_path($file))) {
+                $urls[] = asset($file);
+            }
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Label tampilan untuk satu baris Payment di halaman detail pesanan:
+     * pakai nama channel bila ada (mis. "BCA Virtual Account"), selain itu
+     * jatuh balik ke label metode pembayarannya (Tunai, Xendit Invoice, dsb).
+     */
+    public static function paymentLabel(?string $channel, ?string $method): string
+    {
+        if ($channel !== null && isset(self::CHANNELS[$channel])) {
+            return self::CHANNELS[$channel]['label'];
+        }
+
+        return match ($method) {
+            'cash' => 'Tunai (bayar di kasir)',
+            'xendit_invoice' => 'Xendit Invoice',
+            'xendit_payment_request' => 'Xendit Payment Request',
+            null, '' => 'Metode belum dipilih',
+            default => ucwords(str_replace('_', ' ', $method)),
+        };
     }
 
     /**

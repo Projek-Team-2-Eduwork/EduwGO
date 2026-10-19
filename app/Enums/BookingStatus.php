@@ -23,6 +23,37 @@ enum BookingStatus: string
         };
     }
 
+    /**
+     * Judul panjang untuk panel status di halaman detail pesanan
+     * (lebih deskriptif daripada label badge yang dipakai di daftar).
+     */
+    public function headline(): string
+    {
+        return match ($this) {
+            self::Pending => 'Menunggu Pembayaran',
+            self::Paid => 'Pembayaran Lunas',
+            self::Rented => 'Sedang Disewa',
+            self::Returned => 'Sewa Selesai',
+            self::Cancelled => 'Pesanan Dibatalkan',
+            self::Expired => 'Pesanan Kedaluwarsa',
+        };
+    }
+
+    /**
+     * Penjelasan singkat arti status + langkah berikutnya bagi penyewa.
+     */
+    public function description(): string
+    {
+        return match ($this) {
+            self::Pending => 'Pesanan sudah dibuat dan unit belum terkunci untuk Anda sampai pembayaran diterima.',
+            self::Paid => 'Pembayaran sudah kami terima. Unit disiapkan sesuai jadwal sewa di bawah.',
+            self::Rented => 'Unit sedang digunakan. Kembalikan sebelum waktu selesai sewa agar tidak terlambat.',
+            self::Returned => 'Unit sudah dikembalikan dan pesanan ini selesai. Terima kasih sudah menyewa di EduwGo.',
+            self::Cancelled => 'Pesanan ini dibatalkan, jadi unit kembali tersedia untuk penyewa lain.',
+            self::Expired => 'Batas waktu pembayaran terlewat sehingga pesanan ini dibatalkan otomatis oleh sistem.',
+        };
+    }
+
     public function color(): string
     {
         return match ($this) {
