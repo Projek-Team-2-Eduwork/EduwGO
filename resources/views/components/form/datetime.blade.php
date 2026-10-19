@@ -48,8 +48,47 @@
             <script>
                 // Tanpa CDN (offline) input native datetime-local tetap berfungsi.
                 if (window.flatpickr) {
+                    // Kalender dipasang di <body> (static: false). Scroll tidak bubbling ke
+                    // window, jadi posisinya kita ikuti manual supaya tetap menempel ke input.
+                    const pickerAktif = [];
+                    // Geser kalender seperlunya supaya selalu utuh di dalam layar (tidak kepotong
+                    // atas/bawah) — mis. saat ruang di atas & bawah input sama-sama sempit.
+                    const rapikanDiLayar = (fp) => {
+                        if (! fp.isOpen) return;
+                        const cal = fp.calendarContainer;
+                        const kotak = cal.getBoundingClientRect();
+                        const tepi = 8;
+                        let geser = 0;
+                        if (kotak.top < tepi) geser = tepi - kotak.top;
+                        else if (kotak.bottom > window.innerHeight - tepi) geser = (window.innerHeight - tepi) - kotak.bottom;
+                        if (geser) cal.style.top = `${cal.offsetTop + geser}px`;
+                    };
+                    const ikutiScroll = () => pickerAktif.forEach((fp) => {
+                        if (fp.isOpen && typeof fp._positionCalendar === 'function') {
+                            fp._positionCalendar();
+                            rapikanDiLayar(fp);
+                        }
+                    });
+                    window.addEventListener('scroll', ikutiScroll, true);
+                    window.addEventListener('resize', ikutiScroll);
+
                     document.querySelectorAll('input[data-picker]').forEach((input) => {
                         const label = document.querySelector(`label[for="${input.id}"]`);
+
+                        // Batas bawah = jam min dari server (kalau ada) atau sekarang.
+                        const batasBawah = () => {
+                            const minAttr = input.getAttribute('min');
+                            const minMs = minAttr ? new Date(minAttr).getTime() : 0;
+                            return new Date(Math.max(Date.now(), Number.isNaN(minMs) ? 0 : minMs));
+                        };
+                        // Slot 15 menit berikutnya (sesuai minuteIncrement).
+                        const slotBerikutnya = (dari) => {
+                            const d = new Date(dari);
+                            d.setSeconds(0, 0);
+                            d.setMinutes(d.getMinutes() + (15 - (d.getMinutes() % 15)));
+                            return d;
+                        };
+                        const jamAwal = slotBerikutnya(batasBawah());
 
                         flatpickr(input, {
                             locale: 'id',
@@ -61,8 +100,24 @@
                             altFormat: 'd M Y, H:i',
                             altInputClass: input.className,
                             minDate: input.min || null,
-                            static: true,
-                            disableMobile: false,
+                            // Jam default saat tanggal dipilih: slot berikutnya, bukan jam yang sudah lewat.
+                            defaultHour: jamAwal.getHours(),
+                            defaultMinute: jamAwal.getMinutes(),
+                            // Nempel ke <body> supaya kalender tidak terpotong kotak modal.
+                            static: false,
+                            // Di HP juga pakai kalender ini (picker bawaan HP butuh tombol "Selesai").
+                            disableMobile: true,
+                            // Nilai yang diketik ikut tersimpan saat pindah fokus, tanpa Enter.
+                            allowInput: true,
+                            onOpen(selectedDates, value, fp) {
+                                if (! pickerAktif.includes(fp)) pickerAktif.push(fp);
+                                // Setelah layout siap, pastikan kalender kelihatan utuh di layar.
+                                setTimeout(() => rapikanDiLayar(fp), 0);
+                            },
+                            onClose(selectedDates, value, fp) {
+                                const idx = pickerAktif.indexOf(fp);
+                                if (idx > -1) pickerAktif.splice(idx, 1);
+                            },
                             onReady(selectedDates, value, fp) {
                                 fp.altInput.placeholder = 'Pilih tanggal & jam';
                                 fp.altInput.setAttribute('aria-label', label ? label.textContent.trim() : 'Tanggal & jam');
@@ -84,6 +139,21 @@
                                     fp.hourElement.addEventListener(evt, () => fp.minuteElement.focus());
                                     fp.minuteElement.addEventListener(evt, () => setTimeout(() => fp.close(), 0));
                                 });
+                            },
+                            onValueUpdate(selectedDates, value, fp) {
+                                const pilih = selectedDates && selectedDates[0];
+
+                                // Nilai di masa lalu (mis. pilih "hari ini" tapi jamnya keburu lewat)
+                                // dimajukan ke slot berikutnya supaya API ketersediaan tidak menolak (422).
+                                if (pilih && pilih.getTime() < batasBawah().getTime()) {
+                                    fp.setDate(slotBerikutnya(batasBawah()), true);
+                                    return;
+                                }
+
+                                // Kirim "input" dulu baru "change": flatpickr sendiri mengirim
+                                // "change" lebih dulu, sehingga @change (fetch durasi) membaca nilai lama.
+                                fp.input.dispatchEvent(new Event('input', { bubbles: true }));
+                                fp.input.dispatchEvent(new Event('change', { bubbles: true }));
                             },
                         });
                     });

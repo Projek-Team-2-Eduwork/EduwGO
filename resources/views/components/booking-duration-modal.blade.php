@@ -95,6 +95,7 @@
             isLoading: false,
             error: null,
             pricePerDay: pricePerDay,
+            permintaanTerakhir: null,
 
             openModal() {
                 this.$dispatch('open-modal', `booking-modal-${vehicleId}`);
@@ -105,6 +106,10 @@
 
             async fetchDurations() {
                 if (!this.startAt) return;
+                // Nilai yang sama persis tidak perlu request ulang (flatpickr bisa mengirim
+                // event change lebih dari sekali untuk satu pilihan).
+                if (this.startAt === this.permintaanTerakhir) return;
+                this.permintaanTerakhir = this.startAt;
                 this.isLoading = true;
                 this.error = null;
                 this.durations = null;
@@ -120,6 +125,8 @@
                     }
                 } catch (err) {
                     this.error = err.message;
+                    // Biar pemilihan yang sama bisa dicoba ulang setelah gagal.
+                    this.permintaanTerakhir = null;
                 } finally {
                     this.isLoading = false;
                 }
