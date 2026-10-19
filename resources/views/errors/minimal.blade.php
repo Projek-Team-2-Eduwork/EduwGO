@@ -34,7 +34,7 @@
                 </div>
             </header>
 
-            <main class="flex-1">
+            <main class="flex-1 anim-masuk">
                 @include('errors.partials.content', ['code' => $code, 'heading' => $heading, 'message' => $message])
             </main>
 

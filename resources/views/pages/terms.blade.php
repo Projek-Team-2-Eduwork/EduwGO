@@ -2,15 +2,16 @@
     <x-slot:title>Syarat &amp; Ketentuan</x-slot:title>
     @section('meta_description', 'Syarat dan ketentuan penyewaan motor di '.setting('brand.name', 'EduwGo').'.')
 
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         <h1 class="font-serif text-4xl sm:text-5xl">Syarat &amp; Ketentuan</h1>
         <p class="mt-3 text-sm sm:text-base">Harap baca ketentuan berikut sebelum menyewa motor.</p>
 
-        <ol class="card-surface mt-8 space-y-4 p-6 sm:p-8">
+        {{-- Satu poin satu kartu, senada dengan seksi S&K di beranda --}}
+        <ol class="mt-8 grid gap-4 sm:grid-cols-2">
             @foreach ($points as $point)
-                <li class="flex gap-4">
-                    <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-[#0A0F1D]" style="background-image: var(--accent-gradient);">{{ $loop->iteration }}</span>
-                    <span class="pt-1 text-sm leading-relaxed sm:text-base">{{ $point }}</span>
+                <li class="card-surface card-lift flex flex-col gap-3 p-5 sm:p-6">
+                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-[#0A0F1D]" style="background-image: var(--accent-gradient);" aria-hidden="true">{{ $loop->iteration }}</span>
+                    <span class="text-sm leading-relaxed sm:text-base">{{ $point }}</span>
                 </li>
             @endforeach
         </ol>

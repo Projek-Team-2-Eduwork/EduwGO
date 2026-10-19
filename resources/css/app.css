@@ -752,3 +752,228 @@ html .flatpickr-clear-btn:hover {
         transform: none;
     }
 }
+
+/*
+ * Sidebar admin: mode "rail" (hanya ikon) di desktop.
+ * Dipakai resources/views/layouts/admin.blade.php.
+ * Atribut data-admin-rail dipasang di <html> oleh skrip anti-flash dan tombol toggle,
+ * supaya tidak ada kedipan lebar sidebar saat halaman dimuat (bukan SPA).
+ */
+.admin-brand-rail {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    html[data-admin-rail] #admin-sidebar {
+        width: 5rem;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-sidebar-head {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-brand-text,
+    html[data-admin-rail] #admin-sidebar .admin-nav-label {
+        display: none;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-brand-rail {
+        display: inline-flex;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-nav-link,
+    html[data-admin-rail] #admin-sidebar .admin-logout {
+        justify-content: center;
+        gap: 0;
+        padding-inline: 0.75rem;
+    }
+}
+
+/*
+ * ===== Footer publik (layouts/footer.blade.php) =====
+ * Semua memakai token warna yang sudah ada, jadi ikut tema terang/gelap.
+ */
+.footer-ikon {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    color: var(--orange-500);
+}
+
+.footer-sosmed {
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    color: var(--ink-muted);
+    transition: border-color 150ms ease-in-out, color 150ms ease-in-out, transform 150ms ease-out;
+}
+
+.footer-sosmed:hover,
+.footer-sosmed:focus-visible {
+    border-color: var(--orange-500);
+    color: var(--orange-500);
+    transform: translateY(-2px);
+}
+
+.footer-tautan {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-block: 0.25rem;
+    color: var(--ink-muted);
+    transition: color 150ms ease-in-out, transform 150ms ease-out;
+}
+
+.footer-tautan:hover,
+.footer-tautan:focus-visible {
+    color: var(--orange-500);
+    transform: translateX(2px);
+}
+
+.footer-kartu {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--bg);
+    padding: 1rem 1.25rem;
+}
+
+/* Pil kontak di dalam kartu cabang dibuat lebih rapat agar muat dua sebaris */
+.footer-kartu .btn-secondary-edu,
+.cabang-marquee-kartu .btn-secondary-edu {
+    padding-inline: 0.625rem;
+}
+
+/*
+ * ===== Strip kartu cabang berjalan (komponen x-branch-marquee) =====
+ * Dipakai di beranda (home/profil.blade.php) dan footer publik.
+ * Komponen menggandakan kartu jadi dua paruh identik; animasi menggeser tepat
+ * setengah trek supaya sambungannya tidak berkedip.
+ */
+.cabang-marquee {
+    position: relative;
+    overflow: hidden;
+    /* Tepi kiri/kanan dilembutkan supaya kartu tidak terpotong tajam */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent);
+}
+
+.cabang-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: cabang-marquee-jalan var(--cabang-marquee-durasi, 30s) linear infinite;
+}
+
+/* Berhenti saat disorot, ditekan (layar sentuh), atau sedang ditelusuri keyboard,
+   biar isinya bisa dibaca dan tautannya diklik. */
+.cabang-marquee:hover .cabang-marquee-track,
+.cabang-marquee:active .cabang-marquee-track,
+.cabang-marquee:focus-within .cabang-marquee-track {
+    animation-play-state: paused;
+}
+
+.cabang-marquee-kartu {
+    flex: none;
+    width: 16rem;
+    margin-right: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    /* Sengaja memakai --bg: kontainer tempat strip ini dipakai selalu --surface */
+    background-color: var(--bg);
+}
+
+@keyframes cabang-marquee-jalan {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(-50%, 0, 0);
+    }
+}
+
+@media (min-width: 1024px) {
+    .cabang-marquee {
+        -webkit-mask-image: linear-gradient(to right, transparent, #000 4rem, #000 calc(100% - 4rem), transparent);
+        mask-image: linear-gradient(to right, transparent, #000 4rem, #000 calc(100% - 4rem), transparent);
+    }
+
+    .cabang-marquee-kartu {
+        width: 18rem;
+    }
+}
+
+/* Preferensi kurangi gerakan: strip jadi gulir manual, bukan berjalan sendiri */
+@media (prefers-reduced-motion: reduce) {
+    .cabang-marquee {
+        overflow-x: auto;
+    }
+
+    .cabang-marquee-track {
+        animation: none;
+    }
+}
+
+/*
+ * ===== Animasi masuk halaman user (layouts/app.blade.php & layouts/guest.blade.php) =====
+ * Murni CSS: setiap anak langsung dari wadah .anim-masuk muncul berurutan saat halaman
+ * dibuka/di-reload. Fill-mode "backwards" dipakai supaya tidak ada sisa nilai
+ * opacity/transform setelah animasi selesai (efek hover di dalamnya tetap normal).
+ * Panel admin sengaja tidak memakai ini.
+ */
+@keyframes anim-masuk-naik {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 1.25rem, 0);
+    }
+}
+
+.anim-masuk > * {
+    animation: anim-masuk-naik 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.anim-masuk > :nth-child(1) {
+    animation-delay: 0ms;
+}
+
+.anim-masuk > :nth-child(2) {
+    animation-delay: 80ms;
+}
+
+.anim-masuk > :nth-child(3) {
+    animation-delay: 160ms;
+}
+
+.anim-masuk > :nth-child(4) {
+    animation-delay: 240ms;
+}
+
+.anim-masuk > :nth-child(5) {
+    animation-delay: 320ms;
+}
+
+.anim-masuk > :nth-child(6) {
+    animation-delay: 400ms;
+}
+
+.anim-masuk > :nth-child(n + 7) {
+    animation-delay: 480ms;
+}
+
+/* Preferensi kurangi gerakan: konten langsung tampil */
+@media (prefers-reduced-motion: reduce) {
+    .anim-masuk > * {
+        animation: none;
+    }
+}
