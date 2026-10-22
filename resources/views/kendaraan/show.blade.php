@@ -3,9 +3,11 @@
     <x-slot:title>{{ $vehicle->name }}</x-slot:title>
 
     <div class="mx-auto max-w-[1320px] px-4 py-8 sm:px-6 lg:py-12 xl:px-0">
+        {{-- Di desktop: baris 1 = foto | detail, baris 2 = kalender | rekomendasi.
+             Di mobile urutan tetap: foto → detail → kalender → rekomendasi. --}}
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             {{-- Kartu kiri: foto + spesifikasi (Figma: Desktop - Deskripsi Kendaraan) --}}
-            <div class="card-surface p-5">
+            <div class="card-surface p-5 lg:col-start-1 lg:row-start-1">
                 <div class="relative flex aspect-[4/3] items-center justify-center">
                     <svg class="h-24 w-24 text-[var(--border)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM7 17h8M3 17h2m14 0h2M6 9h6l3 5M12 9V6h3"/></svg>
                     @if ($vehicle->image)
@@ -29,7 +31,7 @@
             </div>
 
             {{-- Kartu kanan: nama, status, deskripsi, harga + Booking --}}
-            <div class="card-surface flex flex-col p-6">
+            <div class="card-surface flex flex-col p-6 lg:col-start-2 lg:row-start-1">
                 <div>
                     <h1 class="text-2xl text-[var(--navy-900)]">{{ $vehicle->name }}</h1>
                     <p class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold {{ $isAvailableNow ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-600 dark:text-slate-300' }}">
@@ -54,24 +56,28 @@
                     @endauth
                 </div>
             </div>
+
+            {{-- Kalender ketersediaan bulanan unit ini (EG-41): kolom kiri baris kedua --}}
+            <div class="self-start lg:col-start-1 lg:row-start-2">
+                <x-availability-calendar :vehicle="$vehicle" />
+            </div>
+
+            {{-- Rekomendasi: mengisi sisa ruang di kolom kanan, sejajar dengan kalender --}}
+            <section class="flex flex-col lg:col-start-2 lg:row-start-2" aria-labelledby="rekomendasi-heading">
+                <h2 id="rekomendasi-heading" class="text-xl text-[var(--navy-900)]">Rekomendasi Kendaraan</h2>
+                <p class="mt-2 text-sm">Pilih kendaraan yang paling sesuai dengan gaya perjalanan dan budget Anda. Semua motor terawat, siap jalan!</p>
+
+                @if ($recommendations->isEmpty())
+                    <x-empty-state class="mt-5" title="Belum ada rekomendasi" description="Belum ada motor sejenis yang tersedia saat ini." action-label="Lihat Semua Kendaraan" :action-href="url('/kendaraan')" />
+                @else
+                    {{-- flex-1 + auto-rows-fr: kartu ikut tinggi kartu kalender di sebelahnya --}}
+                    <div class="mt-5 grid flex-1 auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        @foreach ($recommendations as $item)
+                            <x-vehicle-card :vehicle="$item" :available="$filtered ? true : null" />
+                        @endforeach
+                    </div>
+                @endif
+            </section>
         </div>
-
-        {{-- Kalender ketersediaan bulanan unit ini (EG-41) --}}
-        <x-availability-calendar :vehicle="$vehicle" />
-
-        <section class="mt-12 lg:mt-16" aria-labelledby="rekomendasi-heading">
-            <h2 id="rekomendasi-heading" class="text-2xl text-[var(--navy-900)]">Rekomendasi Kendaraan</h2>
-            <p class="mt-2 text-sm">Pilih kendaraan yang paling sesuai dengan gaya perjalanan dan budget Anda. Semua motor terawat, siap jalan!</p>
-
-            @if ($recommendations->isEmpty())
-                <x-empty-state class="mt-6" title="Belum ada rekomendasi" description="Belum ada motor sejenis yang tersedia saat ini." action-label="Lihat Semua Kendaraan" :action-href="url('/kendaraan')" />
-            @else
-                <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    @foreach ($recommendations as $item)
-                        <x-vehicle-card :vehicle="$item" :available="$filtered ? true : null" />
-                    @endforeach
-                </div>
-            @endif
-        </section>
     </div>
 </x-app-layout>

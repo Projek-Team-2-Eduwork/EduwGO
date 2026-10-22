@@ -1,4 +1,12 @@
 <x-admin-layout>
+    @php
+        // COD menyimpan satu baris tunai pending sampai admin mengonfirmasi
+        // uangnya diterima. Dipakai untuk memberi aksi yang jelas di halaman ini.
+        $codPending = $booking->payments->first(fn ($p) => $p->status === 'pending'
+            && $p->method === 'cash'
+            && $p->payment_channel === \App\Services\XenditService::COD);
+    @endphp
+
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <h2 class="text-xl font-semibold leading-tight">
@@ -9,8 +17,8 @@
                     <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">Update Status</button>
                 @endif
                 @if($booking->status === App\Enums\BookingStatus::Pending)
-                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="btn-secondary-edu inline-flex items-center px-4 py-2 text-sm">
-                        Catat Bayar Tunai
+                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="{{ $codPending ? 'btn-primary-edu' : 'btn-secondary-edu' }} inline-flex items-center px-4 py-2 text-sm">
+                        {{ $codPending ? 'Tandai Sudah Dibayar (COD)' : 'Catat Bayar Tunai' }}
                     </button>
                 @endif
             </div>
@@ -122,7 +130,7 @@
                     <div class="card-surface overflow-hidden">
                         <div class="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
                             <h3 class="font-bold">Riwayat Pembayaran</h3>
-                            @if($payment && $payment->status === 'pending')
+                            @if($payment && $payment->status === 'pending' && str_starts_with((string) $payment->method, 'xendit'))
                                 <a href="{{ route('admin.pesanan.cek-status', $booking->code) }}" class="btn-secondary-edu inline-flex items-center px-3 py-1.5 text-xs">
                                     Cek Status Xendit
                                 </a>
@@ -138,20 +146,37 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($booking->payments as $p)
+                                    @php
+                                        // Cukup satu baris: pembayaran terakhir yang benar-benar
+                                        // terjadi (yang sudah lunas bila ada). Percobaan online yang
+                                        // batal/kedaluwarsa tidak lagi menumpuk di sini.
+                                        $riwayat = $booking->payments->sortByDesc('id');
+                                        $terakhir = $riwayat->firstWhere('status', 'paid') ?? $riwayat->first();
+                                    @endphp
+
+                                    @if($terakhir)
                                         <tr class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
                                             <td class="px-4 py-3">
-                                                <div class="font-medium capitalize text-[var(--navy-900)]">{{ str_replace('_', ' ', $p->method) }}</div>
-                                                <div class="mt-1 font-mono text-xs">{{ $p->gateway_reference }}</div>
+                                                <div class="font-medium text-[var(--navy-900)]">{{ App\Services\XenditService::paymentLabel($terakhir->payment_channel, $terakhir->method) }}</div>
+                                                <div class="mt-1 font-mono text-xs">{{ $terakhir->gateway_reference ?? '-' }}</div>
                                             </td>
-                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-emerald-700 dark:text-emerald-400' : '' }}">{{ $p->status }}</td>
-                                            <td class="px-4 py-3 text-xs">{{ $p->paid_at ? $p->paid_at->translatedFormat('d M Y H:i') : '-' }}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <span class="font-semibold capitalize {{ $terakhir->status === 'paid' ? 'text-emerald-700 dark:text-emerald-400' : '' }}">{{ $terakhir->status }}</span>
+                                                    @if($terakhir->status === 'pending' && $terakhir->method === 'cash' && $booking->status === App\Enums\BookingStatus::Pending)
+                                                        <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-2.5 py-1 text-xs">
+                                                            Tandai Lunas
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3 text-xs">{{ $terakhir->paid_at ? $terakhir->paid_at->translatedFormat('d M Y H:i') : '-' }}</td>
                                         </tr>
-                                    @empty
+                                    @else
                                         <tr>
                                             <td colspan="3" class="px-4 py-6 text-center">Belum ada riwayat pembayaran.</td>
                                         </tr>
-                                    @endforelse
+                                    @endif
                                 </tbody>
                             </table>
                         </div>
@@ -196,5 +221,5 @@
     
     <!-- Render Partial Modal Update Status -->
     @include('admin.partials.update-status-modal', ['booking' => $booking])
-    @include('admin.partials.cash-payment-modal', ['booking' => $booking])
+    @include('admin.partials.cash-payment-modal', ['booking' => $booking, 'codPending' => $codPending])
 </x-admin-layout>
