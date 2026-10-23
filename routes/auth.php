@@ -28,7 +28,7 @@ Route::middleware('guest')->group(function () {
         ->name('register.verify.store');
 
     Route::post('register/kirim-ulang', [PendingRegistrationController::class, 'resend'])
-        ->middleware('throttle:3,1')
+        ->middleware('throttle:verification-code')
         ->name('register.resend');
 
     Route::delete('register/verifikasi', [PendingRegistrationController::class, 'destroy'])
@@ -43,12 +43,14 @@ Route::middleware('guest')->group(function () {
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:6,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:6,1')
         ->name('password.store');
 });
 
@@ -61,7 +63,7 @@ Route::middleware('auth')->group(function () {
         ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-        ->middleware('throttle:3,1')
+        ->middleware('throttle:verification-code')
         ->name('verification.send');
 
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
