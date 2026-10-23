@@ -37,7 +37,12 @@ class BookingPaymentController extends Controller
         try {
             $payment = $xenditService->createInvoice($booking);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            Log::channel('xendit')->error('Halaman menunggu: gagal membuat invoice.', [
+                'booking' => $booking->code,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.');
         }
 
         return view('booking.waiting', compact('booking', 'payment'));

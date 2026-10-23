@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
+use App\Models\Booking;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class PaymentService
                         : now();
                     $payment->save();
 
-                    $booking = $payment->booking;
+                    $booking = $this->lockedBooking($payment);
                     if ($booking->status === BookingStatus::Pending) {
                         $this->bookingService->transition($booking, BookingStatus::Paid, null, 'Pembayaran via Xendit');
                     }
@@ -51,7 +52,7 @@ class PaymentService
                     $payment->status = 'expired';
                     $payment->save();
 
-                    $booking = $payment->booking;
+                    $booking = $this->lockedBooking($payment);
                     if ($booking->status === BookingStatus::Pending) {
                         $this->bookingService->transition($booking, BookingStatus::Expired, null, 'Invoice kedaluwarsa');
                     }
@@ -69,5 +70,15 @@ class PaymentService
                 'status' => $status,
             ]);
         });
+    }
+
+    /**
+     * Booking milik payment dengan kunci baris: satu booking bisa punya beberapa
+     * payment (ganti metode bayar), jadi kunci payment saja tidak cukup untuk
+     * mencegah dua event berbeda membaca status Pending yang sama.
+     */
+    private function lockedBooking(Payment $payment): Booking
+    {
+        return Booking::whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
     }
 }
