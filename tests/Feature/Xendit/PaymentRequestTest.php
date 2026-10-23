@@ -1,0 +1,228 @@
+<?php
+
+namespace Tests\Feature\Xendit;
+
+use App\Enums\BookingStatus;
+use App\Models\Booking;
+use App\Models\Payment;
+use App\Models\User;
+use App\Models\Vehicle;
+use App\Services\XenditService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+
+class PaymentRequestTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const TOKEN = 'token-rahasia';
+
+    private const QR_STRING = '00020101021126610014COM.GO-JEK.WWW0118936009143250602202020303UMI04091234567890503039990609123456789';
+
+    protected $user;
+
+    protected $booking;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'services.xendit.callback_token' => self::TOKEN,
+            'services.xendit.secret_key' => 'xnd_development_fake',
+        ]);
+
+        $this->user = User::factory()->create();
+        $vehicle = Vehicle::factory()->create();
+
+        $this->booking = Booking::factory()->pending()->create([
+            'code' => 'BOOK-PR-001',
+            'user_id' => $this->user->id,
+            'vehicle_id' => $vehicle->id,
+            'start_at' => now()->addDays(1),
+            'end_at' => now()->addDays(3),
+            'duration_days' => 2,
+            'total_amount' => 150000,
+        ]);
+    }
+
+    private function paymentRequestResponse(): array
+    {
+        return [
+            'payment_request_id' => 'pr-123',
+            'reference_id' => 'BOOK-PR-001',
+            'status' => 'REQUIRES_ACTION',
+            'channel_code' => 'QRIS',
+            'channel_properties' => [
+                'expires_at' => now()->addHour()->toIso8601String(),
+            ],
+            'actions' => [
+                ['type' => 'PRESENT_TO_CUSTOMER', 'descriptor' => 'QR_STRING', 'value' => self::QR_STRING],
+            ],
+        ];
+    }
+
+    private function webhook(array $payload, ?string $token = self::TOKEN)
+    {
+        $headers = [];
+
+        if ($token !== null) {
+            $headers['x-callback-token'] = $token;
+        }
+
+        return $this->postJson('/webhooks/xendit', $payload, $headers);
+    }
+
+    private function paymentRequestPayload(string $event, array $dataOverrides = []): array
+    {
+        return [
+            'event' => $event,
+            'business_id' => 'business-123',
+            'data' => array_merge([
+                'payment_request_id' => 'pr-123',
+                'reference_id' => 'BOOK-PR-001',
+                'status' => in_array($event, ['payment.paid', 'payment.capture'], true) ? 'SUCCEEDED' : 'FAILED',
+            ], $dataOverrides),
+        ];
+    }
+
+    private function seedPaymentRequest(): Payment
+    {
+        return Payment::create([
+            'booking_id' => $this->booking->id,
+            'method' => 'xendit_payment_request',
+            'status' => 'pending',
+            'gateway_reference' => 'pr-123',
+            'payment_channel' => 'QRIS',
+            'expires_at' => now()->addHour(),
+            'amount' => 150000,
+        ]);
+    }
+
+    public function test_create_payment_request_menghasilkan_instruksi_tersimpan()
+    {
+        Http::fake(['api.xendit.co/*' => Http::response($this->paymentRequestResponse())]);
+
+        $payment = app(XenditService::class)->createPaymentRequest($this->booking, 'QRIS');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/v3/payment_requests')
+            && $request['reference_id'] === 'BOOK-PR-001'
+            && $request['type'] === 'PAY'
+            && $request['channel_code'] === 'QRIS'
+            && $request['request_amount'] === 150000
+            && $request->hasHeader('api-version'));
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'method' => 'xendit_payment_request',
+            'payment_channel' => 'QRIS',
+            'gateway_reference' => 'pr-123',
+            'status' => 'pending',
+        ]);
+
+        $payment->refresh();
+        $this->assertIsArray($payment->instructions);
+        $this->assertNotEmpty($payment->instructions);
+        $this->assertStringContainsString(self::QR_STRING, implode(' ', $payment->instructions));
+        $this->assertNull($payment->gateway_url, 'Payment Request tidak punya hosted checkout URL');
+    }
+
+    public function test_mode_payment_request_mengalihkan_create_invoice()
+    {
+        config(['services.xendit.mode' => 'payment_request']);
+        Http::fake(['api.xendit.co/*' => Http::response($this->paymentRequestResponse())]);
+
+        $payment = app(XenditService::class)->createInvoice($this->booking);
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/payment_requests'));
+        $this->assertSame('xendit_payment_request', $payment->method);
+    }
+
+    public function test_webhook_payment_paid_menandai_paid_dengan_history()
+    {
+        $this->seedPaymentRequest();
+
+        $this->webhook($this->paymentRequestPayload('payment.capture', [
+            'captures' => [['capture_timestamp' => '2026-10-12T12:00:00.000Z']],
+        ]))->assertStatus(200)->assertJson(['status' => 'ok']);
+
+        $payment = Payment::where('gateway_reference', 'pr-123')->first();
+
+        $this->assertSame('paid', $payment->status);
+        $this->assertSame(BookingStatus::Paid, $this->booking->refresh()->status);
+        $this->assertDatabaseHas('booking_status_histories', [
+            'booking_id' => $this->booking->id,
+            'from_status' => 'pending',
+            'to_status' => 'paid',
+        ]);
+        $this->assertSame('payment.capture', $payment->gateway_payload['event']);
+    }
+
+    public function test_webhook_payment_paid_ganda_idempoten()
+    {
+        $this->seedPaymentRequest();
+
+        $this->webhook($this->paymentRequestPayload('payment.capture', [
+            'captures' => [['capture_timestamp' => '2026-10-12T12:00:00.000Z']],
+        ]))->assertStatus(200);
+
+        // Kirim ulang event yang sama persis
+        $this->webhook($this->paymentRequestPayload('payment.capture', [
+            'captures' => [['capture_timestamp' => '2026-10-12T12:00:00.000Z']],
+        ]))->assertStatus(200);
+
+        $this->assertSame('paid', Payment::where('gateway_reference', 'pr-123')->first()->status);
+        $this->assertSame(1, $this->booking->histories()->count(), 'riwayat status tidak boleh dobel');
+        $this->assertSame(BookingStatus::Paid, $this->booking->refresh()->status);
+    }
+
+    public function test_webhook_payment_failed_tidak_mengubah_status_booking()
+    {
+        $this->seedPaymentRequest();
+
+        $this->webhook($this->paymentRequestPayload('payment.failure', [
+            'failure_code' => 'USER_CANCELLED',
+        ]))->assertStatus(200);
+
+        $payment = Payment::where('gateway_reference', 'pr-123')->first();
+
+        $this->assertSame('pending', $payment->status);
+        $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);
+        $this->assertSame(0, $this->booking->histories()->count());
+        $this->assertSame('payment.failure', $payment->gateway_payload['event'], 'payload wajib tercatat');
+    }
+
+    public function test_webhook_payment_request_tidak_dikenal_dianggap_ok()
+    {
+        // Event terotentikasi tapi referensi tak dikenal (mis. ping uji dashboard
+        // Xendit) di-acknowledge 200 agar tidak dikirim ulang (EG-57)
+        $this->webhook($this->paymentRequestPayload('payment.capture'))->assertStatus(200);
+    }
+
+    public function test_webhook_ditolak_403_jika_token_salah()
+    {
+        $this->seedPaymentRequest();
+
+        $this->webhook($this->paymentRequestPayload('payment.capture'), 'token-salah')->assertStatus(403);
+        $this->webhook($this->paymentRequestPayload('payment.capture'), null)->assertStatus(403);
+
+        $this->assertSame('pending', Payment::where('gateway_reference', 'pr-123')->first()->status);
+        $this->assertSame(BookingStatus::Pending, $this->booking->refresh()->status);
+    }
+
+    public function test_webhook_event_lama_payment_paid_masih_diterima()
+    {
+        $this->seedPaymentRequest();
+
+        // Payload versi lama: identifikasi memakai "id", waktu memakai "succeeded_at"
+        $this->webhook($this->paymentRequestPayload('payment.paid', [
+            'payment_request_id' => null,
+            'id' => 'pr-123',
+            'succeeded_at' => '2026-10-12T12:00:00.000Z',
+        ]))->assertStatus(200);
+
+        $this->assertSame('paid', Payment::where('gateway_reference', 'pr-123')->first()->status);
+        $this->assertSame(BookingStatus::Paid, $this->booking->refresh()->status);
+    }
+}

@@ -1,0 +1,5 @@
+# File bersama: perubahan wajib direview pemilik kode.
+/app/Enums/BookingStatus.php       @Marnyot @nastyo023 @faisalsadli25
+/app/Services/BookingService.php   @Marnyot @nastyo023 @faisalsadli25
+/resources/views/layouts/*         @Marnyot @nastyo023 @faisalsadli25
+/resources/views/components/*      @Marnyot @nastyo023 @faisalsadli25

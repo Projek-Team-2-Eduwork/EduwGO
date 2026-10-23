@@ -38,7 +38,14 @@ return [
     // config/services.php
     'xendit' => [
         'secret_key' => env('XENDIT_SECRET_KEY'),
-        'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
+        'callback_token' => env('XENDIT_CALLBACK_TOKEN'),
+        // 'invoice' = hosted checkout (lama) | 'payment_request' = halaman bayar sendiri (EG-52)
+        'mode' => env('XENDIT_MODE', 'invoice'),
+    ],
+
+    // Token endpoint POST /cron/run untuk cron eksternal (docs/DEPLOY.md)
+    'cron' => [
+        'token' => env('CRON_TOKEN'),
     ],
 
 ];

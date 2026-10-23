@@ -26,6 +26,26 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+
+            // Nomor WhatsApp aktif, dipakai saat checkout & dicek admin.
+            'phone' => ['nullable', 'string', 'regex:'.User::PHONE_REGEX],
+
+            // Username sosmed, boleh diawali @ (dihapus otomatis sebelum disimpan).
+            'instagram' => ['nullable', 'string', 'regex:/^@?[A-Za-z0-9._]{1,50}$/'],
+            'facebook' => ['nullable', 'string', 'regex:/^@?[A-Za-z0-9._]{1,50}$/'],
+
+            // Preferensi tema user.
+            'theme' => ['nullable', 'string', Rule::in(['light', 'dark', 'system'])],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'phone.regex' => User::PHONE_MESSAGE,
         ];
     }
 }

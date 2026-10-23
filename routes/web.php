@@ -1,20 +1,174 @@
 <?php
 
+use App\Http\Controllers\Admin\BranchSettingController;
+use App\Http\Controllers\Admin\CabangController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PenggunaController;
+use App\Http\Controllers\Admin\PesananController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\TipeKendaraanController;
+use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingPaymentController;
+use App\Http\Controllers\CabangPublikController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CronController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\KendaraanController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\XenditWebhookController;
+use App\Http\Middleware\VerifyCronToken;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// ==========================================
+// Rute Publik Terbuka
+// ==========================================
 
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Katalog kendaraan + filter (EG-24)
+Route::get('/kendaraan', [VehicleController::class, 'index'])->name('kendaraan.index');
+Route::get('/kendaraan/reset', [VehicleController::class, 'resetFilter'])->name('kendaraan.reset');
+
+Route::get('/cabang', [CabangPublikController::class, 'index'])->name('cabang.index');
+Route::get('/cabang/{slug}/reset', [CabangPublikController::class, 'resetFilter'])->name('cabang.reset');
+Route::get('/cabang/{slug}', [CabangPublikController::class, 'show'])->name('cabang.show');
+
+Route::redirect('/lokasi', '/cabang', 301);
+Route::get('/lokasi/{slug}', fn (string $slug) => redirect()->route('cabang.show', ['slug' => $slug], 301));
+
+// Halaman Publik: Detail Kendaraan — binding slug (EG-25)
+Route::get('/kendaraan/{vehicle:slug}', [VehicleController::class, 'show'])->name('kendaraan.detail');
+
+// API Internal: Opsi durasi sewa per unit untuk modal pilih durasi (EG-11)
+Route::get('/api/kendaraan/{vehicle}/durasi', [KendaraanController::class, 'durasi'])
+    ->name('kendaraan.durasi');
+
+// API Internal: Jadwal terpakai per hari dalam sebulan untuk kalender ketersediaan (EG-41)
+Route::get('/api/kendaraan/{vehicle}/jadwal', [KendaraanController::class, 'jadwal'])
+    ->name('kendaraan.jadwal');
+
+// Webhook Xendit (EG-14): Endpoint eksternal, diverifikasi via x-callback-token, dikecualikan CSRF
+Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
+    ->name('xendit.webhook');
+
+// Cron eksternal (hosting tanpa scheduler, docs/DEPLOY.md): Bearer CRON_TOKEN, dikecualikan CSRF
+Route::post('/cron/run', [CronController::class, 'run'])
+    ->middleware([VerifyCronToken::class, 'throttle:30,1'])
+    ->name('cron.run');
+
+// ==========================================
+// Rute Development
+// ==========================================
+
+// Referensi visual token/komponen EduwGo (EG-7, EG-8), tidak tersedia di production.
+if (! app()->isProduction()) {
+    Route::get('/styleguide', function () {
+        return view('styleguide');
+    })->name('styleguide');
+}
+
+// ==========================================
+// Rute Area Pengguna Terautentikasi
+// ==========================================
+
+// Dashboard Pengguna Umum
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Manajemen Profil (Hanya butuh login)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+
+    // Alias sesuai spesifikasi EG-28 (Figma: Profil > Home).
+    Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit.indonesian');
+
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Preferensi tema (Dark/Light mode), juga dipakai theme-toggle di navbar.
+    Route::patch('/profil/tema', [ProfileController::class, 'theme'])->name('profile.theme');
 });
 
+// Pesanan & Pembayaran (Wajib login dan email terverifikasi) (EG-22)
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Daftar Pesanan (EG-16)
+    Route::get('/pesanan', [BookingController::class, 'index'])->name('booking.index');
+    Route::get('/pesanan/{code}', [BookingController::class, 'show'])->name('booking.show');
+    Route::post('/pesanan/{code}/batal', [BookingController::class, 'cancel'])->name('booking.cancel');
+
+    // Alur pembayaran Xendit
+    Route::get('/pesanan/{code}/menunggu', [BookingPaymentController::class, 'waiting'])->name('booking.waiting');
+
+    // Halaman bayar sendiri (Xendit Payment Request) (EG-53)
+    Route::get('/pembayaran/{code}', [BookingPaymentController::class, 'bayar'])->name('booking.bayar');
+    Route::post('/pembayaran/{code}/demo-bayar', [BookingPaymentController::class, 'demoBayar'])->name('booking.demo-bayar');
+
+    // Halaman pesanan sukses, gagal, dan polling status pembayaran (EG-15)
+    Route::get('/pesanan/{code}/berhasil', [BookingPaymentController::class, 'success'])->name('booking.success');
+    Route::get('/pesanan/{code}/gagal', [BookingPaymentController::class, 'failed'])->name('booking.failed');
+    // Polling status memanggil API Xendit: dibatasi agar tidak bisa dipakai membanjiri gateway.
+    Route::get('/pesanan/{code}/status', [BookingPaymentController::class, 'status'])
+        ->middleware('throttle:60,1')
+        ->name('booking.status');
+
+    // Fitur Booking Ulang satu klik untuk pesanan expired (EG-27)
+    Route::get('/pesanan/{code}/ulang', [BookingPaymentController::class, 'ulang'])->name('booking.rebook');
+});
+
+// Alur Checkout Sewa Kendaraan
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/checkout/{vehicle}', [CheckoutController::class, 'show'])->name('checkout.show');
+    // Tiap checkout membuat invoice Xendit dan mengunci unit: batasi per pengguna.
+    Route::post('/checkout/{vehicle}', [CheckoutController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('checkout.store');
+});
+
+// ==========================================
+// Rute Area Admin
+// ==========================================
+
+Route::middleware(['auth', 'verified', 'role:'.RoleSeeder::STAFF_MIDDLEWARE])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
+
+    // Daftar pesanan admin, detail, catatan, dan sinkronisasi status (EG-19, EG-26)
+    Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
+    Route::post('/pesanan/{code}/status', [PesananController::class, 'updateStatus'])->name('pesanan.update');
+    Route::get('/pesanan/{code}', [PesananController::class, 'show'])->name('pesanan.show');
+    Route::post('/pesanan/{code}/catatan', [PesananController::class, 'updateNotes'])->name('pesanan.notes');
+    Route::get('/pesanan/{code}/cek-status', [PesananController::class, 'cekStatus'])->name('pesanan.cek-status');
+    Route::post('/pesanan/{code}/bayar-tunai', [PesananController::class, 'payCash'])->name('pesanan.pay-cash');
+
+    Route::get('/pengaturan-cabang', [BranchSettingController::class, 'edit'])->name('pengaturan-cabang.edit');
+    Route::put('/pengaturan-cabang', [BranchSettingController::class, 'update'])->name('pengaturan-cabang.update');
+
+    Route::resource('kendaraan', AdminVehicleController::class);
+
+    Route::middleware('role:'.RoleSeeder::SUPERADMIN)->group(function () {
+        Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
+        Route::put('/pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
+
+        Route::resource('tipe-kendaraan', TipeKendaraanController::class)->except(['create', 'show', 'edit']);
+        Route::get('/pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
+        Route::post('/pengguna', [PenggunaController::class, 'store'])->name('pengguna.store');
+        Route::post('/pengguna/{pengguna}/role', [PenggunaController::class, 'setRole'])->name('pengguna.role');
+        Route::post('/pengguna/{pengguna}/toggle', [PenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
+
+        Route::resource('cabang', CabangController::class)->except(['create', 'show', 'edit'])->parameters(['cabang' => 'cabang']);
+    });
+});
+
+// ==========================================
+// Halaman Pendukung (EG-36)
+// ==========================================
+Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('terms');
+Route::get('/tentang', [PageController::class, 'about'])->name('about');
+
+// Memuat rute-rute bawaan Laravel Breeze
 require __DIR__.'/auth.php';

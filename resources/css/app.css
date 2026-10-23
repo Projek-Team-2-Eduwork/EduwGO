@@ -1,3 +1,979 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * EduwGo design tokens — docs/SPEC.md bagian 8.
+ * Palet dipetakan ke CSS variable; dark mode memakai class strategy (html.dark).
+ */
+:root {
+    color-scheme: light;
+    --bg:              #EDF0F6;
+    --bg-gradient:     linear-gradient(180deg, #F5F7FB 0%, #E4E9F3 100%);
+    --surface:         #FFFFFF;
+    --navy-900:        #0A0F1D;
+    --navy-700:        #1B2537;
+    --ink-muted:       #465064;
+    --orange-500:      #3F6212;
+    --accent-gradient: linear-gradient(135deg, #C6F659 0%, #A3E635 100%);
+    --coral-300:       #DDD0FB;
+    --border:          #D3D9E4;
+    --gold-tan:        #0EA5E9;
+}
+
+.dark {
+    color-scheme: dark;
+    --bg:              #0A0F1D;
+    --bg-gradient:     linear-gradient(180deg, #101829 0%, #0A0F1D 100%);
+    --surface:         #141B2C;
+    --navy-900:        #E9EEF8;
+    --navy-700:        #C7D1E4;
+    --ink-muted:       #A6B0C3;
+    --orange-500:      #C6F659;
+    --accent-gradient: linear-gradient(135deg, #C6F659 0%, #A3E635 100%);
+    --coral-300:       #7C3AED;
+    --border:          #232C42;
+    --gold-tan:        #38BDF8;
+}
+
+@layer base {
+    html {
+        font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body {
+        background-color: var(--bg);
+        background-image: var(--bg-gradient);
+        background-attachment: fixed;
+        color: var(--ink-muted);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--navy-900);
+    }
+}
+
+@layer components {
+    /* Kartu / panel permukaan */
+    .card-surface {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 2px rgb(15 26 46 / 0.06);
+    }
+
+    /* Tombol utama: navy, sudut membulat sesuai Figma */
+    .btn-primary-edu {
+        border-radius: 0.5rem;
+        background-color: var(--navy-900);
+        color: var(--surface);
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out;
+    }
+
+    .btn-primary-edu:hover,
+    .btn-primary-edu:focus-visible {
+        background-color: var(--navy-700);
+    }
+
+    /* Tombol sekunder: kecil, oranye */
+    .btn-secondary-edu {
+        border-radius: 0.5rem;
+        background-color: transparent;
+        color: var(--orange-500);
+        border: 1px solid var(--orange-500);
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+    }
+
+    .btn-secondary-edu:hover,
+    .btn-secondary-edu:focus-visible {
+        background-color: var(--orange-500);
+        color: var(--surface);
+    }
+
+    /* Tombol destruktif (batalkan/hapus): merah, radius & bobot sama seperti tombol lain */
+    .btn-danger-edu {
+        border-radius: 0.5rem;
+        background-color: #DC2626;
+        color: #FFFFFF;
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out;
+    }
+
+    .btn-danger-edu:hover,
+    .btn-danger-edu:focus-visible {
+        background-color: #B91C1C;
+    }
+
+    /* Tombol WhatsApp: hijau khas WA, radius & bobot konsisten */
+    .btn-wa-edu {
+        border-radius: 0.5rem;
+        background-color: #15803D;
+        color: #FFFFFF;
+        font-weight: 600;
+        transition: background-color 150ms ease-in-out;
+    }
+
+    .btn-wa-edu:hover,
+    .btn-wa-edu:focus-visible {
+        background-color: #166534;
+    }
+
+    /* Ikon aksen oranye (hanya untuk ikon/kecil, sesuai spesifikasi) */
+    .icon-accent {
+        color: var(--orange-500);
+    }
+
+    /* Tombol theme-toggle */
+    .theme-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        color: var(--ink-muted);
+        transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+    }
+
+    .theme-btn:hover {
+        background-color: var(--bg);
+        color: var(--navy-900);
+    }
+
+    .theme-btn.is-active {
+        background-color: var(--navy-900);
+        color: var(--surface);
+    }
+
+    /* Badge netral dengan aksen oranye tipis */
+    .badge-accent {
+        background-color: var(--coral-300);
+        color: var(--navy-900);
+        border-radius: 9999px;
+        padding: 0.125rem 0.625rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+}
+
+/*
+ * Override kontrol form agar ikut token (di luar @layer supaya menang
+ * terhadap utility Tailwind bawaan Breeze seperti border-gray-300).
+ */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='tel'],
+input[type='search'],
+input[type='date'],
+input[type='datetime-local'],
+input[type='number'],
+select,
+textarea {
+    background-color: var(--surface);
+    border-color: var(--border);
+    border-radius: 0.5rem;
+    color: var(--navy-900);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--ink-muted);
+}
+
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+input[type='tel']:focus,
+input[type='date']:focus,
+input[type='datetime-local']:focus,
+input[type='number']:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--navy-700);
+    box-shadow: 0 0 0 1px var(--navy-700);
+}
+
+/* ===== Micro-interaction & komponen iterasi UI (EG-37) ===== */
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    /* Chip pilihan (radio tersembunyi + label): tipe kendaraan di filter, durasi di modal booking */
+    .chip-option {
+        position: relative;
+        display: inline-flex;
+        min-width: 0;
+    }
+
+    .chip-option > input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .chip-option > input:disabled {
+        cursor: not-allowed;
+    }
+
+    .chip-face {
+        display: inline-flex;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        border: 1px solid var(--border);
+        border-radius: 9999px;
+        background-color: var(--surface);
+        color: var(--navy-900);
+        padding: 0.375rem 0.875rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.25rem;
+        transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out, color 150ms ease-in-out, transform 150ms ease-in-out;
+    }
+
+    .chip-option > input:not(:disabled):hover + .chip-face {
+        border-color: var(--navy-700);
+        transform: translateY(-1px);
+    }
+
+    .chip-option > input:checked + .chip-face {
+        background-color: var(--navy-900);
+        border-color: var(--navy-900);
+        color: var(--surface);
+    }
+
+    .chip-option > input:focus-visible + .chip-face {
+        outline: 2px solid var(--navy-700);
+        outline-offset: 2px;
+    }
+
+    .chip-option > input:disabled + .chip-face {
+        border-style: dashed;
+        background-color: transparent;
+        color: var(--ink-muted);
+        opacity: 0.55;
+    }
+
+    /* Chip durasi: kotak, angka besar + satuan kecil */
+    .chip-face-day {
+        flex-direction: column;
+        gap: 0;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    /* Kartu kendaraan: terangkat 2px + bayangan saat hover/fokus */
+    .card-lift {
+        transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+    }
+
+    .card-lift:hover,
+    .card-lift:focus-within {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgb(15 26 46 / 0.12);
+    }
+
+    .dark .card-lift:hover,
+    .dark .card-lift:focus-within {
+        box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+    }
+
+    /* Skeleton loading */
+    .skeleton {
+        border-radius: 0.375rem;
+        background-color: var(--border);
+        animation: skeleton-pulse 1.2s ease-in-out infinite;
+    }
+
+    /* Preview tanggal selesai di modal durasi */
+    .preview-pop {
+        animation: preview-in 180ms ease-out;
+    }
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.9; }
+}
+
+@keyframes preview-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/*
+ * ===== Navbar publik: bar penuh saat di atas, mengecil jadi "pill" =====
+ * Dipakai layouts/navigation.blade.php (semua halaman publik) dan
+ * layouts/guest.blade.php (login/daftar). Ditaruh di luar @layer seperti
+ * tema flatpickr supaya tidak ikut di-purge dan menang atas utility tinggi.
+ */
+.navbar-edu {
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    transition: padding 300ms ease, background-color 300ms ease, border-color 300ms ease;
+}
+
+.navbar-edu-inner {
+    transition: padding 300ms ease;
+}
+
+.navbar-edu-bar {
+    height: 4rem;
+    transition: height 300ms ease, margin 300ms ease, padding 300ms ease,
+        border-radius 300ms ease, box-shadow 300ms ease, background-color 300ms ease;
+}
+
+.navbar-edu-panel {
+    background-color: var(--surface);
+}
+
+@media (min-width: 1024px) {
+    .navbar-edu-bar {
+        height: 6.25rem;
+    }
+
+    /* Varian ramping untuk halaman login/daftar */
+    .navbar-edu--slim .navbar-edu-bar {
+        height: 4.25rem;
+    }
+}
+
+/* Kondisi mengecil: bar jadi pill mengambang, latar halaman terlihat di sekelilingnya */
+.navbar-edu.is-shrunk {
+    background-color: transparent;
+    border-bottom-color: transparent;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.navbar-edu.is-shrunk .navbar-edu-inner {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.navbar-edu.is-shrunk .navbar-edu-bar {
+    height: 3.5rem;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background-color: var(--surface);
+    background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 32px -14px rgb(15 26 46 / 0.45);
+}
+
+.dark .navbar-edu.is-shrunk .navbar-edu-bar {
+    box-shadow: 0 12px 32px -14px rgb(0 0 0 / 0.6);
+}
+
+/*
+ * ===== Hero beranda (kartu gelap) =====
+ * Dipakai resources/views/home/hero.blade.php. Kartu pakai navy + aksen lime token
+ * (--accent-gradient); foto motor melebur ke latar kartu lewat mask + lapisan navy,
+ * jadi tepi foto tidak kelihatan. Warna & font tidak diubah.
+ */
+.hero-kartu {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background-color: #0a0f1d;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    box-shadow: 0 24px 60px -34px rgb(10 15 29 / 0.55);
+}
+
+.hero-kartu__foto {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 44%;
+    pointer-events: none;
+}
+
+.hero-kartu__foto img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    object-position: left center;
+    /* Mobile: foto jadi pita di bawah kartu, atasnya luluh ke navy */
+    -webkit-mask-image: linear-gradient(0deg, #000 0%, #000 42%, rgb(0 0 0 / 0) 100%);
+    mask-image: linear-gradient(0deg, #000 0%, #000 42%, rgb(0 0 0 / 0) 100%);
+}
+
+/* Tombol aksen: pil lime + pil navy bertepi */
+.hero-kartu__tombol {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.hero-kartu__tombol:hover {
+    transform: translateY(-1px);
+}
+
+.hero-kartu__tombol--utama {
+    background-color: #c6f659;
+    color: #0a0f1d;
+}
+
+.hero-kartu__tombol--utama:hover {
+    background-color: #d5f97f;
+}
+
+.hero-kartu__tombol--sekunder {
+    background-color: rgb(255 255 255 / 0.08);
+    border: 1px solid rgb(255 255 255 / 0.16);
+    color: #ffffff;
+}
+
+.hero-kartu__tombol--sekunder:hover {
+    background-color: rgb(255 255 255 / 0.14);
+}
+
+.hero-kartu__poin {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: rgb(255 255 255 / 0.72);
+}
+
+.hero-kartu__poin li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hero-kartu__poin svg {
+    flex: none;
+    color: #c6f659;
+}
+
+/* Desktop: foto pindah ke sisi kanan, sisakan area teks di kiri */
+@media (min-width: 1024px) {
+    .hero-kartu__foto {
+        inset: 0 0 0 auto;
+        height: auto;
+        width: 56%;
+    }
+
+    .hero-kartu__foto img {
+        object-position: 26% center;
+        -webkit-mask-image: linear-gradient(90deg, rgb(0 0 0 / 0) 0%, #000 22%);
+        mask-image: linear-gradient(90deg, rgb(0 0 0 / 0) 0%, #000 22%);
+    }
+}
+
+/*
+ * ===== Panel merek halaman akun (masuk/daftar/lupa sandi) =====
+ * Dipakai resources/views/layouts/guest.blade.php: foto toko + gradasi navy token,
+ * aksen lime token. Foto ditaruh sebagai background + overlay ::after supaya
+ * urutan catnya pasti di atas foto (bukan pakai mask seperti hero beranda).
+ */
+.auth-panel {
+    background-color: #0a0f1d;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.auth-panel__latar {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        180deg,
+        rgb(10 15 29 / 0.78) 0%,
+        rgb(10 15 29 / 0.34) 16%,
+        rgb(10 15 29 / 0.56) 50%,
+        rgb(10 15 29 / 0.9) 80%,
+        rgb(10 15 29 / 0.97) 100%
+    );
+}
+
+.auth-panel__ikon {
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background-color: #c6f659;
+    color: #0a0f1d;
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.auth-panel__nama {
+    color: #ffffff;
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+.auth-panel__nama-aksen {
+    color: #c6f659;
+}
+
+.auth-panel__judul {
+    color: #ffffff;
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.auth-panel__aksen {
+    color: #c6f659;
+    white-space: nowrap;
+}
+
+.auth-panel__teks {
+    color: rgb(255 255 255 / 0.76);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+}
+
+.auth-panel__poin {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    color: rgb(255 255 255 / 0.86);
+}
+
+.auth-panel__poin li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 0.75rem;
+    background-color: rgb(10 15 29 / 0.55);
+    padding: 0.5rem 0.75rem;
+}
+
+.auth-panel__poin svg {
+    flex: none;
+    color: #c6f659;
+}
+
+@media (min-width: 1024px) {
+    .auth-panel__judul {
+        font-size: 3rem;
+    }
+}
+
+/*
+ * Tema flatpickr (picker tanggal & jam di filter) — hanya token EduwGo,
+ * di luar @layer + prefix "html" supaya menang terhadap CSS bawaan CDN (dimuat belakangan).
+ */
+html .flatpickr-wrapper {
+    display: block;
+}
+
+html .flatpickr-calendar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgb(15 26 46 / 0.18);
+    color: var(--navy-900);
+    font-family: inherit;
+    max-width: calc(100vw - 2rem);
+}
+
+html .flatpickr-calendar.arrowTop::before,
+html .flatpickr-calendar.arrowTop::after,
+html .flatpickr-calendar.arrowBottom::before,
+html .flatpickr-calendar.arrowBottom::after {
+    display: none;
+}
+
+html .flatpickr-months .flatpickr-month,
+html .flatpickr-current-month .flatpickr-monthDropdown-months,
+html .flatpickr-current-month input.cur-year,
+html span.flatpickr-weekday,
+html .flatpickr-time input,
+html .flatpickr-time .flatpickr-am-pm,
+html .flatpickr-time .flatpickr-time-separator {
+    background: transparent;
+    color: var(--navy-900);
+    fill: var(--navy-900);
+}
+
+html .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+    background-color: var(--surface);
+    color: var(--navy-900);
+}
+
+html .flatpickr-months .flatpickr-prev-month,
+html .flatpickr-months .flatpickr-next-month {
+    color: var(--navy-900);
+    fill: var(--navy-900);
+}
+
+html .flatpickr-months .flatpickr-prev-month svg,
+html .flatpickr-months .flatpickr-next-month svg {
+    fill: var(--navy-900);
+}
+
+html .flatpickr-months .flatpickr-prev-month:hover svg,
+html .flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--orange-500);
+}
+
+html span.flatpickr-weekday {
+    color: var(--ink-muted);
+    font-weight: 600;
+}
+
+html .flatpickr-day {
+    color: var(--navy-900);
+    border-radius: 0.5rem;
+    /* Ringkas tinggi sel (masih nyaman di-tap) supaya kalender selalu muat di layar,
+       termasuk saat dibuka dari modal di HP. */
+    height: 2rem;
+    line-height: 2rem;
+    transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+}
+
+html .flatpickr-day:hover,
+html .flatpickr-day:focus {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+html .flatpickr-day.today {
+    border-color: var(--orange-500);
+}
+
+html .flatpickr-day.selected,
+html .flatpickr-day.selected:hover,
+html .flatpickr-day.selected:focus {
+    background: var(--navy-900);
+    border-color: var(--navy-900);
+    color: var(--surface);
+}
+
+html .flatpickr-day.flatpickr-disabled,
+html .flatpickr-day.flatpickr-disabled:hover,
+html .flatpickr-day.prevMonthDay,
+html .flatpickr-day.nextMonthDay {
+    color: var(--ink-muted);
+    opacity: 0.45;
+}
+
+html .flatpickr-time {
+    border-top-color: var(--border);
+}
+
+/* Bagian jam dibuat lebih jelas: kotak angka + pemisah */
+html .flatpickr-time input.flatpickr-hour,
+html .flatpickr-time input.flatpickr-minute {
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background-color: var(--bg);
+    color: var(--navy-900);
+    font-weight: 700;
+}
+
+html .flatpickr-time .flatpickr-time-separator {
+    color: var(--ink-muted);
+    font-weight: 700;
+}
+
+html .flatpickr-time input:hover,
+html .flatpickr-time input:focus,
+html .flatpickr-time .flatpickr-am-pm:hover {
+    background: var(--bg);
+}
+
+html .flatpickr-time .numInputWrapper span.arrowUp::after {
+    border-bottom-color: var(--navy-900);
+}
+
+html .flatpickr-time .numInputWrapper span.arrowDown::after {
+    border-top-color: var(--navy-900);
+}
+
+html .flatpickr-clear-btn {
+    display: block;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    padding: 0.5rem;
+    color: var(--navy-900);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+html .flatpickr-clear-btn:hover {
+    background: var(--bg);
+}
+
+/* Hormati preferensi kurangi gerakan: matikan transisi/animasi, hilangkan gerak kartu & chip */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .card-lift:hover,
+    .card-lift:focus-within,
+    .chip-option > input:not(:disabled):hover + .chip-face {
+        transform: none;
+    }
+}
+
+/*
+ * Sidebar admin: mode "rail" (hanya ikon) di desktop.
+ * Dipakai resources/views/layouts/admin.blade.php.
+ * Atribut data-admin-rail dipasang di <html> oleh skrip anti-flash dan tombol toggle,
+ * supaya tidak ada kedipan lebar sidebar saat halaman dimuat (bukan SPA).
+ */
+.admin-brand-rail {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    html[data-admin-rail] #admin-sidebar {
+        width: 5rem;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-sidebar-head {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-brand-text,
+    html[data-admin-rail] #admin-sidebar .admin-nav-label {
+        display: none;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-brand-rail {
+        display: inline-flex;
+    }
+
+    html[data-admin-rail] #admin-sidebar .admin-nav-link,
+    html[data-admin-rail] #admin-sidebar .admin-logout {
+        justify-content: center;
+        gap: 0;
+        padding-inline: 0.75rem;
+    }
+}
+
+/*
+ * ===== Footer publik (layouts/footer.blade.php) =====
+ * Semua memakai token warna yang sudah ada, jadi ikut tema terang/gelap.
+ */
+.footer-ikon {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    color: var(--orange-500);
+}
+
+.footer-sosmed {
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    color: var(--ink-muted);
+    transition: border-color 150ms ease-in-out, color 150ms ease-in-out, transform 150ms ease-out;
+}
+
+.footer-sosmed:hover,
+.footer-sosmed:focus-visible {
+    border-color: var(--orange-500);
+    color: var(--orange-500);
+    transform: translateY(-2px);
+}
+
+.footer-tautan {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-block: 0.25rem;
+    color: var(--ink-muted);
+    transition: color 150ms ease-in-out, transform 150ms ease-out;
+}
+
+.footer-tautan:hover,
+.footer-tautan:focus-visible {
+    color: var(--orange-500);
+    transform: translateX(2px);
+}
+
+.footer-kartu {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--bg);
+    padding: 1rem 1.25rem;
+}
+
+/* Pil kontak di dalam kartu cabang dibuat lebih rapat agar muat dua sebaris */
+.footer-kartu .btn-secondary-edu,
+.cabang-marquee-kartu .btn-secondary-edu {
+    padding-inline: 0.625rem;
+}
+
+/*
+ * ===== Strip kartu cabang berjalan (komponen x-branch-marquee) =====
+ * Dipakai di beranda (home/profil.blade.php) dan footer publik.
+ * Komponen menggandakan kartu jadi dua paruh identik; animasi menggeser tepat
+ * setengah trek supaya sambungannya tidak berkedip.
+ */
+.cabang-marquee {
+    position: relative;
+    overflow: hidden;
+    /* Tepi kiri/kanan dilembutkan supaya kartu tidak terpotong tajam */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent);
+}
+
+.cabang-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: cabang-marquee-jalan var(--cabang-marquee-durasi, 30s) linear infinite;
+}
+
+/* Berhenti saat disorot, ditekan (layar sentuh), atau sedang ditelusuri keyboard,
+   biar isinya bisa dibaca dan tautannya diklik. */
+.cabang-marquee:hover .cabang-marquee-track,
+.cabang-marquee:active .cabang-marquee-track,
+.cabang-marquee:focus-within .cabang-marquee-track {
+    animation-play-state: paused;
+}
+
+.cabang-marquee-kartu {
+    flex: none;
+    width: 16rem;
+    margin-right: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    /* Sengaja memakai --bg: kontainer tempat strip ini dipakai selalu --surface */
+    background-color: var(--bg);
+}
+
+@keyframes cabang-marquee-jalan {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(-50%, 0, 0);
+    }
+}
+
+@media (min-width: 1024px) {
+    .cabang-marquee {
+        -webkit-mask-image: linear-gradient(to right, transparent, #000 4rem, #000 calc(100% - 4rem), transparent);
+        mask-image: linear-gradient(to right, transparent, #000 4rem, #000 calc(100% - 4rem), transparent);
+    }
+
+    .cabang-marquee-kartu {
+        width: 18rem;
+    }
+}
+
+/* Preferensi kurangi gerakan: strip jadi gulir manual, bukan berjalan sendiri */
+@media (prefers-reduced-motion: reduce) {
+    .cabang-marquee {
+        overflow-x: auto;
+    }
+
+    .cabang-marquee-track {
+        animation: none;
+    }
+}
+
+/*
+ * ===== Animasi masuk halaman user (layouts/app.blade.php & layouts/guest.blade.php) =====
+ * Murni CSS: setiap anak langsung dari wadah .anim-masuk muncul berurutan saat halaman
+ * dibuka/di-reload. Fill-mode "backwards" dipakai supaya tidak ada sisa nilai
+ * opacity/transform setelah animasi selesai (efek hover di dalamnya tetap normal).
+ * Panel admin sengaja tidak memakai ini.
+ */
+@keyframes anim-masuk-naik {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 1.25rem, 0);
+    }
+}
+
+.anim-masuk > * {
+    animation: anim-masuk-naik 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.anim-masuk > :nth-child(1) {
+    animation-delay: 0ms;
+}
+
+.anim-masuk > :nth-child(2) {
+    animation-delay: 80ms;
+}
+
+.anim-masuk > :nth-child(3) {
+    animation-delay: 160ms;
+}
+
+.anim-masuk > :nth-child(4) {
+    animation-delay: 240ms;
+}
+
+.anim-masuk > :nth-child(5) {
+    animation-delay: 320ms;
+}
+
+.anim-masuk > :nth-child(6) {
+    animation-delay: 400ms;
+}
+
+.anim-masuk > :nth-child(n + 7) {
+    animation-delay: 480ms;
+}
+
+/* Preferensi kurangi gerakan: konten langsung tampil */
+@media (prefers-reduced-motion: reduce) {
+    .anim-masuk > * {
+        animation: none;
+    }
+}

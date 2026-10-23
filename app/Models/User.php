@@ -2,20 +2,34 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\VerifyEmailCode;
+use App\Services\EmailVerificationCodeService;
 use Database\Factories\UserFactory;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'branch_id', 'phone', 'social_account', 'theme_preference'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
+
+    /**
+     * Nomor WhatsApp: hanya angka 0-9, 8-15 digit (batas E.164), tanpa spasi/+/-.
+     * Boleh format lokal (08xx) maupun internasional tanpa + (62xx, 1415xx, 4479xx).
+     */
+    public const PHONE_REGEX = '/^[0-9]{8,15}$/D';
+
+    public const PHONE_MESSAGE = 'Nomor WhatsApp hanya boleh berisi angka (8-15 digit) tanpa spasi, tanda + atau - (contoh: 081234567890 atau 14155552671).';
 
     /**
      * Get the attributes that should be cast.
@@ -27,6 +41,73 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'social_account' => 'array',
+            'theme_preference' => 'string',
         ];
+    }
+
+    /**
+     * Kirim kode verifikasi 6 angka (menggantikan link verifikasi bawaan Laravel).
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $code = app(EmailVerificationCodeService::class)->issue($this);
+
+        // Kirim email setelah respons dikirim ke browser: SMTP bisa makan beberapa detik
+        // dan tidak perlu menahan halaman pendaftaran (tanpa butuh queue worker).
+        app()->terminating(fn () => $this->notify(new VerifyEmailCode($code)));
+    }
+
+    /**
+     * Preferensi tema yang valid (light|dark), selain itu dianggap system.
+     */
+    public function preferredTheme(): string
+    {
+        return in_array($this->theme_preference, ['light', 'dark'], true)
+            ? $this->theme_preference
+            : 'system';
+    }
+
+    /**
+     * Pesanan milik pengguna ini.
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function isSuperadmin(): bool
+    {
+        return $this->hasRole(RoleSeeder::SUPERADMIN);
+    }
+
+    public function isBranchAdmin(): bool
+    {
+        return $this->hasRole(RoleSeeder::ADMIN);
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->hasAnyRole(RoleSeeder::STAFF);
+    }
+
+    public function effectiveBranchId(?int $requested = null): ?int
+    {
+        return $this->isSuperadmin() ? $requested : ($this->branch_id ?? 0);
+    }
+
+    public function canManageBranch(?int $branchId): bool
+    {
+        if ($this->isSuperadmin()) {
+            return true;
+        }
+
+        return $this->isBranchAdmin() && $this->branch_id !== null && $this->branch_id === $branchId;
     }
 }

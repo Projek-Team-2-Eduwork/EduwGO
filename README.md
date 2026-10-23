@@ -3,11 +3,13 @@
 Website rental motor. Tugas Bootcamp Programming Eduwork, tim 3 orang. UI mengikuti Figma "ED.RENT (Eduwork)" dengan brand/warna/logo diganti ke EduwGo.
 
 - Spesifikasi lengkap: [`docs/SPEC.md`](docs/SPEC.md)
+- Keputusan tim, git flow, konvensi, DoD: [`docs/KEPUTUSAN.md`](docs/KEPUTUSAN.md)
+- Struktur database: [`docs/ERD.md`](docs/ERD.md)
 - Backlog & detail tiap task: Linear team **EduwGO** (prefix `EG-`)
 
 ## Stack
 
-Laravel 13, PHP 8.3, Breeze (Blade + Tailwind + Alpine), Laravel Sail (Docker), MySQL 8.4, Mailpit, phpMyAdmin, Xendit Invoice API.
+Laravel 13, PHP 8.3, Breeze (Blade + Tailwind + Alpine), Laravel Sail (Docker), MySQL 8.4, phpMyAdmin, Xendit Invoice API.
 
 ## Setup (5 langkah)
 
@@ -36,11 +38,10 @@ lalu lanjut dari langkah `cp .env.example .env` di atas.
 | Service | URL | Kegunaan |
 |---|---|---|
 | App | http://localhost | Aplikasi Laravel |
-| Mailpit | http://localhost:8025 | Lihat email yang terkirim (verifikasi, dll) |
 | phpMyAdmin | http://localhost:8080 | Lihat/edit database (server: `mysql`, user: `sail`, password: `password`) |
 | MySQL | `localhost:3306` | Untuk klien DB eksternal (TablePlus, dll) |
 
-Ubah port di `.env` (`APP_PORT`, `FORWARD_DB_PORT`, `FORWARD_MAILPIT_PORT`, `FORWARD_MAILPIT_DASHBOARD_PORT`, `FORWARD_PHPMYADMIN_PORT`) kalau bentrok dengan service lain di laptop.
+Ubah port di `.env` (`APP_PORT`, `FORWARD_DB_PORT`, `FORWARD_PHPMYADMIN_PORT`) kalau bentrok dengan service lain di laptop.
 
 ## Perintah sehari-hari
 
@@ -63,6 +64,51 @@ ngrok http 80
 ```
 
 Salin URL `https://xxxx.ngrok-free.app`, daftarkan `https://xxxx.ngrok-free.app/webhooks/xendit` di dashboard Xendit → **Settings → Developers → Webhooks** (Invoices). Detail lengkap: `docs/SPEC.md` bagian 3.
+
+## Scheduler auto-expire (EG-26)
+
+Booking Pending yang invoice Xendit-nya lewat waktu di-expire otomatis tiap 5 menit (`bookings:expire`) — fallback kalau webhook Xendit tidak masuk. Scheduler harus dijalankan terpisah:
+
+```bash
+# lokal — biarkan jalan di terminal terpisah (Ctrl+C untuk berhenti)
+./vendor/bin/sail artisan schedule:work
+```
+
+Untuk produksi, daftarkan cron ini:
+
+```cron
+* * * * * cd /path/ke/EduwGO && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Admin juga bisa memaksa sinkronisasi status invoice lewat tombol "Cek Status Xendit" di halaman `/admin/pesanan/{kode}`.
+
+## Email lewat Gmail SMTP
+
+Default lokal: email ditulis ke log (`storage/logs/laravel.log`), jadi kode verifikasi bisa dibaca di sana. Untuk kirim email sungguhan lewat Gmail:
+
+1. Pakai akun Gmail khusus proyek (jangan akun pribadi).
+2. Aktifkan **Verifikasi 2 langkah** di akun Google, lalu buat **App Password** di https://myaccount.google.com/apppasswords (16 karakter, tanpa spasi).
+3. Isi `.env` (contoh lengkap ada di `.env.example`):
+
+   ```env
+   MAIL_MAILER=smtp
+   MAIL_SCHEME=smtp
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USERNAME=akun-proyek@gmail.com
+   MAIL_PASSWORD=app-password-16-karakter
+   MAIL_FROM_ADDRESS="akun-proyek@gmail.com"
+   MAIL_FROM_NAME="${APP_NAME}"
+   ```
+
+4. Bersihkan cache config: `./vendor/bin/sail artisan config:clear`.
+5. Email status booking dikirim lewat queue (`QUEUE_CONNECTION=database`), jadi worker harus jalan: `./vendor/bin/sail artisan queue:work`. Setelah ubah `.env`/kode, jalankan `./vendor/bin/sail artisan queue:restart`. Di hosting tanpa worker (mis. Render free, `docs/DEPLOY.md`) set `QUEUE_CONNECTION=sync`. Email verifikasi dikirim setelah halaman merespons dan reset password dikirim langsung, keduanya tidak butuh worker.
+
+Catatan:
+- Batas Gmail sekitar 500 email/hari; cukup untuk demo.
+- Email bisa masuk folder **spam** — cek di sana saat uji coba.
+- Alamat pengirim (`MAIL_FROM_ADDRESS`) harus sama dengan `MAIL_USERNAME`, kalau tidak Gmail menimpanya.
+- **Jangan commit `.env`** atau App Password. Kalau bocor, cabut di halaman App Password dan buat baru.
 
 ## Image Docker kustom
 
