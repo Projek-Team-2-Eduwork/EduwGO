@@ -20,6 +20,7 @@
         <div>
             <x-input-label for="phone" value="Nomor WhatsApp" class="!text-[var(--navy-900)]" />
             <x-text-input id="phone" class="block mt-1 w-full" type="tel" inputmode="numeric" name="phone" :value="old('phone')" required autocomplete="tel" placeholder="081234567890" />
+            <p class="mt-1 text-xs text-[var(--ink-muted)]">Hanya angka. Nomor luar negeri tulis dengan kode negara tanpa + (contoh: 14155552671).</p>
             <x-input-error :messages="$errors->get('phone')" class="mt-2 !text-red-600 dark:!text-red-400" />
         </div>
 

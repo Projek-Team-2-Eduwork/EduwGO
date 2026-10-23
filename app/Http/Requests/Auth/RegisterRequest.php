@@ -22,8 +22,8 @@ class RegisterRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            // Format nomor WhatsApp Indonesia: 08xx atau 62xx (10-14 digit).
-            'phone' => ['required', 'string', 'regex:/^(08|62)\d{8,12}$/'],
+            // Nomor WhatsApp lokal (08xx) atau internasional tanpa + (62xx, 1xx, 44xx).
+            'phone' => ['required', 'string', 'regex:'.User::PHONE_REGEX],
             'password' => ['required', 'confirmed', Password::defaults()],
             'terms' => ['accepted'],
         ];
@@ -40,7 +40,7 @@ class RegisterRequest extends FormRequest
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah terdaftar.',
             'phone.required' => 'Nomor WhatsApp wajib diisi.',
-            'phone.regex' => 'Nomor WhatsApp harus diawali 08 atau 62 dan hanya berisi angka (contoh: 081234567890).',
+            'phone.regex' => User::PHONE_MESSAGE,
             'password.required' => 'Kata sandi wajib diisi.',
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
             'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan.',
