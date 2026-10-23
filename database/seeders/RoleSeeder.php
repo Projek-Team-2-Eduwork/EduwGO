@@ -12,7 +12,9 @@ class RoleSeeder extends Seeder
      * File lain (model, route, controller, view) nunjuk ke sini.
      */
     public const SUPERADMIN = 'superadmin';
+
     public const ADMIN = 'admin';
+
     public const USER = 'user';
 
     /** Semua role yang valid. */
