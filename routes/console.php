@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PendingRegistration;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -11,3 +12,4 @@ Artisan::command('inspire', function () {
 Schedule::command('bookings:expire')->everyFiveMinutes();
 Schedule::command('bookings:remind')->dailyAt('08:00');
 Schedule::command('bookings:flag-overdue')->hourly();
+Schedule::command('model:prune', ['--model' => [PendingRegistration::class]])->hourly();

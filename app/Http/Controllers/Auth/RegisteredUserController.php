@@ -4,12 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\User;
-use Database\Seeders\RoleSeeder;
-use Illuminate\Auth\Events\Registered;
+use App\Services\PendingRegistrationService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -27,23 +23,14 @@ class RegisteredUserController extends Controller
     /**
      * Handle an incoming registration request.
      */
-    public function store(RegisterRequest $request): RedirectResponse
+    public function store(RegisterRequest $request, PendingRegistrationService $registrations): RedirectResponse
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-        ]);
+        // Akun belum dibuat: data disimpan sebagai pending sampai kode OTP benar.
+        $pending = $registrations->start($request->only('name', 'email', 'phone', 'password'));
 
-        $user->assignRole(RoleSeeder::USER);
+        $request->session()->put(PendingRegistrationService::SESSION_KEY, $pending->email);
 
-        // Memicu email verifikasi (User implements MustVerifyEmail).
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('verification.notice', absolute: false));
+        return redirect()->route('register.verify');
     }
 
     /**
