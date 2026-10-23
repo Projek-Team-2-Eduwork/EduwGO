@@ -297,7 +297,8 @@ class RegistrationTest extends TestCase
         $this->post('/register', $this->payload(['phone' => $phone]))
             ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'phone' => $phone]);
+        // Akun baru dibuat setelah kode OTP benar; nomor tersimpan dulu di pendaftaran tertunda.
+        $this->assertDatabaseHas('pending_registrations', ['email' => 'test@example.com', 'phone' => $phone]);
     }
 
     /**

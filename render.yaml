@@ -1,0 +1,100 @@
+# Blueprint Render untuk EduwGo (docs/DEPLOY.md).
+# Semua rahasia memakai `sync: false`: Render meminta nilainya di dashboard saat Blueprint dibuat.
+# JANGAN menulis nilai rahasia di file ini.
+services:
+  - type: web
+    name: eduwgo
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    autoDeployTrigger: commit
+    dockerfilePath: ./docker/production/Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      # Aplikasi
+      - key: APP_NAME
+        value: EduwGo
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: APP_TIMEZONE
+        value: Asia/Jakarta
+      - key: APP_LOCALE
+        value: id
+      - key: APP_FALLBACK_LOCALE
+        value: en
+      - key: APP_FAKER_LOCALE
+        value: id_ID
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+
+      # Database Aiven (SSL). CA lewat Secret File `aiven-ca.pem` -> /etc/secrets/aiven-ca.pem
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/secrets/aiven-ca.pem
+
+      # Sesi, cache, queue, file
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: local
+
+      # Email: Brevo SMTP (smtp / smtp / smtp-relay.brevo.com / 2525). Port 25/465/587 diblokir di Render free.
+      - key: MAIL_MAILER
+        sync: false
+      - key: MAIL_SCHEME
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: EduwGo
+
+      # Xendit (mode test untuk demo)
+      - key: XENDIT_MODE
+        value: payment_request
+      - key: XENDIT_SECRET_KEY
+        sync: false
+      - key: XENDIT_CALLBACK_TOKEN
+        sync: false
+
+      # Cron eksternal (POST /cron/run, header Authorization: Bearer <CRON_TOKEN>)
+      - key: CRON_TOKEN
+        sync: false
+
+      # Migrasi otomatis saat start: biarkan false (DB demo sudah dimigrasi)
+      - key: RUN_MIGRATIONS
+        value: "false"

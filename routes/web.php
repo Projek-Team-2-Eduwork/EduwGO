@@ -12,12 +12,14 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CabangPublikController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\XenditWebhookController;
+use App\Http\Middleware\VerifyCronToken;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +54,11 @@ Route::get('/api/kendaraan/{vehicle}/jadwal', [KendaraanController::class, 'jadw
 // Webhook Xendit (EG-14): Endpoint eksternal, diverifikasi via x-callback-token, dikecualikan CSRF
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
+
+// Cron eksternal (hosting tanpa scheduler, docs/DEPLOY.md): Bearer CRON_TOKEN, dikecualikan CSRF
+Route::post('/cron/run', [CronController::class, 'run'])
+    ->middleware([VerifyCronToken::class, 'throttle:30,1'])
+    ->name('cron.run');
 
 // ==========================================
 // Rute Development
