@@ -579,13 +579,15 @@ class XenditService
 
         // OVO mewajibkan nomor HP pembeli dalam format E.164 (+62..., tanpa nol depan)
         if ($channel === 'OVO') {
+            // Hanya format lokal 08xx yang diubah ke +62; nomor lain sudah berkode negara.
             $phone = preg_replace('/\D/', '', (string) ($booking->user->phone ?? ''));
-            $phone = ltrim($phone, '0');
 
-            if (str_starts_with($phone, '62')) {
+            if (str_starts_with($phone, '0')) {
+                $phone = '62'.ltrim($phone, '0');
+            }
+
+            if ($phone !== '') {
                 $returnUrls['account_mobile_number'] = '+'.$phone;
-            } elseif (str_starts_with($phone, '8')) {
-                $returnUrls['account_mobile_number'] = '+62'.$phone;
             }
         }
 

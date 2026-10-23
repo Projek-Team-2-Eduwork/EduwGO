@@ -53,9 +53,9 @@
 
         <div>
             <x-input-label for="phone" value="Nomor WhatsApp" />
-            <x-text-input id="phone" name="phone" type="tel" class="mt-1 block w-full" :value="old('phone', $user->phone)" placeholder="0812-3456-7890" autocomplete="tel" />
+            <x-text-input id="phone" name="phone" type="tel" inputmode="numeric" class="mt-1 block w-full" :value="old('phone', $user->phone)" placeholder="081234567890" autocomplete="tel" />
             <x-input-error class="mt-2" :messages="$errors->get('phone')" />
-            <p class="mt-1 text-xs text-[var(--ink-muted)]">Dipakai saat checkout dan dicek admin saat pengambilan unit.</p>
+            <p class="mt-1 text-xs text-[var(--ink-muted)]">Hanya angka; nomor luar negeri pakai kode negara tanpa + (contoh: 14155552671). Dipakai saat checkout dan dicek admin saat pengambilan unit.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">

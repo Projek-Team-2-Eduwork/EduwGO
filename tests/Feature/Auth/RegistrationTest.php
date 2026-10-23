@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Notifications\VerifyEmailCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -69,10 +70,50 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'phone' => '6281234567890']);
     }
 
-    public function test_registration_fails_with_invalid_phone_format(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function validPhones(): array
     {
-        $this->post('/register', $this->payload(['phone' => '12345']))
-            ->assertSessionHasErrors('phone');
+        return [
+            'lokal 08' => ['081234567890'],
+            'indonesia 62' => ['6281234567890'],
+            'amerika serikat' => ['14155552671'],
+            'inggris' => ['447911123456'],
+            'minimal 8 digit' => ['12345678'],
+            'maksimal 15 digit' => ['123456789012345'],
+        ];
+    }
+
+    #[DataProvider('validPhones')]
+    public function test_phone_with_digits_only_is_accepted(string $phone): void
+    {
+        $this->post('/register', $this->payload(['phone' => $phone]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'phone' => $phone]);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidPhones(): array
+    {
+        return [
+            'terlalu pendek' => ['12345'],
+            'terlalu panjang' => ['1234567890123456'],
+            'ada huruf' => ['0812abc67890'],
+            'ada spasi' => ['0812 3456 7890'],
+            'ada tanda plus' => ['+14155552671'],
+            'ada tanda minus' => ['0812-3456-7890'],
+        ];
+    }
+
+    #[DataProvider('invalidPhones')]
+    public function test_registration_fails_with_invalid_phone_format(string $phone): void
+    {
+        $this->post('/register', $this->payload(['phone' => $phone]))
+            ->assertSessionHasErrors(['phone' => 'Nomor WhatsApp hanya boleh berisi angka (8-15 digit) tanpa spasi, tanda + atau - (contoh: 081234567890 atau 14155552671).']);
 
         $this->assertGuest();
         $this->assertDatabaseCount('users', 0);
