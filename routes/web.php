@@ -104,7 +104,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Halaman pesanan sukses, gagal, dan polling status pembayaran (EG-15)
     Route::get('/pesanan/{code}/berhasil', [BookingPaymentController::class, 'success'])->name('booking.success');
     Route::get('/pesanan/{code}/gagal', [BookingPaymentController::class, 'failed'])->name('booking.failed');
-    Route::get('/pesanan/{code}/status', [BookingPaymentController::class, 'status'])->name('booking.status');
+    // Polling status memanggil API Xendit: dibatasi agar tidak bisa dipakai membanjiri gateway.
+    Route::get('/pesanan/{code}/status', [BookingPaymentController::class, 'status'])
+        ->middleware('throttle:60,1')
+        ->name('booking.status');
 
     // Fitur Booking Ulang satu klik untuk pesanan expired (EG-27)
     Route::get('/pesanan/{code}/ulang', [BookingPaymentController::class, 'ulang'])->name('booking.rebook');
@@ -113,7 +116,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Alur Checkout Sewa Kendaraan
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout/{vehicle}', [CheckoutController::class, 'show'])->name('checkout.show');
-    Route::post('/checkout/{vehicle}', [CheckoutController::class, 'store'])->name('checkout.store');
+    // Tiap checkout membuat invoice Xendit dan mengunci unit: batasi per pengguna.
+    Route::post('/checkout/{vehicle}', [CheckoutController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('checkout.store');
 });
 
 // ==========================================

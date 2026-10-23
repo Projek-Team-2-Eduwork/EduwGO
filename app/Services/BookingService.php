@@ -23,9 +23,17 @@ class BookingService
             throw InvalidTransitionException::make($booking->status, $to);
         }
 
-        $oldStatus = $booking->status;
+        return DB::transaction(function () use ($booking, $to, $by, $note) {
+            // Kunci baris booking lalu cek ulang status terbaru: dua proses bersamaan
+            // (webhook ganda, webhook vs scheduler, admin vs penyewa) tidak boleh
+            // sama-sama lolos dari status lama yang sudah basi di memori.
+            $oldStatus = Booking::whereKey($booking->getKey())->lockForUpdate()->first(['id', 'status'])?->status
+                ?? $booking->status;
 
-        return DB::transaction(function () use ($booking, $oldStatus, $to, $by, $note) {
+            if (! $oldStatus->canTransitionTo($to)) {
+                throw InvalidTransitionException::make($oldStatus, $to);
+            }
+
             // Update status (menggunakan assignment agar tidak terdeteksi grep `update(['status'`)
             $booking->status = $to;
             $booking->save();

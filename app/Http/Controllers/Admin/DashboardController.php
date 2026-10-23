@@ -15,6 +15,10 @@ class DashboardController extends Controller
     public function index(Request $request, DashboardService $dashboardService)
     {
         $request->validate([
+            // Tanggal tidak valid sebelumnya membuat Carbon::parse melempar exception (500).
+            'dari' => ['nullable', 'date'],
+            'sampai' => ['nullable', 'date'],
+            'tipe' => ['nullable', 'integer'],
             'metode' => ['nullable', 'in:xendit_invoice,cash'],
             'branch' => ['nullable', 'integer'],
         ]);
