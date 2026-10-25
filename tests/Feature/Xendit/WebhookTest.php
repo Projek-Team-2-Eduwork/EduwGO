@@ -129,6 +129,9 @@ class WebhookTest extends TestCase
 
     public function test_expired_webhook_menandai_payment_dan_booking_expired()
     {
+        // Batas bayar booking (created_at + invoice_minutes) sudah lewat
+        $this->booking->forceFill(['created_at' => now()->subMinutes(61)])->save();
+
         $this->webhook($this->invoicePayload('EXPIRED'))
             ->assertStatus(200)
             ->assertJson(['status' => 'ok']);
@@ -163,6 +166,8 @@ class WebhookTest extends TestCase
 
     public function test_webhook_expired_duplikat_idempoten()
     {
+        $this->booking->forceFill(['created_at' => now()->subMinutes(61)])->save();
+
         $this->webhook($this->invoicePayload('EXPIRED'))->assertStatus(200);
         $this->webhook($this->invoicePayload('EXPIRED'))->assertStatus(200);
 

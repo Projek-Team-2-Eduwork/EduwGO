@@ -1,5 +1,5 @@
 {{--
-    Layout mandiri untuk 500/503: TIDAK memakai query DB, session, atau auth,
+    Layout mandiri untuk 429/500/503 dan fallback error lain: TIDAK memakai query DB, session, atau auth,
     supaya tetap tampil saat database/session bermasalah.
 --}}
 <!DOCTYPE html>
@@ -35,7 +35,12 @@
             </header>
 
             <main class="flex-1 anim-masuk">
-                @include('errors.partials.content', ['code' => $code, 'heading' => $heading, 'message' => $message])
+                {{-- View error bawaan Laravel (401, 402, 429, ...) meng-extend layout ini lewat @section, tanpa variabel. --}}
+                @include('errors.partials.content', [
+                    'code' => $code ?? trim($__env->yieldContent('code')),
+                    'heading' => $heading ?? trim($__env->yieldContent('title')),
+                    'message' => $message ?? trim($__env->yieldContent('message')),
+                ])
             </main>
 
             <footer class="border-t border-[var(--border)] py-4 text-center text-xs" style="background-color: var(--surface);">

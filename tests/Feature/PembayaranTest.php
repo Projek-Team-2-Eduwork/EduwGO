@@ -405,6 +405,27 @@ class PembayaranTest extends TestCase
         ]);
     }
 
+    public function test_pilih_metode_ovo_tidak_memaksa_awalan_62_pada_nomor_luar_negeri()
+    {
+        $this->user->update(['phone' => '14155552671']);
+
+        Http::fake(['api.xendit.co/*' => Http::response([
+            'payment_request_id' => 'pr-ovo-456',
+            'reference_id' => 'BOOK-PBR-001',
+            'status' => 'REQUIRES_ACTION',
+            'channel_code' => 'OVO',
+            'actions' => [['type' => 'DEEPLINK_URL', 'value' => 'https://ovo.example/abc']],
+            'channel_properties' => ['expires_at' => now()->addHour()->toIso8601String()],
+        ])]);
+
+        $this->actingAs($this->user)
+            ->get('/pembayaran/BOOK-PBR-001?metode=OVO')
+            ->assertOk();
+
+        Http::assertSent(fn ($request) => $request['channel_code'] === 'OVO'
+            && $request['channel_properties']['account_mobile_number'] === '+14155552671');
+    }
+
     public function test_pilih_metode_retail_menampilkan_kode_pembayaran()
     {
         Http::fake(['api.xendit.co/*' => Http::response([

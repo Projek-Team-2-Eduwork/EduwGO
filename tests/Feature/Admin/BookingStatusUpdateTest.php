@@ -147,6 +147,14 @@ class BookingStatusUpdateTest extends TestCase
 
         $response = $this->post(route('admin.pesanan.update', $booking->code), $payload);
 
+        // Lunas hanya lewat bayar tunai/Xendit, form status selalu menolak
+        if ($to === 'paid') {
+            $response->assertSessionHasErrors('to');
+            $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'status' => $from]);
+
+            return;
+        }
+
         if ($isValid) {
             $response->assertSessionHas('success');
             $this->assertDatabaseHas('bookings', [

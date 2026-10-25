@@ -17,7 +17,9 @@
                     <div class="space-y-4">
                         <div>
                             <x-input-label for="amount_{{ $booking->code }}" value="Nominal (Rp)" />
-                            <x-text-input id="amount_{{ $booking->code }}" name="amount" type="number" class="block w-full mt-1" :value="$booking->total_amount" required min="0" />
+                            <x-text-input id="amount_{{ $booking->code }}" name="amount" type="number" class="block w-full mt-1" :value="old('amount', (int) $booking->total_amount)" required min="0" />
+                            <p class="mt-1 text-xs">Harus sama dengan total tagihan.</p>
+                            <x-input-error class="mt-2" :messages="$errors->get('amount')" />
                         </div>
                         <div>
                             <x-input-label for="note_{{ $booking->code }}" value="Catatan (opsional)" />

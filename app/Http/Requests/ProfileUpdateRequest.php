@@ -28,7 +28,7 @@ class ProfileUpdateRequest extends FormRequest
             ],
 
             // Nomor WhatsApp aktif, dipakai saat checkout & dicek admin.
-            'phone' => ['nullable', 'string', 'regex:/^[0-9+\-\s()]{8,20}$/'],
+            'phone' => ['nullable', 'string', 'regex:'.User::PHONE_REGEX],
 
             // Username sosmed, boleh diawali @ (dihapus otomatis sebelum disimpan).
             'instagram' => ['nullable', 'string', 'regex:/^@?[A-Za-z0-9._]{1,50}$/'],
@@ -36,6 +36,16 @@ class ProfileUpdateRequest extends FormRequest
 
             // Preferensi tema user.
             'theme' => ['nullable', 'string', Rule::in(['light', 'dark', 'system'])],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'phone.regex' => User::PHONE_MESSAGE,
         ];
     }
 }

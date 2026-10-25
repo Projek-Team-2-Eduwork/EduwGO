@@ -61,7 +61,15 @@ class SettingController extends Controller
                 $oldPath = setting($dbKey);
                 $file = $request->file($reqKey);
 
-                $filename = uniqid('setting_').'_'.time().'.'.$file->getClientOriginalExtension();
+                // Ekstensi dari isi file (whitelist), bukan dari nama file klien:
+                // cegah file "logo.html" berisi PNG valid (polyglot) disajikan sebagai HTML.
+                $extension = match ($file->guessExtension()) {
+                    'png' => 'png',
+                    'svg' => 'svg',
+                    'ico' => 'ico',
+                    default => 'jpg',
+                };
+                $filename = uniqid('setting_').'_'.time().'.'.$extension;
                 $path = $file->storeAs('settings', $filename, 'public');
 
                 Setting::updateOrCreate(['key' => $dbKey], ['value' => 'storage/'.$path]);

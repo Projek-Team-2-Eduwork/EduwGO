@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class BookingPaymentController extends Controller
 {
-    public function waiting(Request $request, $code, XenditService $xenditService)
+    public function waiting(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -28,6 +29,13 @@ class BookingPaymentController extends Controller
             return redirect()->route('booking.failed', $booking->code);
         }
 
+        // Batas bayar booking habis (cron belum jalan): expire sekarang, jangan buat payment baru
+        if ($booking->isPaymentDeadlinePassed()) {
+            $paymentService->expireIfDeadlinePassed($booking);
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
         // Mode Payment Request (EG-52/53): arahkan ke halaman bayar sendiri.
         // Mode 'invoice' (default) tetap pakai halaman waiting lama — rollback aman.
         if (config('services.xendit.mode', 'invoice') === 'payment_request') {
@@ -37,7 +45,12 @@ class BookingPaymentController extends Controller
         try {
             $payment = $xenditService->createInvoice($booking);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            Log::channel('xendit')->error('Halaman menunggu: gagal membuat invoice.', [
+                'booking' => $booking->code,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.');
         }
 
         return view('booking.waiting', compact('booking', 'payment'));
@@ -47,7 +60,7 @@ class BookingPaymentController extends Controller
      * Halaman bayar sendiri (Xendit Payment Request): pilih metode lalu lihat
      * instruksi pembayaran (QR / nomor rekening) tanpa hosted checkout (EG-53).
      */
-    public function bayar(Request $request, $code, XenditService $xenditService)
+    public function bayar(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -59,6 +72,13 @@ class BookingPaymentController extends Controller
             if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
                 return redirect()->route('booking.show', $booking->code)->with('bayar_berhasil', true);
             }
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
+        // Batas bayar tetap dari waktu booking dibuat: ganti metode tidak memperpanjang hold unit
+        if ($booking->isPaymentDeadlinePassed()) {
+            $paymentService->expireIfDeadlinePassed($booking);
 
             return redirect()->route('booking.failed', $booking->code);
         }

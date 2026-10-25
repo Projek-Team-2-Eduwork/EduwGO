@@ -37,7 +37,7 @@ class ProfileThemeTest extends TestCase
             ->patch('/profile', [
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => '0812-3456-7890',
+                'phone' => '081234567890',
                 'instagram' => '@nastyo.ferdian',
                 'facebook' => 'nastyoferdian',
             ])
@@ -46,7 +46,7 @@ class ProfileThemeTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('0812-3456-7890', $user->phone);
+        $this->assertSame('081234567890', $user->phone);
         $this->assertSame('nastyo.ferdian', $user->social_account['instagram'] ?? null);
         $this->assertSame('nastyoferdian', $user->social_account['facebook'] ?? null);
     }
@@ -64,6 +64,21 @@ class ProfileThemeTest extends TestCase
             ])
             ->assertSessionHasErrors('phone')
             ->assertRedirect('/profile');
+    }
+
+    public function test_international_phone_is_saved_and_formatted_phone_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/profile', ['name' => $user->name, 'email' => $user->email, 'phone' => '447911123456'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('447911123456', $user->refresh()->phone);
+
+        $this->actingAs($user)
+            ->patch('/profile', ['name' => $user->name, 'email' => $user->email, 'phone' => '+44 7911 123456'])
+            ->assertSessionHasErrors('phone');
     }
 
     /**

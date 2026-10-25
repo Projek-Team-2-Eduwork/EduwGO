@@ -12,12 +12,14 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\CabangPublikController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\XenditWebhookController;
+use App\Http\Middleware\VerifyCronToken;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +55,11 @@ Route::get('/api/kendaraan/{vehicle}/jadwal', [KendaraanController::class, 'jadw
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('xendit.webhook');
 
+// Cron eksternal (hosting tanpa scheduler, docs/DEPLOY.md): Bearer CRON_TOKEN, dikecualikan CSRF
+Route::post('/cron/run', [CronController::class, 'run'])
+    ->middleware([VerifyCronToken::class, 'throttle:30,1'])
+    ->name('cron.run');
+
 // ==========================================
 // Rute Development
 // ==========================================
@@ -80,7 +87,7 @@ Route::middleware('auth')->group(function () {
     // Alias sesuai spesifikasi EG-28 (Figma: Profil > Home).
     Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit.indonesian');
 
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile', [ProfileController::class, 'update'])->middleware('throttle:6,1')->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Preferensi tema (Dark/Light mode), juga dipakai theme-toggle di navbar.
@@ -98,13 +105,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pesanan/{code}/menunggu', [BookingPaymentController::class, 'waiting'])->name('booking.waiting');
 
     // Halaman bayar sendiri (Xendit Payment Request) (EG-53)
-    Route::get('/pembayaran/{code}', [BookingPaymentController::class, 'bayar'])->name('booking.bayar');
+    // Tiap ganti metode bisa membuat payment request baru di Xendit: dibatasi per pengguna.
+    Route::get('/pembayaran/{code}', [BookingPaymentController::class, 'bayar'])
+        ->middleware('throttle:30,1')
+        ->name('booking.bayar');
     Route::post('/pembayaran/{code}/demo-bayar', [BookingPaymentController::class, 'demoBayar'])->name('booking.demo-bayar');
 
     // Halaman pesanan sukses, gagal, dan polling status pembayaran (EG-15)
     Route::get('/pesanan/{code}/berhasil', [BookingPaymentController::class, 'success'])->name('booking.success');
     Route::get('/pesanan/{code}/gagal', [BookingPaymentController::class, 'failed'])->name('booking.failed');
-    Route::get('/pesanan/{code}/status', [BookingPaymentController::class, 'status'])->name('booking.status');
+    // Polling status memanggil API Xendit: dibatasi agar tidak bisa dipakai membanjiri gateway.
+    Route::get('/pesanan/{code}/status', [BookingPaymentController::class, 'status'])
+        ->middleware('throttle:60,1')
+        ->name('booking.status');
 
     // Fitur Booking Ulang satu klik untuk pesanan expired (EG-27)
     Route::get('/pesanan/{code}/ulang', [BookingPaymentController::class, 'ulang'])->name('booking.rebook');
@@ -113,7 +126,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Alur Checkout Sewa Kendaraan
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout/{vehicle}', [CheckoutController::class, 'show'])->name('checkout.show');
-    Route::post('/checkout/{vehicle}', [CheckoutController::class, 'store'])->name('checkout.store');
+    // Tiap checkout membuat invoice Xendit dan mengunci unit: batasi per pengguna.
+    Route::post('/checkout/{vehicle}', [CheckoutController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('checkout.store');
 });
 
 // ==========================================
