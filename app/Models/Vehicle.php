@@ -18,6 +18,7 @@ class Vehicle extends Model
     protected $casts = [
         'price_per_day' => 'decimal:2',
         'is_active' => 'boolean',
+        'next_booking_start' => 'datetime',
     ];
 
     /**

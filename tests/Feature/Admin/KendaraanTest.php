@@ -159,7 +159,7 @@ class KendaraanTest extends TestCase
         $response = $this->get(route('admin.kendaraan.index'));
         $response->assertSee('Nonaktif');
         $response->assertSee('Tersedia');
-        $response->assertSee('Disewa');
+        $response->assertSee('Sedang disewa');
 
         // Test Filter Disewa
         $resFilter = $this->get(route('admin.kendaraan.index', ['status' => 'disewa']));

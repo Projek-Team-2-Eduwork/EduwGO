@@ -9,7 +9,7 @@
             @endforeach
         </select>
     @else
-        <p class="mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm">{{ $branches->first() ?? 'Anda belum ditempatkan di cabang' }}</p>
+        <p class="mt-1 rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm">{{ $branches->first() ?? 'Anda belum ditempatkan di cabang' }}</p>
     @endif
     <x-input-error class="mt-2" :messages="$errors->get('branch_id')" />
 </div>

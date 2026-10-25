@@ -16,7 +16,7 @@ class BookingPaymentController extends Controller
 {
     public function waiting(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         // Authorization sederhana
         if ($booking->user_id !== $request->user()->id) {
@@ -65,7 +65,7 @@ class BookingPaymentController extends Controller
      */
     public function bayar(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         if ($booking->user_id !== $request->user()->id) {
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
@@ -258,7 +258,7 @@ class BookingPaymentController extends Controller
 
     public function success(Request $request, $code)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         if ($booking->user_id !== $request->user()->id) {
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
@@ -279,7 +279,7 @@ class BookingPaymentController extends Controller
 
     public function failed(Request $request, $code)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         if ($booking->user_id !== $request->user()->id) {
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
@@ -305,7 +305,7 @@ class BookingPaymentController extends Controller
             abort(404);
         }
 
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         if ($booking->user_id !== $request->user()->id) {
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
@@ -329,7 +329,7 @@ class BookingPaymentController extends Controller
 
     public function status(Request $request, $code, XenditService $xenditService)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         if ($booking->user_id !== $request->user()->id) {
             abort(403, 'Anda tidak memiliki akses ke pesanan ini.');
@@ -364,7 +364,7 @@ class BookingPaymentController extends Controller
      */
     public function ulang(Request $request, $code)
     {
-        $booking = Booking::where('code', $code)->firstOrFail();
+        $booking = Booking::where('code', $code)->with('vehicle.branch')->firstOrFail();
 
         // Pastikan hanya pemilik yang bisa booking ulang pesanannya sendiri
         if ($booking->user_id !== $request->user()->id) {

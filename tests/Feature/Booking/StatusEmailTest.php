@@ -76,7 +76,7 @@ class StatusEmailTest extends TestCase
 
         // Expired
         $booking = Booking::factory()->pending()->create();
-        $service->transition($booking, BookingStatus::Expired, null, 'Expired');
+        $service->transition($booking, BookingStatus::Expired, null, 'Batas bayar terlewat');
         Mail::assertSent(BookingStatusMail::class, function ($mail) {
             return str_contains($mail->subjectText, 'Waktu habis');
         });

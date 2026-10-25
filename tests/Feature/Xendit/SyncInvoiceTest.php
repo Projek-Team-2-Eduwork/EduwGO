@@ -147,7 +147,7 @@ class SyncInvoiceTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.pesanan.show', $booking->code));
 
         $response->assertOk();
-        $response->assertSee('Cek Status Xendit');
+        $response->assertSee('Sinkronkan status bayar');
     }
 
     public function test_tombol_tidak_tampil_jika_bukan_pending()
@@ -166,6 +166,6 @@ class SyncInvoiceTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.pesanan.show', $booking->code));
 
         $response->assertOk();
-        $response->assertDontSee('Cek Status Xendit');
+        $response->assertDontSee('Sinkronkan status bayar');
     }
 }

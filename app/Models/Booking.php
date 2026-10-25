@@ -160,6 +160,20 @@ class Booking extends Model
     }
 
     /**
+     * Link chat WhatsApp ke nomor penyewa (08xx dinormalisasi ke 62xx).
+     */
+    public function whatsappUrl(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $this->customer_phone);
+
+        if ($digits === '') {
+            return null;
+        }
+
+        return 'https://wa.me/'.(str_starts_with($digits, '0') ? '62'.substr($digits, 1) : $digits);
+    }
+
+    /**
      * Mendapatkan key untuk route model binding (digunakan di URL checkout redirect).
      */
     public function getRouteKey()

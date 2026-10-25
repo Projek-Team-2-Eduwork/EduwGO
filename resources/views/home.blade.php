@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout title="Beranda">
     @include('home.hero')
     @include('home.steps')
     @include('home.catalog')

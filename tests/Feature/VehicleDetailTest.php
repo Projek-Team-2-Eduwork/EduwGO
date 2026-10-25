@@ -38,7 +38,7 @@ class VehicleDetailTest extends TestCase
             'end_at' => now()->addDay(),
         ]);
 
-        $this->get(route('kendaraan.detail', $vehicle))->assertOk()->assertSee('Disewa');
+        $this->get(route('kendaraan.detail', $vehicle))->assertOk()->assertSee('Sedang disewa');
     }
 
     public function test_user_login_melihat_modal_durasi(): void
@@ -48,7 +48,8 @@ class VehicleDetailTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('kendaraan.detail', $vehicle))
             ->assertOk()
-            ->assertSee('Pilih Durasi Sewa');
+            ->assertSee('Pilih tanggal sewa')
+            ->assertSee('Lanjut ke checkout');
     }
 
     public function test_guest_klik_booking_menuju_login_lalu_kembali_ke_detail(): void
@@ -58,7 +59,8 @@ class VehicleDetailTest extends TestCase
         $this->get(route('kendaraan.detail', $vehicle))
             ->assertOk()
             ->assertSee(route('login'))
-            ->assertDontSee('Pilih Durasi Sewa');
+            ->assertSee('Masuk untuk pilih jadwal')
+            ->assertDontSee('Lanjut ke checkout');
 
         $user = User::factory()->create();
         $this->post('/login', ['email' => $user->email, 'password' => 'password'])
@@ -89,7 +91,7 @@ class VehicleDetailTest extends TestCase
 
         $recommendations = $response->viewData('recommendations');
         $this->assertSame([$same->id], $recommendations->pluck('id')->all());
-        $response->assertSee('Rekomendasi Kendaraan')->assertDontSee($inactive->name)->assertDontSee($differentType->name);
+        $response->assertSee('Motor serupa di cabang ini')->assertDontSee($inactive->name)->assertDontSee($differentType->name);
     }
 
     public function test_rekomendasi_mengikuti_filter_session_dan_maksimal_8(): void
@@ -133,5 +135,35 @@ class VehicleDetailTest extends TestCase
         $this->withSession(['booking.filter' => ['start_at' => 'bukan-tanggal', 'days' => 99]])
             ->get(route('kendaraan.detail', $vehicle))
             ->assertOk();
+    }
+
+    public function test_detail_menampilkan_cabang_kartu_pesan_dan_kembali_ke_hasil(): void
+    {
+        $vehicle = Vehicle::factory()->create(['price_per_day' => 70000]);
+        $branch = $vehicle->branch->name;
+
+        $this->get('/kendaraan?harga=termurah&q=a')->assertOk();
+
+        $this->get(route('kendaraan.detail', $vehicle))
+            ->assertOk()
+            ->assertSee('Ambil di '.$branch)
+            ->assertSee('Lokasi pengambilan')
+            ->assertSee('Rp70.000')
+            ->assertSee('Kembali ke hasil')
+            ->assertSee(e(url('/kendaraan?harga=termurah&q=a')), false)
+            ->assertSee('Baca seluruh ketentuan')
+            ->assertSeeInOrder(['<h1', 'Ambil di '.$branch, 'Foto '.$vehicle->name], false);
+    }
+
+    public function test_rekomendasi_tidak_menampilkan_plat(): void
+    {
+        $type = VehicleType::factory()->create();
+        $vehicle = Vehicle::factory()->create(['vehicle_type_id' => $type->id]);
+        $same = Vehicle::factory()->create(['vehicle_type_id' => $type->id, 'plate_number' => 'N 9999 ZZ']);
+
+        $this->get(route('kendaraan.detail', $vehicle))
+            ->assertOk()
+            ->assertSee($same->name)
+            ->assertDontSee('N 9999 ZZ');
     }
 }

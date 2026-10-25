@@ -1,142 +1,228 @@
-<x-admin-layout>
+<x-admin-layout title="Dashboard">
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight">
             {{ __('Dashboard Admin') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Widget: Stats (Jumlah Kendaraan) -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="card-surface p-6">
-                        <div class="text-sm font-medium">Total Unit Aktif</div>
-                        <div class="mt-2 text-3xl font-bold text-[var(--navy-900)]">{{ $stats['total_vehicles'] }}</div>
+    @php
+        $scope = array_filter(['branch' => request('branch')]);
+        $statCards = [
+            ['label' => 'Total Unit Aktif', 'value' => $stats['total_vehicles'], 'tone' => 'ink', 'href' => route('admin.kendaraan.index', $scope)],
+            ['label' => 'Tersedia', 'value' => $stats['available_vehicles'], 'tone' => 'success', 'href' => route('admin.kendaraan.index', $scope + ['status' => 'tersedia'])],
+            ['label' => 'Booking Aktif', 'value' => $stats['active_bookings'], 'tone' => 'accent', 'href' => route('admin.pesanan.index', $scope + ['status' => 'aktif'])],
+            ['label' => 'Sedang Disewa', 'value' => $stats['rented_bookings'], 'tone' => 'accent', 'href' => route('admin.pesanan.index', $scope + ['status' => 'rented'])],
+        ];
+    @endphp
+
+    <div class="mx-auto max-w-7xl space-y-8 py-2">
+        @if(session('success')) <x-alert type="success">{{ session('success') }}</x-alert> @endif
+        @if(session('error')) <x-alert type="error">{{ session('error') }}</x-alert> @endif
+
+        @if($branches->isNotEmpty())
+            {{-- Cakupan cabang superadmin berlaku untuk seluruh dashboard --}}
+            <form method="GET" action="{{ route('admin.dashboard') }}" class="flex flex-wrap items-end gap-3">
+                @foreach(['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode] as $key => $val)
+                    @if($val) <input type="hidden" name="{{ $key }}" value="{{ $val }}"> @endif
+                @endforeach
+                <x-form.select name="branch" label="Cabang" :options="$branches" :value="request('branch')" placeholder="Semua cabang" onchange="this.form.submit()" class="sm:w-64" />
+                <noscript><x-primary-button>Terapkan</x-primary-button></noscript>
+            </form>
+        @endif
+
+        {{-- Kartu statistik: klik ke daftar terfilter --}}
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            @foreach($statCards as $card)
+                <a href="{{ $card['href'] }}" class="dash-stat card-surface flex flex-col justify-between p-4 transition hover:border-[var(--accent)]">
+                    <span class="text-sm font-medium">{{ $card['label'] }}</span>
+                    <span class="mt-2 text-3xl font-bold text-[var(--{{ $card['tone'] }})]">{{ $card['value'] }}</span>
+                </a>
+            @endforeach
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-3">
+            {{-- Jadwal hari ini --}}
+            <section class="card-surface lg:col-span-2" aria-labelledby="jadwal-hari-ini">
+                <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                    <h3 id="jadwal-hari-ini" class="font-bold">Jadwal hari ini</h3>
+                    <span class="text-xs">{{ now()->translatedFormat('l, d M Y') }}</span>
+                </div>
+                @if($schedule->isEmpty())
+                    <p class="px-5 py-8 text-center text-sm">Tidak ada unit diambil atau dikembalikan hari ini.</p>
+                @else
+                    <ul class="divide-y divide-[var(--line)]">
+                        @foreach($schedule as $item)
+                            @php($b = $item['booking'])
+                            <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
+                                <div class="w-14 shrink-0">
+                                    <div class="font-mono text-base font-bold text-[var(--ink)]">{{ $item['at']->format('H:i') }}</div>
+                                    <div class="text-xs font-semibold {{ $item['type'] === 'ambil' ? 'text-[var(--success)]' : 'text-[var(--warning)]' }}">{{ $item['type'] === 'ambil' ? 'Ambil' : 'Kembali' }}</div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <a href="{{ route('admin.pesanan.show', $b->code) }}" class="font-semibold text-[var(--ink)] hover:underline">{{ $b->vehicle?->name ?? 'Kendaraan dihapus' }}</a>
+                                    <div class="truncate text-xs"><span class="font-mono">{{ $b->code }}</span> · {{ $b->customer_name }}</div>
+                                </div>
+                                <div class="flex basis-full items-center justify-end gap-2 sm:basis-auto">
+                                    @if($wa = $b->whatsappUrl())
+                                        <a href="{{ $wa }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex items-center px-3 text-xs">WA</a>
+                                    @endif
+                                    <form method="POST" action="{{ route('admin.pesanan.update', $b->code) }}" onsubmit="return confirm('Ubah status {{ $b->code }}?')">
+                                        @csrf
+                                        <input type="hidden" name="to" value="{{ $item['type'] === 'ambil' ? 'rented' : 'returned' }}">
+                                        <button class="btn-primary-edu inline-flex items-center px-3 text-xs">{{ $item['type'] === 'ambil' ? 'Serahkan unit' : 'Tandai kembali' }}</button>
+                                    </form>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </section>
+
+            {{-- Perlu tindakan: refund manual --}}
+            <section class="card-surface" aria-labelledby="perlu-refund">
+                <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                    <h3 id="perlu-refund" class="font-bold">Perlu refund</h3>
+                    <a href="{{ route('admin.refund.index') }}" class="text-sm font-medium text-[var(--accent)] hover:underline">Lihat semua</a>
+                </div>
+                @if($refunds->isEmpty())
+                    <p class="px-5 py-8 text-center text-sm">Tidak ada refund tertunda.</p>
+                @else
+                    <ul class="divide-y divide-[var(--line)]">
+                        @foreach($refunds->take(4) as $p)
+                            <li class="flex items-center justify-between gap-3 px-5 py-3">
+                                <div class="min-w-0">
+                                    <a href="{{ route('admin.pesanan.show', $p->booking->code) }}" class="font-mono text-sm font-semibold text-[var(--ink)] hover:underline">{{ $p->booking->code }}</a>
+                                    <div class="truncate text-xs">{{ $p->booking->customer_name }}</div>
+                                </div>
+                                <span class="shrink-0 text-sm font-bold text-[var(--warning)]">{{ rupiah($p->amount) }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </section>
+        </div>
+
+        {{-- Unit terlambat: daftar actionable --}}
+        @if($overdue->isNotEmpty())
+            <section class="card-surface border-[var(--danger)]" aria-labelledby="unit-terlambat">
+                <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                    <h3 id="unit-terlambat" class="font-bold text-[var(--danger)]">{{ $stats['overdue_vehicles'] }} unit terlambat</h3>
+                    <a href="{{ route('admin.pesanan.index', $scope + ['status' => 'terlambat']) }}" class="text-sm font-medium text-[var(--accent)] hover:underline">Lihat semua</a>
+                </div>
+                <ul class="divide-y divide-[var(--line)]">
+                    @foreach($overdue as $b)
+                        <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
+                            <div class="min-w-0 flex-1">
+                                <a href="{{ route('admin.pesanan.show', $b->code) }}" class="font-semibold text-[var(--ink)] hover:underline">{{ $b->vehicle?->name ?? 'Kendaraan dihapus' }}</a>
+                                <span class="ms-1 rounded bg-[var(--bg)] px-1.5 py-0.5 font-mono text-xs">{{ $b->vehicle?->plate_number ?? '-' }}</span>
+                                <div class="truncate text-xs">{{ $b->customer_name }} · <span class="font-mono">{{ $b->code }}</span></div>
+                            </div>
+                            <span class="shrink-0 text-sm font-semibold text-[var(--danger)]">Terlambat {{ $b->end_at->diffForHumans(null, true) }}</span>
+                            <div class="flex basis-full items-center justify-end gap-2 sm:basis-auto">
+                                @if($wa = $b->whatsappUrl())
+                                    <a href="{{ $wa }}?text={{ rawurlencode('Halo '.$b->customer_name.', masa sewa '.$b->code.' sudah lewat. Mohon segera kembalikan unit.') }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex items-center px-3 text-xs">Hubungi</a>
+                                @endif
+                                <form method="POST" action="{{ route('admin.pesanan.update', $b->code) }}" onsubmit="return confirm('Ubah status {{ $b->code }}?')">
+                                    @csrf
+                                    <input type="hidden" name="to" value="returned">
+                                    <button class="btn-primary-edu inline-flex items-center px-3 text-xs">Tandai kembali</button>
+                                </form>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        <div class="grid gap-6 lg:grid-cols-3">
+            {{-- Pendapatan --}}
+            <section class="card-surface p-5 lg:col-span-2" aria-labelledby="pendapatan">
+                <div class="mb-4 flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h3 id="pendapatan" class="font-bold">Pendapatan</h3>
+                        <div class="mt-1 text-sm">Total Pendapatan</div>
+                        <div class="text-3xl font-bold text-[var(--accent)]">{{ rupiah($revenue) }}</div>
                     </div>
-                    <div class="card-surface p-6">
-                        <div class="text-sm font-medium">Tersedia</div>
-                        <div class="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-400">{{ $stats['available_vehicles'] }}</div>
+                    <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-secondary-edu inline-flex items-center px-4 text-sm">
+                        Export Excel
+                    </a>
+                </div>
+
+                <x-responsive-filters name="admin-filters"><form method="GET" action="{{ route('admin.dashboard') }}" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    @if(request('branch')) <input type="hidden" name="branch" value="{{ request('branch') }}"> @endif
+                    <x-form.datetime name="dari" label="Tanggal awal" :value="$dari" :time="false" :picker="true" />
+                    <x-form.datetime name="sampai" label="Tanggal akhir" :value="$sampai" :time="false" :picker="true" />
+                    <x-form.select name="tipe" label="Tipe kendaraan" :options="$vehicleTypes" :value="$tipe" placeholder="Semua tipe" class="text-sm" />
+                    <x-form.select name="metode" label="Metode bayar" :options="['cash' => 'Tunai', 'xendit_invoice' => 'Online (Xendit)']" :value="$metode" placeholder="Semua metode" class="text-sm" />
+                    <div class="flex justify-end sm:col-span-2 xl:col-span-4"><x-primary-button class="h-11 px-6">Terapkan</x-primary-button></div>
+                </form></x-responsive-filters>
+
+                @if($revenueByBranch->isNotEmpty())
+                    @php($maxBranch = max($revenueByBranch->max('total'), 1))
+                    <div class="mt-6 border-t border-[var(--line)] pt-4">
+                        <h4 class="mb-3 text-sm font-bold">Per cabang</h4>
+                        <ul class="space-y-3">
+                            @foreach($revenueByBranch as $row)
+                                <li>
+                                    <div class="flex justify-between gap-3 text-sm">
+                                        <a href="{{ route('admin.dashboard', ['branch' => $row['id'], 'dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode]) }}" class="font-medium text-[var(--ink)] hover:underline">{{ $row['name'] }}</a>
+                                        <span class="font-semibold text-[var(--ink)]">{{ rupiah($row['total']) }}</span>
+                                    </div>
+                                    <div class="mt-1 h-2 rounded-full bg-[var(--bg)]" aria-hidden="true">
+                                        <div class="h-2 rounded-full bg-[var(--accent)]" style="width: {{ round($row['total'] / $maxBranch * 100, 1) }}%"></div>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
-                    <div class="card-surface p-6">
-                        <div class="text-sm font-medium">Booking Aktif</div>
-                        <div class="mt-2 text-3xl font-bold text-[var(--orange-500)]">{{ $stats['active_bookings'] }}</div>
-                    </div>
-                    <div class="card-surface p-6">
-                        <div class="text-sm font-medium">Sedang Disewa</div>
-                        <div class="mt-2 text-3xl font-bold text-[var(--orange-500)]">{{ $stats['rented_bookings'] }}</div>
-                    </div>
-                    @if($stats['overdue_vehicles'] > 0)
-                        <a href="{{ route('admin.pesanan.index', ['status' => 'terlambat']) }}" class="btn-danger-edu col-span-2 flex items-center justify-center p-4 text-center text-base">
-                            {{ $stats['overdue_vehicles'] }} unit terlambat
-                        </a>
+                @endif
+            </section>
+
+            {{-- Motor terlaris --}}
+            <section class="card-surface p-5" aria-labelledby="terlaris">
+                <h3 id="terlaris" class="mb-4 font-bold">Motor terlaris</h3>
+                <div class="relative flex h-64 w-full items-center justify-center">
+                    @if($topVehicles->isEmpty())
+                        <div class="text-sm">Belum ada data rental.</div>
+                    @else
+                        <canvas id="topVehiclesChart"></canvas>
                     @endif
                 </div>
-
-                <!-- Widget: Top 5 Orderan Rental -->
-                <div class="card-surface p-6">
-                    <h3 class="mb-4 font-bold">5 Top Orderan Rental</h3>
-                    <div class="flex items-center justify-center relative w-full h-64">
-                        @if($topVehicles->isEmpty())
-                            <div class="text-sm">Belum ada data rental.</div>
-                        @else
-                            <canvas id="topVehiclesChart"></canvas>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Widget: Pendapatan -->
-                <div class="card-surface col-span-1 p-6 lg:col-span-2">
-                    <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <h3 class="font-bold">Pendapatan</h3>
-                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">
-                            Export Excel
-                        </a>
-                    </div>
-                    
-                    <form method="GET" action="{{ route('admin.dashboard') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                        @include('admin.partials.branch-filter')
-                        <div>
-                            <x-input-label for="dari" value="Tanggal Awal" />
-                            <x-text-input id="dari" type="date" name="dari" value="{{ $dari }}" class="w-full mt-1 text-sm" />
-                        </div>
-                        <div>
-                            <x-input-label for="sampai" value="Tanggal Akhir" />
-                            <x-text-input id="sampai" type="date" name="sampai" value="{{ $sampai }}" class="w-full mt-1 text-sm" />
-                        </div>
-                        <div>
-                            <x-input-label for="tipe" value="Tipe Kendaraan" />
-                            <select id="tipe" name="tipe" class="w-full mt-1 rounded-lg shadow-sm text-sm">
-                                <option value="">Semua Tipe</option>
-                                @foreach($vehicleTypes as $id => $name)
-                                    <option value="{{ $id }}" {{ $tipe == $id ? 'selected' : '' }}>{{ $name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <x-input-label for="metode" value="Metode Bayar" />
-                            <div class="flex gap-2 items-start mt-1">
-                                <select id="metode" name="metode" class="w-full rounded-lg shadow-sm text-sm">
-                                    <option value="">Semua Metode</option>
-                                    <option value="cash" {{ $metode === 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
-                                    <option value="xendit_invoice" {{ $metode === 'xendit_invoice' ? 'selected' : '' }}>Xendit</option>
-                                </select>
-                                <x-primary-button type="submit" class="px-3 py-2 text-xs h-[38px]">Filter</x-primary-button>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <div class="mb-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4 text-center">
-                        <div class="text-sm">Total Pendapatan</div>
-                        <div class="mt-2 text-3xl font-bold text-[var(--orange-500)] sm:text-4xl">
-                            Rp {{ number_format($revenue, 0, ',', '.') }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Widget: Pesanan Terakhir -->
-                <div class="card-surface col-span-1 flex flex-col overflow-hidden lg:col-span-2">
-                    <div class="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
-                        <h3 class="font-bold">Pesanan Terakhir</h3>
-                        <a href="{{ route('admin.pesanan.index') }}" class="text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Lihat semua</a>
-                    </div>
-                    <div class="overflow-y-auto flex-1 max-h-[400px]">
-                        @if($recentBookings->isEmpty())
-                            <div class="p-6 text-center text-sm">Belum ada pesanan masuk.</div>
-                        @else
-                            <ul class="divide-y divide-[var(--border)]">
-                                @foreach($recentBookings as $b)
-                                    <li class="p-4 transition hover:bg-[var(--bg)]">
-                                        <div class="flex items-center gap-4">
-                                            @if($b->vehicle_image)
-                                                <img src="{{ asset($b->vehicle_image) }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" alt="">
-                                            @else
-                                                <div class="w-12 h-12 rounded-lg bg-[var(--bg)] flex items-center justify-center flex-shrink-0">
-                                                    <svg class="w-6 h-6 text-[var(--border)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                                </div>
-                                            @endif
-                                            <div class="flex-1 min-w-0">
-                                                <p class="truncate text-sm font-bold text-[var(--navy-900)]">
-                                                    {{ $b->customer_name }} <span class="font-normal">({{ $b->vehicle_name }})</span>
-                                                </p>
-                                                <p class="truncate mt-0.5 text-xs">
-                                                    {{ $b->vehicle_type_name }} &bull; {{ \Carbon\Carbon::parse($b->start_at)->translatedFormat('d M Y H:i') }}
-                                                </p>
-                                            </div>
-                                            <div class="text-right flex-shrink-0 flex flex-col items-end gap-1">
-                                                <span class="text-sm font-bold text-[var(--navy-900)]">Rp {{ number_format($b->total_amount, 0, ',', '.') }}</span>
-                                                <x-badge-status :status="$b->status" />
-                                            </div>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    </div>
-                </div>
-            </div>
+            </section>
         </div>
+
+        {{-- Pesanan terakhir: 5 teratas, tanpa scroll internal --}}
+        <section class="card-surface" aria-labelledby="pesanan-terakhir">
+            <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                <h3 id="pesanan-terakhir" class="font-bold">Pesanan Terakhir</h3>
+                <a href="{{ route('admin.pesanan.index', $scope) }}" class="text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline">Lihat semua</a>
+            </div>
+            @if($recentBookings->isEmpty())
+                <div class="p-6 text-center text-sm">Belum ada pesanan masuk.</div>
+            @else
+                <ul class="divide-y divide-[var(--line)]">
+                    @foreach($recentBookings as $b)
+                        <li>
+                            <a href="{{ route('admin.pesanan.show', $b->code) }}" class="flex items-center gap-4 px-5 py-3 transition hover:bg-[var(--bg)]">
+                                @if($b->vehicle_image)
+                                    <x-picture :src="$b->vehicle_image" class="h-10 w-10 shrink-0 rounded-lg object-cover" alt="" />
+                                @else
+                                    <span class="h-10 w-10 shrink-0 rounded-lg bg-[var(--bg)]" aria-hidden="true"></span>
+                                @endif
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-bold text-[var(--ink)]">{{ $b->customer_name }} <span class="font-normal">({{ $b->vehicle_name }})</span></p>
+                                    <p class="mt-0.5 truncate text-xs"><span class="font-mono">{{ $b->code }}</span> · {{ \Carbon\Carbon::parse($b->start_at)->translatedFormat('d M Y H:i') }}</p>
+                                </div>
+                                <div class="flex shrink-0 flex-col items-end gap-1">
+                                    <span class="text-sm font-bold text-[var(--ink)]">{{ rupiah($b->total_amount) }}</span>
+                                    <x-badge-status :status="$b->status" />
+                                </div>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
     </div>
 
     @push('scripts')
@@ -144,37 +230,17 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = @json($topVehicles);
-            
+
             if(chartData.length > 0) {
                 const root = document.documentElement;
                 const token = (name) => getComputedStyle(root).getPropertyValue(name).trim();
-                const palette = () => ['--navy-900', '--navy-700', '--orange-500', '--coral-300', '--gold-tan'].map(token);
+                const palette = () => chartData.map(() => token('--accent'));
                 const ctx = document.getElementById('topVehiclesChart').getContext('2d');
                 const mobile = window.matchMedia('(max-width: 639px)');
 
-                // Teks tengah digambar di canvas supaya selalu pas di tengah donat (legend bisa di kanan/bawah).
-                const centerText = {
-                    id: 'centerText',
-                    afterDraw(c) {
-                        const { left, right, top, bottom } = c.chartArea;
-                        const x = (left + right) / 2;
-                        const y = (top + bottom) / 2;
-                        c.ctx.save();
-                        c.ctx.textAlign = 'center';
-                        c.ctx.textBaseline = 'middle';
-                        c.ctx.fillStyle = token('--ink-muted');
-                        c.ctx.font = '12px "Plus Jakarta Sans", sans-serif';
-                        c.ctx.fillText('Total Sewa', x, y - 14);
-                        c.ctx.fillStyle = token('--navy-900');
-                        c.ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
-                        c.ctx.fillText(@json($topVehicles->sum('booking_count')), x, y + 10);
-                        c.ctx.restore();
-                    }
-                };
-
                 const chart = new Chart(ctx, {
-                    type: 'doughnut',
-                    plugins: [centerText],
+                    type: 'bar',
+
                     data: {
                         labels: chartData.map(v => v.name),
                         datasets: [{
@@ -188,10 +254,11 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '70%',
+                        indexAxis: 'y',
+                        scales: { x: { beginAtZero: true, ticks: { precision: 0, color: token('--ink-muted') }, grid: { color: token('--line') } }, y: { ticks: { color: token('--ink-muted') }, grid: { display: false } } },
                         plugins: {
                             legend: {
-                                position: mobile.matches ? 'bottom' : 'right',
+                                display: false,
                                 labels: {
                                     color: token('--ink-muted'),
                                     usePointStyle: true,
@@ -214,7 +281,9 @@
                     chart.data.datasets[0].backgroundColor = palette().slice(0, chartData.length);
                     chart.data.datasets[0].borderColor = token('--surface');
                     chart.options.plugins.legend.labels.color = token('--ink-muted');
-                    chart.options.plugins.legend.position = mobile.matches ? 'bottom' : 'right';
+                    chart.options.scales.x.ticks.color = token('--ink-muted');
+                    chart.options.scales.y.ticks.color = token('--ink-muted');
+                    chart.options.scales.x.grid.color = token('--line');
                     chart.update();
                 };
                 new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['class'] });

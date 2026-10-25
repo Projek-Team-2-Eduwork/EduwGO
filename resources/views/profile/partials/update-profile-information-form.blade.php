@@ -1,6 +1,6 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-[var(--navy-900)]">
+        <h2 class="text-lg font-medium text-[var(--ink)]">
             Informasi Profil
         </h2>
 
@@ -35,15 +35,15 @@
 
                         <button
                             form="send-verification"
-                            class="underline text-sm text-[var(--orange-500)] hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--navy-700)]"
+                            class="underline text-sm text-[var(--accent)] hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ink-muted)]"
                         >
                             Klik di sini untuk mengirim ulang kode verifikasi.
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-code-sent')
-                        <p class="mt-2 font-medium text-sm text-[var(--orange-500)]">
-                            Kode verifikasi baru sudah dikirim ke email kamu.
+                        <p class="mt-2 font-medium text-sm text-[var(--accent)]">
+                            Kode verifikasi baru sudah dikirim ke email Anda.
                             <a href="{{ route('verification.notice') }}" class="underline">Masukkan kode</a>.
                         </p>
                     @endif

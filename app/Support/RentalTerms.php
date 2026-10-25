@@ -25,7 +25,7 @@ class RentalTerms
         $items = is_string($value) ? (json_decode($value, true) ?? preg_split('/\R/', $value)) : $value;
 
         $items = is_array($items)
-            ? array_values(array_filter(array_map(fn ($item) => is_string($item) ? trim($item) : '', $items)))
+            ? array_values(array_filter(array_map(fn ($item) => is_string($item) && ! preg_match('/\bdenda\b/iu', $item) ? trim($item) : '', $items)))
             : [];
 
         return $items ?: self::DEFAULT;

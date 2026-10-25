@@ -1,12 +1,12 @@
-<x-app-layout>
+<x-app-layout title="Dashboard">
     <x-slot name="header">
         <h1 class="font-serif text-3xl">Dashboard</h1>
     </x-slot>
 
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <x-empty-state
+        <x-empty-state illustration="welcome"
             title="Selamat datang kembali"
-            description="Mulai sewa motor atau cek pesanan kamu."
+            description="Mulai sewa motor atau cek pesanan Anda."
             action-label="Pilih Kendaraan"
             :action-href="url('/kendaraan')"
         />

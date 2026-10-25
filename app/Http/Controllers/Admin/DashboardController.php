@@ -38,9 +38,21 @@ class DashboardController extends Controller
         $revenue = $dashboardService->revenue($from, $to, $tipe, $metode, $branchId);
         $recentBookings = $dashboardService->recentBookings($branchId);
         $vehicleTypes = $dashboardService->vehicleTypes();
-        $branches = $request->user()->isSuperadmin() ? Branch::orderBy('name')->pluck('name', 'id') : collect();
+        $isSuperadmin = $request->user()->isSuperadmin();
+        $branches = $isSuperadmin ? Branch::orderBy('name')->pluck('name', 'id') : collect();
+        $schedule = $dashboardService->todaySchedule($branchId);
+        $overdue = $dashboardService->overdueBookings($branchId);
+        $refunds = $dashboardService->refundsAwaiting($branchId);
+        // Perbandingan cabang hanya relevan saat superadmin melihat semua cabang
+        $revenueByBranch = $isSuperadmin && $branchId === null
+            ? $dashboardService->revenueByBranch($branches, $from, $to, $tipe, $metode)
+            : collect();
 
         return view('admin.dashboard', compact(
+            'schedule',
+            'overdue',
+            'refunds',
+            'revenueByBranch',
             'topVehicles',
             'stats',
             'revenue',

@@ -131,9 +131,11 @@ class PesananAdminTest extends TestCase
 
         $html = $this->get(route('admin.pesanan.index'))->assertOk()->getContent();
 
-        $this->assertSame('2', $this->summaryNumber($html, 'Pending'));
-        $this->assertSame('3', $this->summaryNumber($html, 'Sukses'));
-        $this->assertSame('1', $this->summaryNumber($html, 'Expired'));
+        $this->assertSame('2', $this->summaryNumber($html, 'Menunggu pembayaran'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Lunas'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Sedang disewa'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Sudah kembali'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Batas bayar terlewat'));
     }
 
     public function test_klik_kartu_pending_dan_expired_memfilter_tabel()
@@ -158,7 +160,7 @@ class PesananAdminTest extends TestCase
             ->assertDontSee('EG.200003');
     }
 
-    public function test_klik_kartu_sukses_menampilkan_paid_rented_returned()
+    public function test_filter_lunas_hanya_menampilkan_paid()
     {
         $this->actingAsAdmin();
         Booking::factory()->paid()->create(['code' => 'EG.300001']);
@@ -168,11 +170,11 @@ class PesananAdminTest extends TestCase
         Booking::factory()->expired()->create(['code' => 'EG.300005']);
         Booking::factory()->cancelled()->create(['code' => 'EG.300006']);
 
-        $this->get(route('admin.pesanan.index', ['status' => 'sukses']))
+        $this->get(route('admin.pesanan.index', ['status' => 'paid']))
             ->assertOk()
             ->assertSee('EG.300001')
-            ->assertSee('EG.300002')
-            ->assertSee('EG.300003')
+            ->assertDontSee('EG.300002')
+            ->assertDontSee('EG.300003')
             ->assertDontSee('EG.300004')
             ->assertDontSee('EG.300005')
             ->assertDontSee('EG.300006');

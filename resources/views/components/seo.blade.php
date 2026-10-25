@@ -19,9 +19,9 @@
 
     $metaDescription = $clean($description)
         ?: $clean($__env->yieldContent('meta_description'))
-        ?: $clean(setting('brand.description', $brand.' menyediakan rental motor cepat, aman, dan terjangkau. Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.'));
+        ?: $clean(setting('brand.description', $brand.' menyediakan rental motor dengan pengambilan di cabang pilihan Anda. Pilih motor, tentukan durasi, bayar online, lalu ambil di lokasi.'));
 
-    $metaImage = $clean($image) ?: $clean($__env->yieldContent('meta_image')) ?: $clean(setting('brand.og_image') ?: setting('brand.logo_light'));
+    $metaImage = $clean($image) ?: $clean($__env->yieldContent('meta_image')) ?: $clean(setting('brand.og_image') ?: 'images/brand/og.png');
     if ($metaImage && ! preg_match('#^https?://#i', $metaImage)) {
         $metaImage = url($metaImage);
     }

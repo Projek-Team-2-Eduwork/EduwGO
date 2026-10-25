@@ -42,7 +42,7 @@
     }"
     x-init="$nextTick(() => apply())"
     @theme-changed.window="set($event.detail.theme)"
-    {{ $attributes->merge(['class' => 'inline-flex items-center gap-1 border border-[var(--border)] bg-[var(--surface)] p-1']) }}
+    {{ $attributes->merge(['class' => 'theme-toggle inline-flex items-center gap-1 border border-[var(--line)] bg-[var(--surface)] p-1']) }}
     role="group"
     aria-label="Pilih tema tampilan"
 >

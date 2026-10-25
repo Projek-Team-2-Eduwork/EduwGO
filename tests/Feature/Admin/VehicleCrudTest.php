@@ -218,15 +218,16 @@ class VehicleCrudTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // Badge "Disewa" (merah) hanya untuk booking paid/rented — pending tidak dihitung.
-        $this->assertSame(1, preg_match_all('/rounded-full[^>]*bg-red-100[^>]*">\s*Disewa\s*</', $html));
+        // Badge tampil dua kali per unit (tabel desktop + daftar mobile).
+        // "Sedang disewa" hanya untuk booking paid/rented — pending tidak dihitung.
+        $this->assertSame(2, preg_match_all('/rounded-full[^>]*bg-\[var\(--warning-soft\)\][^>]*">\s*Sedang disewa\s*</', $html));
         // Dua unit aktif tanpa booking berjalan → Tersedia.
-        $this->assertSame(2, preg_match_all('/rounded-full[^>]*bg-emerald-100[^>]*">\s*Tersedia\s*</', $html));
-        $this->assertSame(1, preg_match_all('/rounded-full[^>]*bg-slate-200[^>]*">\s*Nonaktif\s*</', $html));
+        $this->assertSame(4, preg_match_all('/rounded-full[^>]*bg-\[var\(--success-soft\)\][^>]*">\s*Tersedia\s*</', $html));
+        $this->assertSame(2, preg_match_all('/rounded-full[^>]*bg-\[var\(--bg\)\][^>]*">\s*Nonaktif\s*</', $html));
 
-        // Badge merah menempel pada kartu "Unit Disewa" (bukan kartu lain).
+        // Badge "Sedang disewa" menempel pada baris "Unit Disewa" (badge sesudah nama di baris yang sama).
         $this->assertMatchesRegularExpression(
-            '/rounded-full[^>]*bg-red-100[^>]*">\s*Disewa\s*<\/span>.*?Unit Disewa/s',
+            '/Unit Disewa<\/div>(?:(?!<\/tr>).)*?bg-\[var\(--warning-soft\)\][^>]*">\s*Sedang disewa/s',
             $html
         );
     }

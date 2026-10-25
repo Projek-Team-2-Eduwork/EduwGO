@@ -1,5 +1,5 @@
-<x-app-layout>
+<x-app-layout title="Sesi telah berakhir">
     <x-slot:title>Sesi telah berakhir</x-slot:title>
 
-    @include('errors.partials.content', ['code' => '419', 'heading' => 'Sesi telah berakhir', 'message' => 'Sesi kamu sudah habis. Muat ulang halaman sebelumnya lalu coba lagi.'])
+    @include('errors.partials.content', ['code' => '419', 'heading' => 'Sesi telah berakhir', 'message' => 'Sesi Anda sudah habis. Muat ulang halaman sebelumnya lalu coba lagi.'])
 </x-app-layout>

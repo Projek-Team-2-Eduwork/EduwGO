@@ -5,13 +5,13 @@
 @if(in_array($booking->status->value, $allowed))
 <x-modal name="update-{{ $booking->code }}" :show="false" maxWidth="sm" focusable>
     <div class="p-6">
-        <h2 class="mb-4 border-b border-[var(--border)] pb-2 text-lg font-semibold text-[var(--navy-900)]">
-            Update Status: <span class="font-mono text-[var(--orange-500)]">{{ $booking->code }}</span>
+        <h2 class="mb-4 border-b border-[var(--line)] pb-2 text-lg font-semibold text-[var(--ink)]">
+            Ubah status: <span class="font-mono text-[var(--accent)]">{{ $booking->code }}</span>
         </h2>
 
         @if($booking->status->value === 'paid')
             <!-- Paid to Rented -->
-            <form action="{{ route('admin.pesanan.update', $booking->code) }}" method="POST" class="mb-6 border-b border-[var(--border)] pb-6">
+            <form action="{{ route('admin.pesanan.update', $booking->code) }}" method="POST" class="mb-6 border-b border-[var(--line)] pb-6">
                 @csrf
                 <input type="hidden" name="to" value="rented">
                 <p class="mb-3 text-sm">Tandai bahwa unit telah diserahkan ke penyewa dan masa sewa dimulai.</p>
@@ -21,7 +21,7 @@
                 </div>
                 <x-primary-button class="w-full justify-center">Serah Terima Unit</x-primary-button>
             </form>
-            
+
             <!-- Paid to Cancelled -->
             <form action="{{ route('admin.pesanan.update', $booking->code) }}" method="POST">
                 @csrf
@@ -30,14 +30,14 @@
                     <x-input-label for="reason_paid_{{ $booking->code }}" value="Alasan Pembatalan *" />
                     <textarea id="reason_paid_{{ $booking->code }}" name="reason" rows="2" required class="mt-1 w-full rounded-lg shadow-sm"></textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('reason')" />
-                    <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">Catat kesepakatan refund dari chat WA</p>
+                    <p class="mt-1 text-xs text-[var(--warning)] dark:text-[var(--warning)]">Catat kesepakatan refund dari chat WA</p>
                 </div>
                 <x-danger-button class="w-full justify-center">Batalkan Pesanan</x-danger-button>
             </form>
 
         @elseif($booking->status->value === 'pending')
             <!-- Pending to Paid (tunai / COD) -->
-            <form action="{{ route('admin.pesanan.pay-cash', $booking->code) }}" method="POST" class="mb-6 border-b border-[var(--border)] pb-6">
+            <form action="{{ route('admin.pesanan.pay-cash', $booking->code) }}" method="POST" class="mb-6 border-b border-[var(--line)] pb-6">
                 @csrf
                 <input type="hidden" name="amount" value="{{ (int) $booking->total_amount }}">
                 <p class="mb-3 text-sm">Konfirmasi bahwa pembayaran tunai / COD sudah diterima. Pesanan akan ditandai <strong>Lunas</strong>.</p>
@@ -69,9 +69,9 @@
                 <x-primary-button class="w-full justify-center">Unit Sudah Kembali</x-primary-button>
             </form>
         @endif
-        
+
         <div class="mt-4 flex justify-end">
-            <button type="button" x-on:click="$dispatch('close')" class="text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Tutup</button>
+            <button type="button" x-on:click="$dispatch('close')" class="text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Tutup</button>
         </div>
     </div>
 </x-modal>

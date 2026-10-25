@@ -137,7 +137,7 @@ class BookingDaftarPesananTest extends TestCase
         $this->get(route('booking.index'))->assertRedirect(route('login'));
     }
 
-    public function test_10_ringkasan_transaksi_angka_benar()
+    public function test_10_tab_pesanan_dan_total_per_pesanan_tampil()
     {
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -168,14 +168,12 @@ class BookingDaftarPesananTest extends TestCase
         $response = $this->get(route('booking.index'));
 
         $response->assertOk();
-        $response->assertSee('Riwayat Transaksi');
-        $response->assertSee('Rp 300.000');
+        $response->assertSee('Pesanan saya');
+        $response->assertSee(rupiah($bookingA->total_amount));
 
-        $response->assertSee('<div class="text-sm text-[var(--ink-muted)] mb-1">Jumlah Transaksi</div>', false);
-        $response->assertSee('<div class="text-lg font-bold text-[var(--navy-900)]">3</div>', false);
-
-        $response->assertSee('<div class="text-sm text-[var(--ink-muted)] mb-1">Menunggu Bayar</div>', false);
-        $response->assertSee('<div class="text-lg font-bold text-[var(--navy-900)]">1</div>', false);
+        $response->assertSee('Aktif')->assertSee('Menunggu bayar')->assertSee('Selesai');
+        $response->assertSee($bookingA->code)->assertSee($bookingB->code);
+        $response->assertDontSee('Jumlah Transaksi');
     }
 
     public function test_11_metode_dan_status_bayar_tampil()
@@ -199,8 +197,8 @@ class BookingDaftarPesananTest extends TestCase
         $response = $this->get(route('booking.index'));
 
         $response->assertOk();
-        $response->assertSee('Cash - Paid');
-        $response->assertSee('Belum bayar');
+        $response->assertSee('Lunas · Tunai');
+        $response->assertSee('Belum dibayar');
     }
 
     public function test_12_riwayat_tetap_terisolasi()
@@ -241,7 +239,7 @@ class BookingDaftarPesananTest extends TestCase
         $response = $this->get(route('booking.index'));
 
         $response->assertOk();
-        $response->assertSee('Rp 0');
+        $response->assertSee('Belum dibayar');
         $response->assertDontSee('Belum ada pesanan');
     }
 

@@ -14,6 +14,7 @@
 <!-- Anti-flash: set class dark sebelum render (SPEC bagian 8) -->
 <script>
     (function () {
+        document.documentElement.toggleAttribute('data-nav-pill', @json(!request()->routeIs('home')) || window.scrollY > 24);
         var preference = @json(auth()->check() ? auth()->user()->preferredTheme() : null);
         var stored = null;
 
@@ -35,16 +36,5 @@
 <!-- Scripts -->
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-{{-- Override warna brand dari Pengaturan Toko (EG-30) --}}
-@php
-    $brandPrimaryColor = setting('brand.primary_color');
-    $brandAccentColor = setting('brand.accent_color');
-@endphp
-@if($brandPrimaryColor || $brandAccentColor)
-    <style>
-        :root {
-            @if($brandPrimaryColor)--navy-900: {{ $brandPrimaryColor }};@endif
-            @if($brandAccentColor)--orange-500: {{ $brandAccentColor }};@endif
-        }
-    </style>
-@endif
+
+@include('components.site-icons')

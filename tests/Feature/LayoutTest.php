@@ -25,7 +25,7 @@ class LayoutTest extends TestCase
     {
         $html = Blade::render('<x-app-layout><p>konten</p></x-app-layout>');
 
-        foreach (['EduwGo', 'konten', 'Pilih Kendaraan', 'Daftar Pesanan', 'Butuh bantuan?', 'Masuk', 'Kontak', 'wa.me'] as $text) {
+        foreach (['EduwGo', 'konten', 'Pilih Kendaraan', 'Pesanan saya', 'Butuh bantuan?', 'Masuk', 'Cabang', 'wa.me'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
     }
@@ -50,9 +50,11 @@ class LayoutTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin/dashboard');
 
         $response->assertOk();
-        foreach (['Dashboard', 'Daftar Pesanan', 'Kendaraan', 'Tipe Kendaraan', 'Pengaturan', 'Log Out'] as $menu) {
+        foreach (['Dashboard', 'Pesanan', 'Kendaraan', 'Jadwal armada', 'Perlu refund', 'Pengaturan', 'Keluar'] as $menu) {
             $response->assertSee($menu);
         }
+        // Menu khusus superadmin tidak tampil untuk admin cabang
+        $response->assertDontSee('admin/tipe-kendaraan');
     }
 
     public function test_user_biasa_ditolak_di_halaman_admin(): void

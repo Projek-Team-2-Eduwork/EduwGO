@@ -41,13 +41,13 @@ class CabangPublikController extends Controller
         $sort = in_array($filter['harga'] ?? null, ['termurah', 'termahal'], true) ? $filter['harga'] : null;
         $min = (isset($filter['harga_min']) && is_numeric($filter['harga_min']) && $filter['harga_min'] >= 0) ? (int) $filter['harga_min'] : null;
         $max = (isset($filter['harga_max']) && is_numeric($filter['harga_max']) && $filter['harga_max'] >= 0) ? (int) $filter['harga_max'] : null;
-        $popular = in_array($filter['urut'] ?? null, ['populer'], true);
+        $popular = ($filter['harga'] ?? null) === 'populer' || in_array($filter['urut'] ?? null, ['populer'], true);
 
         $request->session()->put('booking.filter', array_filter([
             'start_at' => $start?->format('Y-m-d\TH:i'),
             'days' => $days,
             'type' => $typeId,
-            'harga' => $sort,
+            'harga' => $popular ? 'populer' : $sort,
             'harga_min' => $min !== null ? (string) $min : null,
             'harga_max' => $max !== null ? (string) $max : null,
             'urut' => $popular ? 'populer' : null,
@@ -60,6 +60,7 @@ class CabangPublikController extends Controller
         $timeFiltered = $start !== null && $days !== null;
 
         $vehicles = $availability->catalogQuery($start, $days, $typeId, $search, $onlyAvailable, $cabang->id)
+            ->withMin(['bookings as next_booking_start' => fn ($query) => $query->active()->where('end_at', '>', now())], 'start_at')
             ->withCount(['bookings as booking_count' => fn (Builder $q) => $q->whereIn('status', ['paid', 'rented', 'returned'])])
             ->when($min !== null, fn ($q) => $q->where('price_per_day', '>=', $min))
             ->when($max !== null, fn ($q) => $q->where('price_per_day', '<=', $max))
@@ -81,7 +82,7 @@ class CabangPublikController extends Controller
                 'days' => $days,
                 'available' => $onlyAvailable,
                 'q' => $search,
-                'harga' => $sort,
+                'harga' => $popular ? 'populer' : $sort,
                 'harga_min' => $min,
                 'harga_max' => $max,
                 'urut' => $popular ? 'populer' : null,

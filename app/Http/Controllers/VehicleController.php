@@ -34,7 +34,7 @@ class VehicleController extends Controller
         $sort = in_array($filter['harga'] ?? null, ['termurah', 'termahal'], true) ? $filter['harga'] : null;
         $min = (isset($filter['harga_min']) && is_numeric($filter['harga_min']) && $filter['harga_min'] >= 0) ? (int) $filter['harga_min'] : null;
         $max = (isset($filter['harga_max']) && is_numeric($filter['harga_max']) && $filter['harga_max'] >= 0) ? (int) $filter['harga_max'] : null;
-        $popular = in_array($filter['urut'] ?? null, ['populer'], true);
+        $popular = ($filter['harga'] ?? null) === 'populer' || in_array($filter['urut'] ?? null, ['populer'], true);
 
         // Filter waktu & tipe dibawa ke detail motor & modal durasi lewat session (+ query string di link).
         // Null tidak disimpan; min/max disimpan sebagai string supaya lolos rule 'string' saat di-merge balik.
@@ -42,7 +42,7 @@ class VehicleController extends Controller
             'start_at' => $start?->format('Y-m-d\TH:i'),
             'days' => $days,
             'type' => $typeId,
-            'harga' => $sort,
+            'harga' => $popular ? 'populer' : $sort,
             'harga_min' => $min !== null ? (string) $min : null,
             'harga_max' => $max !== null ? (string) $max : null,
             'urut' => $popular ? 'populer' : null,
@@ -56,6 +56,7 @@ class VehicleController extends Controller
 
         // Terapkan Query Tambahan, Jumlah Pesanan (withCount) dan Pengurutan
         $vehicles = $query
+            ->withMin(['bookings as next_booking_start' => fn ($query) => $query->active()->where('end_at', '>', now())], 'start_at')
             ->withCount(['bookings as booking_count' => fn (Builder $q) => $q->whereIn('status', ['paid', 'rented', 'returned'])])
             ->when($min !== null, fn ($q) => $q->where('price_per_day', '>=', $min))
             ->when($max !== null, fn ($q) => $q->where('price_per_day', '<=', $max))
@@ -64,6 +65,7 @@ class VehicleController extends Controller
             ->when(! $popular && $sort === 'termahal', fn ($q) => $q->orderBy('price_per_day', 'desc')->orderBy('name'))
             ->when(! $popular && $sort === null, fn ($q) => $q->orderBy('name'))
             ->paginate(12)->withQueryString();
+        $branches->attachTo($vehicles);
 
         return view('kendaraan.index', [
             'vehicles' => $vehicles,
@@ -78,7 +80,7 @@ class VehicleController extends Controller
                 'days' => $days,
                 'available' => $onlyAvailable,
                 'q' => $search,
-                'harga' => $sort,
+                'harga' => $popular ? 'populer' : $sort,
                 'harga_min' => $min,
                 'harga_max' => $max,
                 'urut' => $popular ? 'populer' : null,
@@ -105,18 +107,23 @@ class VehicleController extends Controller
         $branches->selectBranchOf($vehicle->branch_id);
 
         $vehicle->load('type');
+        $branches->attachTo([$vehicle]);
 
-        // Guest yang klik Booking diarahkan ke login lalu kembali ke halaman ini.
+        // Guest yang klik Booking diarahkan ke login lalu kembali ke halaman ini (jadwal di query ikut).
         if (auth()->guest()) {
-            session()->put('url.intended', route('kendaraan.detail', $vehicle));
+            session()->put('url.intended', request()->fullUrl());
         }
 
         [$recommendations, $filtered] = $this->recommendations($vehicle, $availability);
+        $branches->attachTo($recommendations);
 
         return view('kendaraan.show', [
             'vehicle' => $vehicle,
-            'isAvailableNow' => $availability->isAvailable($vehicle, now(), 1),             'recommendations' => $recommendations,
+            'isAvailableNow' => $availability->isAvailable($vehicle, now(), 1),
+            'recommendations' => $recommendations,
             'filtered' => $filtered,
+            'backUrl' => $this->catalogBackUrl(),
+            'terms' => array_slice(RentalTerms::list(), 0, 3),
         ]);
     }
 
@@ -135,15 +142,32 @@ class VehicleController extends Controller
 
         $query = $filtered
             ? $availability->availableVehicles($start, $days, $vehicle->vehicle_type_id, null, $vehicle->branch_id)
-            : Vehicle::query()->where('is_active', true)->where('branch_id', $vehicle->branch_id)->where('vehicle_type_id', $vehicle->vehicle_type_id)->with('type');
+            : $availability->catalogQuery(null, null, $vehicle->vehicle_type_id, null, false, $vehicle->branch_id)
+                ->withMin(['bookings as next_booking_start' => fn ($query) => $query->active()->where('end_at', '>', now())], 'start_at');
 
+        // Tipe & cabang sama dengan unit ini: pakai relasi yang sudah dimuat, tanpa eager load ulang
         $items = $query
+            ->without('type')
             ->whereKeyNot($vehicle->getKey())
             ->latest('id')
             ->limit(self::RECOMMENDATION_LIMIT)
-            ->get();
+            ->get()
+            ->each->setRelation('type', $vehicle->type);
 
         return [$items, $filtered];
+    }
+
+    /**
+     * "Kembali ke hasil": URL katalog sebelumnya lengkap dengan query (cari, harga, dst.).
+     * Selain itu katalog polos, yang memulihkan filter tersimpan di session.
+     */
+    private function catalogBackUrl(): string
+    {
+        $previous = url()->previous();
+
+        return parse_url($previous, PHP_URL_PATH) === parse_url(route('kendaraan.index'), PHP_URL_PATH)
+            ? $previous
+            : route('kendaraan.index');
     }
 
     private function parseStart(mixed $value): ?Carbon

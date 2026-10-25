@@ -1,55 +1,52 @@
 @props([
     'vehicle',
-    'available' => null,   // true = Tersedia, false = Disewa, null = badge disembunyikan
+    'available' => null,   // status saat ini: true = bebas, false = sedang disewa, null = belum diketahui
+    'scheduled' => false,  // true = lolos cek jadwal yang dipilih penyewa (rentang lengkap)
+    'days' => null,        // durasi jadwal; total ditampilkan bila $scheduled
     'href' => null,        // default: halaman detail kendaraan
-    'cta' => 'Booking',
+    'cta' => 'Lihat detail',
 ])
 
 @php
     $href = $href ?? route('kendaraan.detail', $vehicle);
+    $nextStart = $vehicle->next_booking_start;
+    // Cabang hanya bila sudah di-eager-load (hindari N+1 di grid).
+    $branchName = $vehicle->relationLoaded('branch') ? $vehicle->branch?->name : null;
+    [$statusText, $statusOk] = match (true) {
+        $scheduled => ['Tersedia untuk jadwal Anda', true],
+        $available === false => ['Sedang disewa saat ini', false],
+        default => ['Pilih jadwal untuk cek', null],
+    };
 @endphp
 
-<article {{ $attributes->merge(['class' => 'card-surface card-lift group flex flex-col p-4']) }}>
-    <div class="min-w-0">
-        <h3 class="truncate text-base font-bold">
-            <a href="{{ $href }}">{{ $vehicle->name }}</a>
-        </h3>
-        <p class="mt-0.5 text-xs">{{ $vehicle->type?->name }}</p>
-    </div>
-
-    {{-- Foto motor: latar surface (bukan putih hardcode), placeholder bila file belum ada --}}
-    <a href="{{ $href }}" class="relative my-3 flex aspect-[4/3] items-center justify-center" tabindex="-1" aria-hidden="true">
-        <svg class="h-16 w-16 text-[var(--border)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM7 17h8M3 17h2m14 0h2M6 9h6l3 5M12 9V6h3"/></svg>
+{{-- Seluruh kartu satu tautan; CTA hanya visual (span), tanpa elemen interaktif bersarang --}}
+<a href="{{ $href }}" {{ $attributes->merge(['class' => 'card-surface card-lift reveal group flex flex-col p-4']) }}>
+    <div class="relative mb-4 flex aspect-[4/3] items-center justify-center overflow-hidden" aria-hidden="true">
+        <x-illustration name="vehicles" class="absolute" />
         @if ($vehicle->image)
-            <img src="{{ asset($vehicle->image) }}" alt="" loading="lazy" onerror="this.remove()" class="absolute inset-0 h-full w-full object-contain">
-        @endif
-    </a>
-
-    <div class="flex items-center justify-between gap-2 text-xs">
-        <span class="inline-flex min-w-0 items-center gap-1.5">
-            <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 11h.01M11 11h6"/></svg>
-            <span class="truncate font-mono">{{ $vehicle->plate_number ?: '-' }}</span>
-        </span>
-
-        @if (! is_null($available))
-            <span class="inline-flex shrink-0 items-center gap-1.5 font-semibold {{ $available ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-600 dark:text-slate-300' }}">
-                <span class="h-1.5 w-1.5 rounded-full {{ $available ? 'bg-emerald-500' : 'bg-slate-400' }}" aria-hidden="true"></span>
-                {{ $available ? 'Tersedia' : 'Disewa' }}
-            </span>
+            <x-picture :src="$vehicle->image" alt="" loading="lazy" onerror="this.remove()" class="vehicle-card__image absolute inset-0 h-full w-full object-contain" />
         @endif
     </div>
 
-    {{-- mt-auto: harga nempel di bawah saat kartu ditinggikan (mis. sejajar kalender) --}}
-    <div class="mt-auto flex items-center justify-between gap-3 pt-3">
+    <h3 class="line-clamp-2 text-base font-bold">{{ $vehicle->name }}</h3>
+    <p class="mt-0.5 text-xs">{{ collect([$vehicle->type?->name, $branchName ? 'Ambil di '.$branchName : null])->filter()->join(' · ') }}</p>
+
+    <p @class(['mt-3 inline-flex items-center gap-1.5 text-xs font-semibold', 'text-[var(--success)]' => $statusOk, 'text-[var(--ink-muted)]' => ! $statusOk])>
+        <span @class(['h-2 w-2 shrink-0 rounded-full', 'bg-current' => $statusOk !== null, 'border border-current' => $statusOk === null]) aria-hidden="true"></span>
+        {{ $statusText }}
+    </p>
+    @if (! $scheduled && $nextStart?->isFuture())
+        <p class="mt-1 text-xs">Dipesan berikutnya {{ $nextStart->translatedFormat('d M, H:i') }}</p>
+    @endif
+
+    <div class="mt-auto flex items-end justify-between gap-3 pt-4">
         <p class="min-w-0">
-            <span class="text-base font-bold text-[var(--navy-900)]">Rp{{ number_format((float) $vehicle->price_per_day, 0, ',', '.') }}</span><span class="text-xs">/hari</span>
+            <span class="text-base font-bold text-[var(--ink)]">{{ rupiah((float) $vehicle->price_per_day) }}</span><span class="text-xs">/hari</span>
+            @if ($scheduled && $days)
+                <span class="block text-xs">{{ rupiah((float) $vehicle->price_per_day * $days) }} untuk {{ $days }} hari</span>
+            @endif
         </p>
 
-        <a href="{{ $href }}" @class([
-            'btn-primary-edu inline-flex shrink-0 items-center px-3 py-1.5 text-xs',
-            'pointer-events-none opacity-50' => $available === false,
-        ]) @if ($available === false) aria-disabled="true" @endif>
-            {{ $cta }}
-        </a>
+        <span class="btn-primary-edu inline-flex shrink-0 items-center px-3 text-xs">{{ $cta }}</span>
     </div>
-</article>
+</a>
