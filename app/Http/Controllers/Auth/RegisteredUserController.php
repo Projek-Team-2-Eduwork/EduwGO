@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\PendingRegistrationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -26,7 +27,9 @@ class RegisteredUserController extends Controller
     public function store(RegisterRequest $request, PendingRegistrationService $registrations): RedirectResponse
     {
         // Akun belum dibuat: data disimpan sebagai pending sampai kode OTP benar.
-        $pending = $registrations->start($request->only('name', 'email', 'phone', 'password'));
+        $token = $request->session()->get(PendingRegistrationService::TOKEN_KEY) ?? Str::random(64);
+        $pending = $registrations->start($request->only('name', 'email', 'phone', 'password'), $token);
+        $request->session()->put(PendingRegistrationService::TOKEN_KEY, $token);
 
         $request->session()->put(PendingRegistrationService::SESSION_KEY, $pending->email);
 

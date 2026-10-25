@@ -60,9 +60,11 @@ class BookingService
     public function checkout(User $user, Vehicle $vehicle, CarbonInterface $start, int $days, array $data): Booking
     {
         return DB::transaction(function () use ($user, $vehicle, $start, $days, $data) {
-            // Kunci baris user dulu: dua checkout bersamaan dari akun yang sama
-            // tidak boleh sama-sama lolos batas booking Pending.
-            User::whereKey($user->id)->lockForUpdate()->first(['id']);
+            // Kunci baris user: serialisasi dengan penghapusan/anonimisasi akun, dan dua
+            // checkout bersamaan dari akun yang sama tidak boleh sama-sama lolos batas Pending.
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            abort_unless($user->is_active, 403, 'Akun tidak aktif.');
+            $start = $start->copy()->setTimezone(config('app.timezone'));
 
             $maxPending = (int) setting('booking.max_pending_per_user', 2);
             $pending = Booking::where('user_id', $user->id)

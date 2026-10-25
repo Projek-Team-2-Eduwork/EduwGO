@@ -13,7 +13,18 @@ class SendBookingStatusEmail implements ShouldQueue
 {
     use InteractsWithQueue;
 
+    public bool $afterCommit = true;
+
     public function handle(BookingStatusChanged $event): void
+    {
+        try {
+            $this->send($event);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    private function send(BookingStatusChanged $event): void
     {
         $booking = $event->booking;
 
@@ -25,7 +36,7 @@ class SendBookingStatusEmail implements ShouldQueue
             default => null,
         };
 
-        if ($subject) {
+        if ($subject && $booking->user?->is_active) {
             Mail::to($booking->user->email)->send(new BookingStatusMail($booking, $subject));
         }
     }

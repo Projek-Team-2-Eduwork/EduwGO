@@ -19,7 +19,7 @@ class CheckoutController extends Controller
             'days' => ['required', 'integer', 'min:1', 'max:'.setting('booking.max_days', 5)],
         ]);
 
-        $start = Carbon::parse($request->start);
+        $start = Carbon::parse($request->start, config('app.timezone'))->setTimezone(config('app.timezone'));
         $days = (int) $request->days;
         $end = $start->copy()->addDays($days);
 
@@ -32,7 +32,7 @@ class CheckoutController extends Controller
             $booking = $bookingService->checkout(
                 $request->user(),
                 $vehicle,
-                Carbon::parse($request->start),
+                Carbon::parse($request->start, config('app.timezone'))->setTimezone(config('app.timezone')),
                 (int) $request->days,
                 $request->validated()
             );
