@@ -74,7 +74,7 @@
                         </x-slot>
                     </x-dropdown>
                 @else
-                    <a href="{{ route('login') }}" class="btn-primary-edu inline-flex items-center px-5 py-2 text-sm">Masuk</a>
+                    <a href="{{ route('login') }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">Masuk</a>
                 @endauth
             </div>
 
@@ -105,7 +105,7 @@
         <div class="px-4 pb-3">
             <x-branch-picker align="left" class="mb-3 w-full justify-between" />
 
-            <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn-secondary-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm">
+            <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn-secondary-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm">
                 Butuh bantuan?
             </a>
         </div>

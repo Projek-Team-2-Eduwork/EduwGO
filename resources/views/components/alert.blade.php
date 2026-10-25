@@ -16,7 +16,7 @@
     x-data="{ show: true }"
     x-show="show"
     role="{{ $type === 'error' ? 'alert' : 'status' }}"
-    {{ $attributes->merge(['class' => 'flex items-start gap-3 rounded-md border px-4 py-3 text-sm '.$classes]) }}
+    {{ $attributes->merge(['class' => 'flex items-start gap-3 rounded-lg border px-4 py-3 text-sm '.$classes]) }}
 >
     <div class="flex-1">{{ $slot }}</div>
 

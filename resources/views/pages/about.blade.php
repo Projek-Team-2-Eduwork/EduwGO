@@ -28,6 +28,6 @@
             </div>
         @endif
 
-        <a href="{{ url('/') }}" class="btn-primary-edu mt-8 inline-flex items-center px-6 py-2.5 text-sm">Kembali ke Home</a>
+        <a href="{{ url('/') }}" class="btn-primary-edu mt-8 inline-flex items-center px-5 py-2.5 text-sm">Kembali ke Home</a>
     </div>
 </x-app-layout>

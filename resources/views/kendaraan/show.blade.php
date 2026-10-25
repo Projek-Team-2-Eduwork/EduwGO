@@ -50,7 +50,7 @@
                         {{-- Komponen modal (EG-12) membawa tombol Booking sendiri yang membuka modal durasi --}}
                         <x-booking-duration-modal :vehicle="$vehicle" />
                     @else
-                        <a href="{{ route('login') }}" class="btn-primary-edu inline-flex items-center justify-center px-6 py-2.5 text-sm">Booking</a>
+                        <a href="{{ route('login') }}" class="btn-primary-edu inline-flex items-center justify-center px-5 py-2.5 text-sm">Booking</a>
                     @endauth
                 </div>
             </div>

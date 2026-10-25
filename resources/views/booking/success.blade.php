@@ -13,7 +13,7 @@
                     </div>
                     <h2 class="mb-4 text-2xl font-bold text-[var(--navy-900)]">Yeay! Pembayaran Berhasil</h2>
                     <p class="mb-2">Cek status booking & konfirmasi pengambilan via Chat Admin.</p>
-                    <p class="mb-8 inline-block rounded bg-[var(--bg)] px-4 py-2 text-lg font-mono font-semibold text-[var(--navy-900)]">{{ $booking->code }}</p>
+                    <p class="mb-8 inline-block rounded-md bg-[var(--bg)] px-4 py-2 text-lg font-mono font-semibold text-[var(--navy-900)]">{{ $booking->code }}</p>
                 @else
                     <!-- State Memproses -->
                     <div class="mb-6 flex justify-center">
@@ -24,7 +24,7 @@
                     </div>
                     <h2 class="mb-4 text-2xl font-bold text-[var(--navy-900)]">Memproses pembayaran…</h2>
                     <p class="mb-2">Pembayaran Anda sedang diverifikasi. Halaman ini memperbarui otomatis.</p>
-                    <p class="mb-4 inline-block rounded bg-[var(--bg)] px-4 py-2 text-lg font-mono font-semibold text-[var(--navy-900)]">{{ $booking->code }}</p>
+                    <p class="mb-4 inline-block rounded-md bg-[var(--bg)] px-4 py-2 text-lg font-mono font-semibold text-[var(--navy-900)]">{{ $booking->code }}</p>
                     
                     <div x-show="showTimeoutMessage" style="display: none;" class="mb-4 text-sm font-medium text-red-600 dark:text-red-400">
                         Masih diproses? Hubungi admin.

@@ -171,11 +171,11 @@ class BookingDaftarPesananTest extends TestCase
         $response->assertSee('Riwayat Transaksi');
         $response->assertSee('Rp 300.000');
 
-        $response->assertSee('<div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Jumlah Transaksi</div>', false);
-        $response->assertSee('<div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">3</div>', false);
+        $response->assertSee('<div class="text-sm text-[var(--ink-muted)] mb-1">Jumlah Transaksi</div>', false);
+        $response->assertSee('<div class="text-lg font-bold text-[var(--navy-900)]">3</div>', false);
 
-        $response->assertSee('<div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Menunggu Bayar</div>', false);
-        $response->assertSee('<div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">1</div>', false);
+        $response->assertSee('<div class="text-sm text-[var(--ink-muted)] mb-1">Menunggu Bayar</div>', false);
+        $response->assertSee('<div class="text-lg font-bold text-[var(--navy-900)]">1</div>', false);
     }
 
     public function test_11_metode_dan_status_bayar_tampil()

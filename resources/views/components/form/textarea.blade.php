@@ -20,7 +20,7 @@
         id="{{ $id }}"
         name="{{ $name }}"
         rows="{{ $rows }}"
-        {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-md shadow-sm']) }}
+        {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-lg shadow-sm']) }}
         @error($errorKey) aria-invalid="true" @enderror
     >{{ old($errorKey, $value) }}</textarea>
 

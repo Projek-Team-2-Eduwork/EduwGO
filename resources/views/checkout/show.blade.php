@@ -14,7 +14,7 @@
 
                 <div class="mb-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4">
                     <h3 class="text-lg font-semibold text-[var(--navy-900)]">{{ $vehicle->name }}</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Harga per hari: Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}</p>
+                    <p class="text-sm text-[var(--ink-muted)]">Harga per hari: Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}</p>
 
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div>

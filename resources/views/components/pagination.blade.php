@@ -1,7 +1,7 @@
 {{-- View pagination kustom: pakai `$paginator->links('components.pagination')`. --}}
 @if ($paginator->hasPages())
     @php
-        $baseButton = 'inline-flex min-w-[2.25rem] items-center justify-center border px-3 py-1.5 text-sm font-medium transition';
+        $baseButton = 'inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy-700)] py-1.5 text-sm font-medium transition';
     @endphp
 
     <nav role="navigation" aria-label="Navigasi halaman" class="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
