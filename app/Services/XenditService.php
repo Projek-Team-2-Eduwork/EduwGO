@@ -111,6 +111,13 @@ class XenditService
     ];
 
     /**
+     * Kode kanal bayar di tempat (COD). Bukan channel Xendit: tidak pernah
+     * dikirim ke gateway, hanya dicatat sebagai pembayaran tunai pending yang
+     * nanti ditandai lunas oleh admin.
+     */
+    public const COD = 'COD';
+
+    /**
      * Menyusun katalog channel per kategori untuk ditampilkan halaman bayar
      * (EG-55, gaya gateway). Tiap channel membawa channel_code (untuk link
      * ?metode=), label tampilan, dan logo brand SVG inline (EG-56).
@@ -135,7 +142,15 @@ class XenditService
             ];
         }
 
-        $order = ['Virtual Account', 'Kartu Kredit', 'E-Wallet', 'QR', 'Retail Outlet'];
+        // Bayar di tempat (COD): pilihan lokal tanpa logo brand — pakai ikon uang.
+        $grouped['Bayar di Tempat'][] = [
+            'code' => self::COD,
+            'label' => 'Bayar di Tempat (COD)',
+            'logo' => [],
+            'icon' => $logos[self::COD],
+        ];
+
+        $order = ['Virtual Account', 'Kartu Kredit', 'E-Wallet', 'QR', 'Bayar di Tempat', 'Retail Outlet'];
         $catalog = [];
 
         foreach ($order as $kategori) {
@@ -178,6 +193,7 @@ class XenditService
             'QRIS' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QRIS"><g fill="#E31E24"><rect x="14" y="7" width="9" height="9" rx="1.5"/><rect x="16.5" y="9.5" width="4" height="4" fill="#fff"/><rect x="33" y="7" width="9" height="9" rx="1.5"/><rect x="35.5" y="9.5" width="4" height="4" fill="#fff"/><rect x="14" y="20" width="9" height="9" rx="1.5"/><rect x="16.5" y="22.5" width="4" height="4" fill="#fff"/><rect x="33" y="20" width="4" height="4"/><rect x="39" y="20" width="4" height="4"/><rect x="33" y="26" width="4" height="4"/><rect x="39" y="26" width="4" height="4"/></g></svg>',
             'ALFAMART' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Alfamart"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" font-style="italic" fill="#E31E24">Alfamart</text></svg>',
             'INDOMARET' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Indomaret"><text x="28" y="23" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#E31E24">Indomaret</text></svg>',
+            'COD' => '<svg class="h-full w-full" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bayar di Tempat"><rect x="10" y="9" width="36" height="18" rx="2.5" fill="none" stroke="#0A0F1D" stroke-width="1.6"/><circle cx="28" cy="18" r="4.6" fill="none" stroke="#0A0F1D" stroke-width="1.6"/><circle cx="17" cy="14" r="1.3" fill="#0A0F1D"/><circle cx="39" cy="22" r="1.3" fill="#0A0F1D"/></svg>',
         ];
     }
 
@@ -237,6 +253,10 @@ class XenditService
      */
     public static function paymentLabel(?string $channel, ?string $method): string
     {
+        if ($channel === self::COD) {
+            return 'Tunai (bayar di tempat)';
+        }
+
         if ($channel !== null && isset(self::CHANNELS[$channel])) {
             return self::CHANNELS[$channel]['label'];
         }

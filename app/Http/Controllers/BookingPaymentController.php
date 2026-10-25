@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class BookingPaymentController extends Controller
 {
@@ -86,12 +89,28 @@ class BookingPaymentController extends Controller
         // Metode yang dipilih penyewa (default QRIS) — nilai tak dikenal jatuh balik ke QRIS
         $channel = strtoupper((string) $request->query('metode', 'QRIS'));
 
-        if (! isset(XenditService::CHANNELS[$channel])) {
+        if ($channel !== XenditService::COD && ! isset(XenditService::CHANNELS[$channel])) {
             $channel = match ($channel) {
                 'BANK_TRANSFER' => 'BCA_VIRTUAL_ACCOUNT',
                 'EWALLET' => 'SHOPEEPAY',
                 default => 'QRIS',
             };
+        }
+
+        // Bayar di tempat (COD): tidak lewat gateway sama sekali.
+        if ($channel === XenditService::COD) {
+            return $this->bayarDiTempat($booking, $xenditService);
+        }
+
+        // Pindah dari COD ke bayar online hanya selama batas bayar online masih
+        // berlaku; lewat dari itu penyewa tetap bayar di tempat.
+        $cod = Booking::pendingCod($booking->payments())->first();
+        if ($cod) {
+            if (! now()->lessThan($booking->onlinePaymentDeadline())) {
+                return $this->bayarDiTempat($booking, $xenditService);
+            }
+
+            $cod->update(['status' => 'expired']);
         }
 
         // Kartu kredit/debit tidak didukung Payments API v3 untuk negara ID
@@ -160,6 +179,81 @@ class BookingPaymentController extends Controller
             'paymentUrl' => $tampilan['payment_url'],
             'error' => null,
         ]);
+    }
+
+    /**
+     * Halaman instruksi bayar di tempat (COD). Tidak memanggil gateway: cukup
+     * catatan pembayaran tunai pending yang nanti ditandai lunas admin lewat
+     * "Tandai Sudah Dibayar (COD)" saat uang benar-benar diterima di cabang.
+     */
+    private function bayarDiTempat(Booking $booking, XenditService $xenditService): View
+    {
+        $booking->loadMissing(['vehicle.branch']);
+
+        $payment = DB::transaction(function () use ($booking, $xenditService) {
+            Booking::whereKey($booking->id)->lockForUpdate()->first();
+
+            // Payment gateway yang masih pending ditutup: penyewa sudah memilih
+            // bayar tunai, QR/VA lama tidak boleh dibayar lagi.
+            $gateway = $booking->payments()
+                ->whereIn('method', ['xendit_invoice', 'xendit_payment_request'])
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($gateway as $p) {
+                $p->update(['status' => 'expired']);
+            }
+
+            DB::afterCommit(function () use ($gateway, $xenditService) {
+                foreach ($gateway as $p) {
+                    $xenditService->cancelGatewayPayment($p);
+                }
+            });
+
+            // Idempoten: pilihan COD yang sama tidak menumpuk baris pembayaran.
+            return Booking::pendingCod($booking->payments())->latest('id')->first()
+                ?? Payment::create([
+                    'booking_id' => $booking->id,
+                    'method' => 'cash',
+                    'status' => 'pending',
+                    'payment_channel' => XenditService::COD,
+                    'amount' => $booking->total_amount,
+                    // Batas bayar COD = waktu pengambilan + buffer (lihat Booking::paymentDeadline)
+                    'expires_at' => $booking->start_at->copy()->addMinutes((int) setting('booking.buffer_minutes', 60)),
+                ]);
+        });
+
+        return view('booking.bayar', [
+            'booking' => $booking,
+            'payment' => $payment,
+            'channel' => XenditService::COD,
+            'channelLabel' => 'Bayar di Tempat (COD)',
+            'kategoriKanal' => XenditService::channelCatalog(),
+            'steps' => $this->instruksiBayarDiTempat($booking),
+            'qrString' => null,
+            'paymentUrl' => null,
+            'error' => null,
+        ]);
+    }
+
+    /**
+     * Langkah bayar di tempat, menyesuaikan cabang & jadwal pengambilan.
+     *
+     * @return array<int, string>
+     */
+    private function instruksiBayarDiTempat(Booking $booking): array
+    {
+        $cabang = $booking->vehicle?->branch?->name;
+        $nominal = 'Rp'.number_format((float) $booking->total_amount, 0, ',', '.');
+
+        return [
+            'Pilih metode ini kalau kamu mau bayar tunai langsung di '.($cabang ?: 'cabang kami').'.',
+            'Datang sesuai jadwal pengambilan: '.$booking->start_at->translatedFormat('D, d M Y H:i').'.',
+            'Tunjukkan kode booking '.$booking->code.' kepada admin, lalu bayar '.$nominal.' secara tunai.',
+            'Admin mencatat pembayaran, lalu status pesanan otomatis berubah jadi Lunas.',
+            'Pesanan otomatis kedaluwarsa kalau belum dibayar sampai waktu pengambilan.',
+        ];
     }
 
     public function success(Request $request, $code)

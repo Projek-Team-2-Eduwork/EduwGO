@@ -14,7 +14,7 @@
                 <span class="text-xl font-bold text-[var(--ink)]">{{ rupiah($booking->total_amount) }}</span>
             </div>
 
-            @if ($payment)
+            @if ($payment && $payment->expires_at && $channel !== 'COD')
                 <div x-data="hitungMundur({{ json_encode($payment->expires_at?->toIso8601String()) }}, {{ json_encode(route('booking.failed', $booking->code)) }})"
                      class="mt-4 rounded-xl p-4 text-center" style="background-color: var(--bg);">
                     <p class="mb-1 text-sm">Sisa Waktu Pembayaran</p>
@@ -117,24 +117,35 @@
                 </ol>
 
                 <div class="space-y-3">
-                    <button type="button" @click="sudahBayar()" :disabled="checking"
-                        class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm disabled:opacity-60">
-                        <span x-show="!checking">Saya Sudah Bayar</span>
-                        <span x-show="checking">Memeriksa status...</span>
-                    </button>
-                    <p x-show="message" x-text="message" class="text-center text-sm text-[var(--ink-muted)]"></p>
-                    <a href="{{ route('booking.show', $booking->code) }}"
-                       class="block w-full py-2 text-center text-sm font-medium text-[var(--ink)] underline">
-                        Kembali ke Detail Pesanan
-                    </a>
-                    @if (app()->environment('local') || str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
-                        <form method="POST" action="{{ route('booking.demo-bayar', $booking->code) }}">
-                            @csrf
-                            <button type="submit"
-                                class="block w-full rounded-lg border border-dashed border-[var(--line)] py-2 text-center text-xs font-semibold text-[var(--ink-muted)]">
-                                Demo pembayaran
-                            </button>
-                        </form>
+                    @if ($channel === 'COD')
+                        {{-- Bayar di tempat: tidak ada tombol cek status, admin yang mencatat --}}
+                        <div class="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-4 text-sm">
+                            Simpan kode booking ini. Pembayaran tunai dicatat oleh admin saat kamu datang ke cabang, lalu status pesanan otomatis berubah jadi <strong class="text-[var(--ink)]">Lunas</strong>.
+                        </div>
+                        <a href="{{ route('booking.show', $booking->code) }}"
+                           class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm">
+                            Kembali ke Detail Pesanan
+                        </a>
+                    @else
+                        <button type="button" @click="sudahBayar()" :disabled="checking"
+                            class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm disabled:opacity-60">
+                            <span x-show="!checking">Saya Sudah Bayar</span>
+                            <span x-show="checking">Memeriksa status...</span>
+                        </button>
+                        <p x-show="message" x-text="message" class="text-center text-sm text-[var(--ink-muted)]"></p>
+                        <a href="{{ route('booking.show', $booking->code) }}"
+                           class="block w-full py-2 text-center text-sm font-medium text-[var(--ink)] underline">
+                            Kembali ke Detail Pesanan
+                        </a>
+                        @if (app()->environment('local') || str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
+                            <form method="POST" action="{{ route('booking.demo-bayar', $booking->code) }}">
+                                @csrf
+                                <button type="submit"
+                                    class="block w-full rounded-lg border border-dashed border-[var(--line)] py-2 text-center text-xs font-semibold text-[var(--ink-muted)]">
+                                    Demo pembayaran
+                                </button>
+                            </form>
+                        @endif
                     @endif
                 </div>
             </div>

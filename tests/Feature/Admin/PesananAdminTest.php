@@ -198,4 +198,45 @@ class PesananAdminTest extends TestCase
         // Klik kartu aktif → kembali menampilkan semua pesanan.
         $this->get($href)->assertOk()->assertSee('EG.500001')->assertSee('EG.500002');
     }
+
+    public function test_urutkan_index_berdasarkan_kode_terendah_dan_tertinggi()
+    {
+        $this->actingAsAdmin();
+
+        Booking::factory()->pending()->create([
+            'code' => 'EG.000020',
+            'start_at' => now()->addDays(2),
+            'end_at' => now()->addDays(4),
+        ]);
+        Booking::factory()->pending()->create([
+            'code' => 'EG.000010',
+            'start_at' => now()->addDays(1),
+            'end_at' => now()->addDays(3),
+        ]);
+        Booking::factory()->pending()->create([
+            'code' => 'EG.000030',
+            'start_at' => now()->addDays(3),
+            'end_at' => now()->addDays(5),
+        ]);
+
+        // Tanpa filter urut: tetap urut jadwal terbaru (start_at desc).
+        $this->get(route('admin.pesanan.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000030', 'EG.000020', 'EG.000010']);
+
+        // Kode terendah → tertinggi.
+        $this->get(route('admin.pesanan.index', ['urut' => 'kode_asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000010', 'EG.000020', 'EG.000030']);
+
+        // Kode tertinggi → terendah.
+        $this->get(route('admin.pesanan.index', ['urut' => 'kode_desc']))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000030', 'EG.000020', 'EG.000010']);
+
+        // Nilai urut yang tidak dikenal diabaikan (kembali ke urutan default).
+        $this->get(route('admin.pesanan.index', ['urut' => 'ngawur']))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000030', 'EG.000020', 'EG.000010']);
+    }
 }

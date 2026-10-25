@@ -30,10 +30,11 @@
                     <x-form.input name="q" label="Cari pesanan" :value="request('q')" placeholder="Nama / motor / kode" />
                     <x-form.select name="status" label="Status" :options="$statusOptions" :value="request('status')" placeholder="Semua status" />
                     <x-form.select name="tipe" label="Tipe kendaraan" :options="$types" :value="request('tipe')" placeholder="Semua tipe" />
+                    <x-form.select name="urut" label="Urutkan" :options="['kode_asc' => 'Kode terendah → tertinggi', 'kode_desc' => 'Kode tertinggi → terendah']" :value="request('urut')" placeholder="Jadwal terbaru" />
                     <x-form.datetime name="mulai" label="Jadwal dari" :value="request('mulai')" :picker="true" />
                     <x-form.datetime name="selesai" label="Jadwal sampai" :value="request('selesai')" :picker="true" />
                     <div class="flex items-center justify-end gap-3 sm:col-span-2 lg:col-span-3">
-                        @if(request()->hasAny(['q', 'status', 'tipe', 'mulai', 'selesai', 'branch']))
+                        @if(request()->hasAny(['q', 'status', 'tipe', 'urut', 'mulai', 'selesai', 'branch']))
                             <a href="{{ route('admin.pesanan.index') }}" class="text-sm underline-offset-4 hover:underline">Reset</a>
                         @endif
                         <x-primary-button class="h-11 px-6">Terapkan</x-primary-button>
