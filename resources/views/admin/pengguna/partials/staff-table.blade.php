@@ -8,7 +8,8 @@
             <tr>
                 <th class="px-4 py-3">Nama</th>
                 <th class="px-4 py-3">Email</th>
-                <th class="px-4 py-3">Role · Cabang</th>
+                <th class="px-4 py-3">Role</th>
+                <th class="px-4 py-3">Cabang</th>
                 <th class="px-4 py-3">Status</th>
                 <th class="px-4 py-3 text-right">Aksi</th>
             </tr>
@@ -18,7 +19,8 @@
                 <tr>
                     <td class="px-4 py-2"><a href="{{ route('admin.pengguna.show', $user) }}" class="font-semibold text-[var(--ink)] hover:underline">{{ $user->name }}</a></td>
                     <td class="px-4 py-2 text-xs">{{ $user->email }}</td>
-                    <td class="px-4 py-2">@include('admin.pengguna.partials.role-badge', ['user' => $user])</td>
+                    <td class="px-4 py-2">@include('admin.pengguna.partials.role-badge', ['user' => $user, 'showBranch' => false])</td>
+                    <td class="px-4 py-2 text-xs">{{ $user->isSuperadmin() ? 'Semua cabang' : ($user->branch?->name ?? 'Belum ada cabang') }}</td>
                     <td class="px-4 py-2">{!! $statusBadge($user) !!}</td>
                     <td class="px-4 py-2 text-right">
                         @if($user->is(auth()->user()))

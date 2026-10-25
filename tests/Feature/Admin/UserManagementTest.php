@@ -44,6 +44,34 @@ class UserManagementTest extends TestCase
         $response->assertDontSee('Siti');
     }
 
+    public function test_tabel_staf_menampilkan_kolom_role_dan_cabang_terpisah(): void
+    {
+        $this->actingAsSuperadmin();
+        $branch = Branch::factory()->create(['name' => 'Cabang Jakarta']);
+        $admin = User::factory()->create(['branch_id' => $branch->id]);
+        $admin->assignRole('admin');
+
+        $this->get(route('admin.pengguna.index'))
+            ->assertOk()
+            ->assertSee('>Role</th>', false)
+            ->assertSee('>Cabang</th>', false)
+            ->assertSee('Superadmin')
+            ->assertSee('Cabang Jakarta');
+    }
+
+    public function test_tabel_penyewa_menampilkan_role_tanpa_kontrol_ubah_role(): void
+    {
+        $this->actingAsSuperadmin();
+        $user = User::factory()->create();
+        $user->assignRole('user');
+
+        $this->get(route('admin.pengguna.index', ['tab' => 'penyewa']))
+            ->assertOk()
+            ->assertSee('>Role</th>', false)
+            ->assertDontSee(route('admin.pengguna.role', $user), false)
+            ->assertViewHas('users', fn ($users) => $users->every(fn ($user) => $user->relationLoaded('roles')));
+    }
+
     public function test_superadmin_bisa_memindah_cabang_admin()
     {
         $this->actingAsSuperadmin();

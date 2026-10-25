@@ -24,7 +24,7 @@ class PenggunaController extends Controller
 
         $query = $tab === 'staf'
             ? User::role(RoleSeeder::STAFF)->with(['roles', 'branch'])
-            : User::withoutRole(RoleSeeder::STAFF)->withCount('bookings');
+            : User::withoutRole(RoleSeeder::STAFF)->with('roles')->withCount('bookings');
 
         if ($request->filled('q')) {
             $q = $request->q;
