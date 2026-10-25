@@ -74,7 +74,7 @@ class DashboardTest extends TestCase
         $this->assertEquals((float) $expectedRevenue, $revenue);
 
         $recent = $service->recentBookings();
-        $expectedRecent = Booking::orderByDesc('created_at')->limit(8)->get();
+        $expectedRecent = Booking::orderByDesc('created_at')->limit(5)->get();
         $this->assertCount($expectedRecent->count(), $recent);
         if ($expectedRecent->count() > 0) {
             $this->assertEquals($expectedRecent->first()->id, $recent->first()->id);
@@ -150,14 +150,14 @@ class DashboardTest extends TestCase
 
         $response->assertSee('Total Unit Aktif');
         $response->assertSee('Tersedia');
-        $response->assertSee('5 Top Orderan Rental');
+        $response->assertSee('Motor terlaris');
         $response->assertSee('Pendapatan');
         $response->assertSee('Total Pendapatan');
         $response->assertSee('Pesanan Terakhir');
         $response->assertSee('Lihat semua');
     }
 
-    public function test_batas_maksimal_query_halaman_adalah_9()
+    public function test_batas_maksimal_query_halaman_tetap()
     {
         $admin = $this->getAdmin();
 
@@ -169,6 +169,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
         $response->assertOk();
 
-        $this->assertLessThanOrEqual(9, count(DB::getQueryLog()));
+        // Widget jadwal hari ini, terlambat, refund, per cabang, dan badge sidebar: query tetap, tanpa N+1
+        $this->assertLessThanOrEqual(16, count(DB::getQueryLog()));
     }
 }

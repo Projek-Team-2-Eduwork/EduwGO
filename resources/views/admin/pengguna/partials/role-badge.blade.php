@@ -3,7 +3,7 @@
     $isSuper = $user->hasRole(RoleSeeder::SUPERADMIN);
     $isAdmin = $user->hasRole(RoleSeeder::ADMIN);
 @endphp
-<span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $isSuper || $isAdmin ? 'bg-[var(--coral-300)] text-[var(--navy-900)]' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100' }}">
+<span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $isSuper || $isAdmin ? 'bg-[var(--accent-soft)] text-[var(--ink)]' : 'bg-[var(--bg)] text-[var(--ink)] dark:bg-[var(--bg)] dark:text-[var(--ink-muted)]' }}">
     {{ $isSuper ? 'Superadmin' : ($isAdmin ? 'Admin' : 'Penyewa') }}
 </span>
 @if ($isAdmin)

@@ -3,8 +3,10 @@
 use App\Http\Controllers\Admin\BranchSettingController;
 use App\Http\Controllers\Admin\CabangController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\JadwalArmadaController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\PesananController;
+use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TipeKendaraanController;
 use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
@@ -153,6 +155,10 @@ Route::middleware(['auth', 'verified', 'role:'.RoleSeeder::STAFF_MIDDLEWARE])->p
 
     Route::resource('kendaraan', AdminVehicleController::class);
 
+    Route::get('/jadwal-armada', [JadwalArmadaController::class, 'index'])->name('jadwal-armada');
+    Route::get('/refund', [RefundController::class, 'index'])->name('refund.index');
+    Route::post('/refund/{payment}', [RefundController::class, 'update'])->name('refund.update');
+
     Route::middleware('role:'.RoleSeeder::SUPERADMIN)->group(function () {
         Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
         Route::put('/pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
@@ -160,6 +166,8 @@ Route::middleware(['auth', 'verified', 'role:'.RoleSeeder::STAFF_MIDDLEWARE])->p
         Route::resource('tipe-kendaraan', TipeKendaraanController::class)->except(['create', 'show', 'edit']);
         Route::get('/pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
         Route::post('/pengguna', [PenggunaController::class, 'store'])->name('pengguna.store');
+        Route::get('/pengguna/{pengguna}', [PenggunaController::class, 'show'])->name('pengguna.show');
+        Route::post('/pengguna/{pengguna}/reset-password', [PenggunaController::class, 'sendResetLink'])->middleware('throttle:6,1')->name('pengguna.reset-password');
         Route::post('/pengguna/{pengguna}/role', [PenggunaController::class, 'setRole'])->name('pengguna.role');
         Route::post('/pengguna/{pengguna}/toggle', [PenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
 
@@ -175,3 +183,5 @@ Route::get('/tentang', [PageController::class, 'about'])->name('about');
 
 // Memuat rute-rute bawaan Laravel Breeze
 require __DIR__.'/auth.php';
+
+Route::view('/kredit-foto', 'pages.photo-credits')->name('photo-credits');

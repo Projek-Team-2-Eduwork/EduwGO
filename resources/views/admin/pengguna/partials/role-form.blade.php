@@ -1,16 +1,23 @@
 @use('Database\Seeders\RoleSeeder')
-@php($current = $user->hasRole(RoleSeeder::SUPERADMIN) ? RoleSeeder::SUPERADMIN : ($user->hasRole(RoleSeeder::ADMIN) ? RoleSeeder::ADMIN : RoleSeeder::USER))
-<form action="{{ route('admin.pengguna.role', $user->id) }}" method="POST" x-data="{ role: '{{ $current }}' }" class="flex flex-wrap items-center gap-2" onsubmit="return confirm('Ubah role pengguna ini?')">
+@php($current = $user->hasRole(RoleSeeder::SUPERADMIN) ? RoleSeeder::SUPERADMIN : RoleSeeder::ADMIN)
+{{-- Hanya untuk staf: penyewa tidak punya kontrol role (ditolak juga di UserPolicy::setRole) --}}
+<form action="{{ route('admin.pengguna.role', $user->id) }}" method="POST" x-data="{ role: '{{ $current }}' }" class="space-y-4" onsubmit="return confirm('Simpan perubahan role {{ $user->name }}?')">
     @csrf
-    <select name="role" x-model="role" aria-label="Role {{ $user->name }}" class="rounded-md border border-[var(--border)] bg-[var(--surface)] py-1 text-xs">
-        <option value="{{ RoleSeeder::USER }}">Penyewa</option>
-        <option value="{{ RoleSeeder::ADMIN }}">Admin cabang</option>
-        <option value="{{ RoleSeeder::SUPERADMIN }}">Superadmin</option>
-    </select>
-    <select name="branch_id" x-show="role === '{{ RoleSeeder::ADMIN }}'" x-bind:disabled="role !== '{{ RoleSeeder::ADMIN }}'" aria-label="Cabang {{ $user->name }}" class="rounded-md border border-[var(--border)] bg-[var(--surface)] py-1 text-xs">
-        @foreach ($branches as $id => $name)
-            <option value="{{ $id }}" @selected($user->branch_id === $id)>{{ $name }}</option>
-        @endforeach
-    </select>
-    <button type="submit" class="text-xs font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Simpan</button>
+    <div>
+        <x-input-label for="role-{{ $user->id }}" value="Role" />
+        <select id="role-{{ $user->id }}" name="role" x-model="role" class="mt-1 block w-full rounded-lg shadow-sm">
+            <option value="{{ RoleSeeder::ADMIN }}">Admin cabang</option>
+            <option value="{{ RoleSeeder::SUPERADMIN }}">Superadmin</option>
+            <option value="{{ RoleSeeder::USER }}">Cabut akses staf (jadi penyewa)</option>
+        </select>
+    </div>
+    <div x-show="role === '{{ RoleSeeder::ADMIN }}'">
+        <x-input-label for="branch-{{ $user->id }}" value="Cabang" />
+        <select id="branch-{{ $user->id }}" name="branch_id" x-bind:disabled="role !== '{{ RoleSeeder::ADMIN }}'" class="mt-1 block w-full rounded-lg shadow-sm">
+            @foreach ($branches as $id => $name)
+                <option value="{{ $id }}" @selected($user->branch_id === $id)>{{ $name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <x-primary-button class="w-full justify-center">Simpan role</x-primary-button>
 </form>

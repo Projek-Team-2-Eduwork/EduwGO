@@ -84,7 +84,7 @@ class SettingController extends Controller
         }
 
         Cache::forget('settings');
-        Cache::forget('settings.all');
+        Setting::flushCache();
 
         return back()->with('success', 'Pengaturan toko berhasil diperbarui.');
     }

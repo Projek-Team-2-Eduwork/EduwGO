@@ -27,7 +27,7 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create(['name' => 'Sutrisno']);
         Booking::factory()->count(3)->create(['user_id' => $user->id]);
 
-        $response = $this->get(route('admin.pengguna.index'));
+        $response = $this->get(route('admin.pengguna.index', ['tab' => 'penyewa']));
         $response->assertOk();
         $response->assertSee('Sutrisno');
         $response->assertSee('3'); // Jumlah booking via withCount
@@ -39,22 +39,34 @@ class UserManagementTest extends TestCase
         User::factory()->create(['name' => 'Joko', 'email' => 'joko@gmail.com']);
         User::factory()->create(['name' => 'Siti']);
 
-        $response = $this->get(route('admin.pengguna.index', ['q' => 'joko']));
+        $response = $this->get(route('admin.pengguna.index', ['tab' => 'penyewa', 'q' => 'joko']));
         $response->assertSee('Joko');
         $response->assertDontSee('Siti');
     }
 
-    public function test_superadmin_bisa_menjadikan_pengguna_admin_cabang()
+    public function test_superadmin_bisa_memindah_cabang_admin()
     {
         $this->actingAsSuperadmin();
         $cabang = Branch::factory()->create();
-        $user = User::factory()->create();
+        $user = User::factory()->create(['branch_id' => Branch::factory()->create()->id]);
+        $user->assignRole('admin');
 
         $this->post(route('admin.pengguna.role', $user->id), ['role' => 'admin', 'branch_id' => $cabang->id]);
 
         $user->refresh();
         $this->assertTrue($user->hasRole('admin'));
         $this->assertSame($cabang->id, $user->branch_id);
+    }
+
+    public function test_role_penyewa_tidak_bisa_diubah_lewat_panel()
+    {
+        $this->actingAsSuperadmin();
+        $cabang = Branch::factory()->create();
+        $user = User::factory()->create();
+        $user->assignRole('user');
+
+        $this->post(route('admin.pengguna.role', $user->id), ['role' => 'admin', 'branch_id' => $cabang->id])->assertForbidden();
+        $this->assertFalse($user->fresh()->hasRole('admin'));
     }
 
     public function test_superadmin_membuat_admin_cabang_baru_langsung()
@@ -103,7 +115,9 @@ class UserManagementTest extends TestCase
     public function test_role_admin_tanpa_cabang_ditolak()
     {
         $this->actingAsSuperadmin();
+        Role::firstOrCreate(['name' => 'superadmin']);
         $user = User::factory()->create();
+        $user->assignRole('superadmin');
 
         $this->post(route('admin.pengguna.role', $user->id), ['role' => 'admin'])->assertSessionHasErrors('branch_id');
         $this->assertFalse($user->fresh()->hasRole('admin'));

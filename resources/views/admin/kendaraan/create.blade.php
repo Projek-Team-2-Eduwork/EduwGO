@@ -1,16 +1,16 @@
-<x-admin-layout>
+<x-admin-layout title="Tambah kendaraan">
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight">
             {{ __('Tambah Kendaraan') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-6">
         <div class="max-w-3xl mx-auto">
-            <div class="card-surface p-6">
+            <div class="section-plain p-6">
                 <form action="{{ route('admin.kendaraan.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <x-input-label for="name" value="Nama Kendaraan *" />
@@ -50,7 +50,7 @@
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="image" value="Foto Kendaraan *" />
-                            <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--navy-900)] hover:file:brightness-95" required>
+                            <x-form.file name="image" label="" accept="image/*" />
                             <x-input-error class="mt-2" :messages="$errors->get('image')" />
                         </div>
                         <div class="md:col-span-2">
@@ -60,13 +60,13 @@
                         </div>
                         <div class="md:col-span-2 flex items-center">
                             <input type="hidden" name="is_active" value="0">
-                            <input id="is_active" name="is_active" type="checkbox" value="1" class="rounded border-[var(--border)] text-[var(--orange-500)] shadow-sm focus:ring-[var(--orange-500)]" {{ old('is_active', true) ? 'checked' : '' }}>
-                            <label for="is_active" class="ml-2 block text-sm text-[var(--navy-900)]">Status Aktif (Ditampilkan ke pengguna)</label>
+                            <input id="is_active" name="is_active" type="checkbox" value="1" class="rounded border-[var(--line)] text-[var(--accent)] shadow-sm focus:ring-[var(--accent)]" {{ old('is_active', true) ? 'checked' : '' }}>
+                            <label for="is_active" class="ml-2 block text-sm text-[var(--ink)]">Status Aktif (Ditampilkan ke pengguna)</label>
                         </div>
                     </div>
 
                     <div class="mt-4 flex items-center justify-end gap-4">
-                        <a href="{{ route('admin.kendaraan.index') }}" class="text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</a>
+                        <a href="{{ route('admin.kendaraan.index') }}" class="text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Batal</a>
                         <x-primary-button>Simpan Kendaraan</x-primary-button>
                     </div>
                 </form>

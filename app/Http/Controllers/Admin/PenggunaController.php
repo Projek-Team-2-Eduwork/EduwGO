@@ -3,19 +3,28 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendStaffResetLinkRequest;
 use App\Models\Branch;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Password;
 
 class PenggunaController extends Controller
 {
+    /**
+     * Dua tab terpisah: Staf (superadmin + admin cabang) dan Penyewa. Pencarian berlaku per tab.
+     */
     public function index(Request $request)
     {
         Gate::authorize('viewAny', User::class);
 
-        $query = User::withCount('bookings')->with(['roles', 'branch']);
+        $tab = $request->input('tab') === 'penyewa' ? 'penyewa' : 'staf';
+
+        $query = $tab === 'staf'
+            ? User::role(RoleSeeder::STAFF)->with(['roles', 'branch'])
+            : User::withoutRole(RoleSeeder::STAFF)->withCount('bookings');
 
         if ($request->filled('q')) {
             $q = $request->q;
@@ -28,9 +37,33 @@ class PenggunaController extends Controller
 
         $users = $query->orderBy('name')->paginate(12)->withQueryString();
 
+        $counts = [
+            'staf' => User::role(RoleSeeder::STAFF)->count(),
+            'penyewa' => User::withoutRole(RoleSeeder::STAFF)->count(),
+        ];
+
         $branches = Branch::query()->orderBy('name')->pluck('name', 'id');
 
-        return view('admin.pengguna.index', compact('users', 'branches'));
+        return view('admin.pengguna.index', compact('users', 'branches', 'tab', 'counts'));
+    }
+
+    public function show(User $pengguna)
+    {
+        Gate::authorize('viewAny', User::class);
+
+        $pengguna->load(['roles', 'branch'])->loadCount('bookings');
+        $bookings = $pengguna->bookings()->with('vehicle')->latest()->paginate(10);
+
+        return view('admin.pengguna.show', compact('pengguna', 'bookings'));
+    }
+
+    public function sendResetLink(SendStaffResetLinkRequest $request, User $pengguna)
+    {
+        $status = Password::sendResetLink(['email' => $pengguna->email]);
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('success', "Link reset password dikirim ke {$pengguna->email}.")
+            : back()->with('error', __($status));
     }
 
     public function store(Request $request)

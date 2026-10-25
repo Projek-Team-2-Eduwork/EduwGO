@@ -13,6 +13,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\BookingService;
 use App\Services\XenditService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,13 +33,11 @@ class PesananController extends Controller
         Gate::authorize('viewAny', Booking::class);
 
         // Kartu ringkasan status: jumlah global per kategori (EG-51)
-        $summary = [
-            'pending' => $this->countStatus($request, 'pending'),
-            'sukses' => $this->countStatus($request, 'sukses'),
-            'expired' => $this->countStatus($request, 'expired'),
-        ];
+        // Satu query GROUP BY untuk semua status (bukan satu count per status)
+        $counts = $this->scopedQuery($request)->toBase()->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
+        $summary = collect(BookingStatus::cases())->mapWithKeys(fn ($s) => [$s->value => (int) ($counts[$s->value] ?? 0)])->all();
 
-        $query = $this->scopedQuery($request)->with(['user', 'vehicle.type', 'payments', 'histories.changer']);
+        $query = $this->scopedQuery($request)->with('vehicle.type');
 
         // Filter Status — aturan tunggal direuse kartu ringkasan (EG-51)
         $this->applyStatusFilter($query, $request->input('status'));
@@ -50,11 +49,10 @@ class PesananController extends Controller
             });
         }
 
-        // Filter Rentang Waktu (Beririsan)
-        if ($request->filled('mulai') && $request->filled('selesai')) {
-            $query->where('start_at', '<=', $request->selesai)
-                ->where('end_at', '>=', $request->mulai);
-        }
+        // Filter Rentang Waktu (Beririsan); boleh diisi salah satu
+        $request->validate(['mulai' => ['nullable', 'date'], 'selesai' => ['nullable', 'date']]);
+        $query->when($request->filled('selesai'), fn ($q) => $q->where('start_at', '<=', Carbon::parse($request->selesai)))
+            ->when($request->filled('mulai'), fn ($q) => $q->where('end_at', '>=', Carbon::parse($request->mulai)));
 
         // Search Query (q)
         if ($request->filled('q')) {
@@ -90,7 +88,7 @@ class PesananController extends Controller
 
     /**
      * Terapkan filter status pada query. Satu-satunya tempat aturan status
-     * (termasuk 'sukses' = paid+rented+returned) — dipakai tabel & kartu (EG-51).
+     * dipakai tabel dan ringkasan status.
      */
     private function applyStatusFilter(Builder $query, ?string $status): void
     {
@@ -104,8 +102,8 @@ class PesananController extends Controller
             return;
         }
 
-        if ($status === 'sukses') {
-            $query->whereIn('status', ['paid', 'rented', 'returned']);
+        if ($status === 'aktif') {
+            $query->active();
 
             return;
         }
@@ -114,17 +112,6 @@ class PesananController extends Controller
         if ($statusEnum) {
             $query->where('status', $statusEnum->value);
         }
-    }
-
-    /**
-     * Jumlah pesanan untuk satu nilai filter status (dipakai kartu ringkasan).
-     */
-    private function countStatus(Request $request, string $status): int
-    {
-        $query = $this->scopedQuery($request);
-        $this->applyStatusFilter($query, $status);
-
-        return $query->count();
     }
 
     public function show(string $code): View

@@ -1,16 +1,16 @@
-<x-admin-layout>
+<x-admin-layout title="Kelola Tipe Kendaraan">
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight">Kelola Tipe Kendaraan</h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ editMode: null }">
+    <div class="py-6" x-data="{ editMode: null }">
         <div class="max-w-7xl mx-auto space-y-6">
             @if(session('success')) <x-alert type="success">{{ session('success') }}</x-alert> @endif
             @if(session('error')) <x-alert type="error">{{ session('error') }}</x-alert> @endif
             @if($errors->any()) <x-alert type="error">{{ $errors->first() }}</x-alert> @endif
 
             <!-- Form Tambah -->
-            <div class="card-surface p-4">
+            <div class="section-plain p-4">
                 <form action="{{ route('admin.tipe-kendaraan.store') }}" method="POST" class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
                     @csrf
                     <div class="w-full sm:flex-1">
@@ -22,7 +22,7 @@
             </div>
 
             <!-- List Tipe -->
-            <div class="card-surface overflow-hidden">
+            <div class="section-plain overflow-hidden">
                 @if($types->isEmpty())
                     <x-empty-state title="Belum ada tipe kendaraan" description="Tambahkan tipe pertama lewat form di atas." />
                 @else
@@ -31,34 +31,33 @@
                         <thead class="bg-[var(--bg)] text-xs uppercase">
                             <tr>
                                 <th>Nama Tipe</th>
-                                <th>Slug / URL Param</th>
                                 <th>Jumlah Kendaraan</th>
                                 <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($types as $type)
-                                <tr x-show="editMode !== {{ $type->id }}" class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
-                                    <td class="px-4 py-3 font-medium text-[var(--navy-900)]">{{ $type->name }}</td>
-                                    <td class="px-4 py-3 font-mono text-xs">{{ $type->slug }}</td>
+                                <tr x-show="editMode !== {{ $type->id }}" class="border-b border-[var(--line)] transition hover:bg-[var(--bg)]">
+                                    <td class="px-4 py-3 font-medium text-[var(--ink)]">{{ $type->name }}</td>
+
                                     <td>{{ $type->vehicles_count }} Unit</td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-3">
-                                        <button @click="editMode = {{ $type->id }}" class="font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
+                                        <button @click="editMode = {{ $type->id }}" class="font-medium text-[var(--accent)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Ubah</button>
                                         <form action="{{ route('admin.tipe-kendaraan.destroy', $type->id) }}" method="POST" onsubmit="return confirm('Hapus tipe ini?');">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="font-medium text-red-600 dark:text-red-400 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
+                                            <button type="submit" class="font-medium text-[var(--danger)] dark:text-[var(--danger)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line)]">Hapus</button>
                                         </form>
                                     </td>
                                 </tr>
                                 <!-- Mode Edit -->
-                                <tr x-show="editMode === {{ $type->id }}" x-cloak class="border-b border-[var(--border)] bg-[var(--bg)]">
-                                    <td colspan="4">
+                                <tr x-show="editMode === {{ $type->id }}" x-cloak class="border-b border-[var(--line)] bg-[var(--bg)]">
+                                    <td colspan="3">
                                         <form action="{{ route('admin.tipe-kendaraan.update', $type->id) }}" method="POST" class="flex gap-4 items-center">
                                             @csrf @method('PUT')
                                             <x-text-input name="name" value="{{ $type->name }}" aria-label="Nama tipe" class="w-full sm:w-1/2" required />
-                                            <span class="hidden font-mono text-xs sm:inline">Slug tetap: {{ $type->slug }}</span>
+
                                             <div class="flex ml-auto gap-2">
-                                                <button type="button" @click="editMode = null" class="rounded px-3 py-1.5 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</button>
+                                                <button type="button" @click="editMode = null" class="rounded px-3 py-1.5 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Batal</button>
                                                 <x-primary-button class="px-3 py-1.5">Simpan</x-primary-button>
                                             </div>
                                         </form>
@@ -70,21 +69,21 @@
                 </div>
 
                 <!-- Mobile Card Layout -->
-                <div class="divide-y divide-[var(--border)] md:hidden">
+                <div class="divide-y divide-[var(--line)] md:hidden">
                     @foreach($types as $type)
                         <div class="p-4" x-show="editMode !== {{ $type->id }}">
                             <div class="mb-2 flex items-start justify-between">
                                 <div>
-                                    <div class="font-bold text-[var(--navy-900)]">{{ $type->name }}</div>
-                                    <div class="mt-1 font-mono text-xs">{{ $type->slug }}</div>
+                                    <div class="font-bold text-[var(--ink)]">{{ $type->name }}</div>
+
                                 </div>
                                 <span class="rounded-md bg-[var(--bg)] px-2 py-1 text-xs">{{ $type->vehicles_count }} Unit</span>
                             </div>
                             <div class="mt-3 flex justify-end gap-4">
-                                <button @click="editMode = {{ $type->id }}" class="text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
+                                <button @click="editMode = {{ $type->id }}" class="text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Ubah</button>
                                 <form action="{{ route('admin.tipe-kendaraan.destroy', $type->id) }}" method="POST" onsubmit="return confirm('Hapus tipe ini?');">
                                     @csrf @method('DELETE')
-                                    <button class="text-sm font-medium text-red-600 dark:text-red-400 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">Hapus</button>
+                                    <button class="text-sm font-medium text-[var(--danger)] dark:text-[var(--danger)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line)]">Hapus</button>
                                 </form>
                             </div>
                         </div>
@@ -93,7 +92,7 @@
                                 @csrf @method('PUT')
                                 <x-text-input name="name" value="{{ $type->name }}" aria-label="Nama tipe" class="w-full text-sm" required />
                                 <div class="mt-3 flex justify-end gap-2">
-                                    <button type="button" @click="editMode = null" class="rounded px-3 py-1.5 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Batal</button>
+                                    <button type="button" @click="editMode = null" class="rounded px-3 py-1.5 text-sm underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Batal</button>
                                     <x-primary-button class="px-3 py-1.5">Simpan</x-primary-button>
                                 </div>
                             </form>
