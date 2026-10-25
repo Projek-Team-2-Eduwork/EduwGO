@@ -13,7 +13,7 @@
                 <span class="text-xl font-bold text-[var(--navy-900)]">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
             </div>
 
-            @if ($payment)
+            @if ($payment && $payment->expires_at && $channel !== 'COD')
                 <div x-data="hitungMundur({{ json_encode($payment->expires_at?->toIso8601String()) }}, {{ json_encode(route('booking.failed', $booking->code)) }})"
                      class="mt-4 rounded-xl p-4 text-center" style="background-color: var(--bg);">
                     <p class="mb-1 text-sm">Sisa Waktu Pembayaran</p>
@@ -118,24 +118,35 @@
                 </ol>
 
                 <div class="space-y-3">
-                    <button type="button" @click="sudahBayar()" :disabled="checking"
-                        class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm disabled:opacity-60">
-                        <span x-show="!checking">Saya Sudah Bayar</span>
-                        <span x-show="checking">Memeriksa status...</span>
-                    </button>
-                    <p x-show="message" x-text="message" class="text-center text-sm text-gray-500"></p>
-                    <a href="{{ route('booking.show', $booking->code) }}"
-                       class="block w-full py-2 text-center text-sm font-medium text-[var(--navy-900)] underline">
-                        Kembali ke Detail Pesanan
-                    </a>
-                    @if (str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
-                        <form method="POST" action="{{ route('booking.demo-bayar', $booking->code) }}">
-                            @csrf
-                            <button type="submit"
-                                class="block w-full rounded-lg border border-dashed border-yellow-500 py-2 text-center text-xs font-semibold text-yellow-500">
-                                🎲 Demo: Tandai pembayaran berhasil (test mode)
-                            </button>
-                        </form>
+                    @if ($channel === 'COD')
+                        {{-- Bayar di tempat: tidak ada tombol cek status, admin yang mencatat --}}
+                        <div class="rounded-xl border border-[var(--border)] p-4 text-sm" style="background-color: var(--bg);">
+                            Simpan kode booking ini. Pembayaran tunai dicatat oleh admin saat kamu datang ke cabang, lalu status pesanan otomatis berubah jadi <strong>Lunas</strong>.
+                        </div>
+                        <a href="{{ route('booking.show', $booking->code) }}"
+                           class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm">
+                            Kembali ke Detail Pesanan
+                        </a>
+                    @else
+                        <button type="button" @click="sudahBayar()" :disabled="checking"
+                            class="btn-primary-edu flex w-full items-center justify-center py-3 text-sm disabled:opacity-60">
+                            <span x-show="!checking">Saya Sudah Bayar</span>
+                            <span x-show="checking">Memeriksa status...</span>
+                        </button>
+                        <p x-show="message" x-text="message" class="text-center text-sm text-gray-500"></p>
+                        <a href="{{ route('booking.show', $booking->code) }}"
+                           class="block w-full py-2 text-center text-sm font-medium text-[var(--navy-900)] underline">
+                            Kembali ke Detail Pesanan
+                        </a>
+                        @if (str_starts_with((string) config('services.xendit.secret_key'), 'xnd_devel'))
+                            <form method="POST" action="{{ route('booking.demo-bayar', $booking->code) }}">
+                                @csrf
+                                <button type="submit"
+                                    class="block w-full rounded-lg border border-dashed border-yellow-500 py-2 text-center text-xs font-semibold text-yellow-500">
+                                    🎲 Demo: Tandai pembayaran berhasil (test mode)
+                                </button>
+                            </form>
+                        @endif
                     @endif
                 </div>
             </div>

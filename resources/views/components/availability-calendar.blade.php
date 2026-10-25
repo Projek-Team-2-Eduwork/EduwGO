@@ -1,7 +1,7 @@
 @props(['vehicle'])
 
 {{-- Kalender ketersediaan bulanan per unit (EG-41). Data: GET /api/kendaraan/{id}/jadwal?month= --}}
-<section x-data="availabilityCalendar('{{ route('kendaraan.jadwal', $vehicle) }}')" x-init="load()" class="card-surface mt-4 w-full max-w-md p-5 sm:p-6" aria-labelledby="kalender-heading">
+<section x-data="availabilityCalendar('{{ route('kendaraan.jadwal', $vehicle) }}')" x-init="load()" class="card-surface w-full max-w-md p-5 sm:p-6" aria-labelledby="kalender-heading">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h2 id="kalender-heading" class="text-lg text-[var(--navy-900)]">Ketersediaan Unit</h2>

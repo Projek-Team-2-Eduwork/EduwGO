@@ -68,7 +68,17 @@ class PesananController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('start_at', 'desc')->paginate(12)->withQueryString();
+        // Urutan kode booking (opsional): terendah → tertinggi atau sebaliknya.
+        // Kode dibuat berurutan dengan 6 digit ('EG.000001'), jadi urutan teks
+        // sama dengan urutan angkanya.
+        $urut = $request->input('urut');
+        if (in_array($urut, ['kode_asc', 'kode_desc'], true)) {
+            $query->orderBy('code', $urut === 'kode_asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderBy('start_at', 'desc');
+        }
+
+        $bookings = $query->paginate(12)->withQueryString();
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
         $branches = $request->user()->isSuperadmin() ? Branch::orderBy('name')->pluck('name', 'id') : collect();
 
@@ -216,8 +226,10 @@ class PesananController extends Controller
         $booking = Booking::where('code', $code)->firstOrFail();
         Gate::authorize('adminUpdate', $booking);
 
+        // Nominal dari input number bisa berbentuk "80000.00" (total_amount
+        // bertipe decimal), jadi validasi integer akan menolak nilai yang sah.
         $request->validate([
-            'amount' => 'required|integer|min:1',
+            'amount' => 'required|numeric|min:1',
             'note' => 'nullable|string|max:500',
         ]);
 
@@ -226,26 +238,46 @@ class PesananController extends Controller
         }
 
         // Tunai = pelunasan penuh: nominal wajib sama dengan total tagihan
-        if ((int) $request->amount !== (int) round((float) $booking->total_amount)) {
+        $amount = round((float) $request->input('amount'), 2);
+        if ($amount !== round((float) $booking->total_amount, 2)) {
             $pesan = 'Nominal tunai harus sama dengan total tagihan Rp '.number_format((float) $booking->total_amount, 0, ',', '.').'.';
 
             return back()->withErrors(['amount' => $pesan])->withInput()->with('error', $pesan);
         }
 
         try {
-            DB::transaction(function () use ($request, $booking) {
-                Payment::create([
-                    'booking_id' => $booking->id,
-                    'method' => 'cash',
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'amount' => (int) $request->amount,
-                    'gateway_reference' => null,
-                    'gateway_url' => null,
-                ]);
+            DB::transaction(function () use ($request, $booking, $amount) {
+                // COD sudah membuat baris tunai pending saat penyewa memilih
+                // "Bayar di Tempat". Tandai baris itu lunas agar tidak ada
+                // pembayaran ganda.
+                $payment = $booking->payments()
+                    ->where('method', 'cash')
+                    ->where('status', 'pending')
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'amount' => $amount,
+                    ]);
+                } else {
+                    $payment = Payment::create([
+                        'booking_id' => $booking->id,
+                        'method' => 'cash',
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'amount' => $amount,
+                        'gateway_reference' => null,
+                        'gateway_url' => null,
+                    ]);
+                }
 
                 // Payment Xendit yang masih pending ditutup listener ExpirePendingPayments
-                $note = trim('Bayar tunai'.($request->filled('note') ? ': '.$request->note : ''));
+                $label = $payment->payment_channel === XenditService::COD ? 'Bayar tunai COD' : 'Bayar tunai';
+                $note = trim($label.($request->filled('note') ? ': '.$request->note : ''));
                 app(BookingService::class)->transition($booking, BookingStatus::Paid, auth()->user(), $note);
             });
         } catch (InvalidTransitionException $e) {

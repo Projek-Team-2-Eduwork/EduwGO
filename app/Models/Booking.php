@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
+use App\Services\XenditService;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -54,12 +55,25 @@ class Booking extends Model
     }
 
     /**
-     * Batas bayar tetap: waktu booking dibuat + setting invoice_minutes. Tidak ikut
-     * bergeser saat penyewa membuat payment baru (ganti metode bayar).
+     * Batas bayar online tetap: waktu booking dibuat + setting invoice_minutes. Tidak
+     * ikut bergeser saat penyewa membuat payment baru (ganti metode bayar).
+     */
+    public function onlinePaymentDeadline(): CarbonInterface
+    {
+        return $this->created_at->copy()->addMinutes((int) setting('booking.invoice_minutes', 60));
+    }
+
+    /**
+     * Batas bayar efektif. Booking COD dibayar saat pengambilan, jadi batasnya
+     * start_at + buffer; selain itu batas bayar online.
      */
     public function paymentDeadline(): CarbonInterface
     {
-        return $this->created_at->copy()->addMinutes((int) setting('booking.invoice_minutes', 60));
+        if (self::pendingCod($this->payments())->exists()) {
+            return $this->start_at->copy()->addMinutes((int) setting('booking.buffer_minutes', 60));
+        }
+
+        return $this->onlinePaymentDeadline();
     }
 
     public function isPaymentDeadlinePassed(): bool
@@ -72,8 +86,26 @@ class Booking extends Model
      */
     public function scopePaymentDeadlinePassed(Builder $query): Builder
     {
+        $cod = fn (Builder $q) => self::pendingCod($q);
+
         return $query->where('status', BookingStatus::Pending->value)
-            ->where('created_at', '<=', now()->subMinutes((int) setting('booking.invoice_minutes', 60)));
+            ->where(fn (Builder $q) => $q
+                ->where(fn (Builder $online) => $online
+                    ->whereDoesntHave('payments', $cod)
+                    ->where('created_at', '<=', now()->subMinutes((int) setting('booking.invoice_minutes', 60))))
+                ->orWhere(fn (Builder $bayarDiTempat) => $bayarDiTempat
+                    ->whereHas('payments', $cod)
+                    ->where('start_at', '<=', now()->subMinutes((int) setting('booking.buffer_minutes', 60)))));
+    }
+
+    /**
+     * Filter payment tunai COD yang masih menunggu dibayar di cabang.
+     */
+    public static function pendingCod($query)
+    {
+        return $query->where('method', 'cash')
+            ->where('status', 'pending')
+            ->where('payment_channel', XenditService::COD);
     }
 
     public function scopeManagedBy(Builder $query, User $user): Builder

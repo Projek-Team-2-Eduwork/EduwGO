@@ -36,6 +36,14 @@
             </form>
 
         @elseif($booking->status->value === 'pending')
+            <!-- Pending to Paid (tunai / COD) -->
+            <form action="{{ route('admin.pesanan.pay-cash', $booking->code) }}" method="POST" class="mb-6 border-b border-[var(--border)] pb-6">
+                @csrf
+                <input type="hidden" name="amount" value="{{ (int) $booking->total_amount }}">
+                <p class="mb-3 text-sm">Konfirmasi bahwa pembayaran tunai / COD sudah diterima. Pesanan akan ditandai <strong>Lunas</strong>.</p>
+                <x-primary-button class="w-full justify-center">Tandai Sudah Dibayar</x-primary-button>
+            </form>
+
             <!-- Pending to Cancelled -->
             <form action="{{ route('admin.pesanan.update', $booking->code) }}" method="POST">
                 @csrf

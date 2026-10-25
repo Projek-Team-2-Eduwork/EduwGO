@@ -39,7 +39,8 @@
         @endif
     </div>
 
-    <div class="mt-3 flex items-center justify-between gap-3">
+    {{-- mt-auto: harga nempel di bawah saat kartu ditinggikan (mis. sejajar kalender) --}}
+    <div class="mt-auto flex items-center justify-between gap-3 pt-3">
         <p class="min-w-0">
             <span class="text-base font-bold text-[var(--navy-900)]">Rp{{ number_format((float) $vehicle->price_per_day, 0, ',', '.') }}</span><span class="text-xs">/hari</span>
         </p>

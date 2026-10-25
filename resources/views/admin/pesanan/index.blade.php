@@ -22,15 +22,15 @@
 
             <!-- Filter -->
             <div class="card-surface p-4">
-                <form method="GET" action="{{ route('admin.pesanan.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    @include('admin.partials.branch-filter', ['class' => 'md:col-span-1'])
-                    <div class="md:col-span-1">
+                <form method="GET" action="{{ route('admin.pesanan.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    @include('admin.partials.branch-filter')
+                    <div>
                         <x-input-label for="q" value="Cari Pesanan" />
-                        <x-text-input id="q" name="q" value="{{ request('q') }}" placeholder="Nama / Motor / Kode" class="w-full mt-1" />
+                        <x-text-input id="q" name="q" value="{{ request('q') }}" placeholder="Nama / Motor / Kode" class="mt-1 w-full" />
                     </div>
-                    <div class="md:col-span-1">
+                    <div>
                         <x-input-label for="status" value="Status" />
-                        <select name="status" id="status" class="w-full rounded-lg text-sm shadow-sm sm:w-auto" onchange="this.form.submit()">
+                        <select name="status" id="status" class="mt-1 w-full rounded-lg text-sm shadow-sm" onchange="this.form.submit()">
                             <option value="">Semua Status</option>
                                 @foreach(App\Enums\BookingStatus::cases() as $s)
                             <option value="{{ $s->value }}" {{ request('status') === $s->value ? 'selected' : '' }}>{{ $s->label() }}</option>
@@ -39,25 +39,33 @@
                             <option value="sukses" {{ request('status') === 'sukses' ? 'selected' : '' }}>Sukses</option>
                         </select>
                     </div>
-                    <div class="md:col-span-1">
+                    <div>
                         <x-input-label for="tipe" value="Tipe Kendaraan" />
-                        <select id="tipe" name="tipe" class="mt-1 w-full rounded-lg shadow-sm">
+                        <select id="tipe" name="tipe" class="mt-1 w-full rounded-lg text-sm shadow-sm">
                             <option value="">Semua Tipe</option>
                             @foreach($types as $id => $name)
                                 <option value="{{ $id }}" {{ request('tipe') == $id ? 'selected' : '' }}>{{ $name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="md:col-span-1">
-                        <x-input-label for="mulai" value="Mulai" />
-                        <x-text-input id="mulai" type="datetime-local" name="mulai" value="{{ request('mulai') }}" class="w-full min-w-0 mt-1" />
+                    <div>
+                        <x-input-label for="urut" value="Urutkan Kode" />
+                        <select id="urut" name="urut" class="mt-1 w-full rounded-lg text-sm shadow-sm" onchange="this.form.submit()">
+                            <option value="">Jadwal Terbaru</option>
+                            <option value="kode_asc" {{ request('urut') === 'kode_asc' ? 'selected' : '' }}>Terendah &rarr; Tertinggi</option>
+                            <option value="kode_desc" {{ request('urut') === 'kode_desc' ? 'selected' : '' }}>Tertinggi &rarr; Terendah</option>
+                        </select>
                     </div>
-                    <div class="md:col-span-1">
+                    <div>
+                        <x-input-label for="mulai" value="Mulai" />
+                        <x-text-input id="mulai" type="datetime-local" name="mulai" value="{{ request('mulai') }}" class="mt-1 w-full min-w-0" />
+                    </div>
+                    <div>
                         <x-input-label for="selesai" value="Selesai" />
-                        <div class="flex gap-2 items-start mt-1">
-                            <x-text-input id="selesai" type="datetime-local" name="selesai" value="{{ request('selesai') }}" class="w-full min-w-0" />
-                            <x-primary-button type="submit">Cari</x-primary-button>
-                        </div>
+                        <x-text-input id="selesai" type="datetime-local" name="selesai" value="{{ request('selesai') }}" class="mt-1 w-full min-w-0" />
+                    </div>
+                    <div class="flex items-end sm:col-span-2 lg:col-span-1">
+                        <x-primary-button type="submit" class="h-10 w-full">Cari</x-primary-button>
                     </div>
                 </form>
             </div>
