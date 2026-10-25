@@ -25,7 +25,10 @@ class AuditMailTransactionTest extends TestCase
             $levels[] = DB::transactionLevel();
             throw new \RuntimeException('SMTP unavailable');
         });
-        $this->mock(XenditService::class)->shouldReceive('createInvoice')->once()->andReturnUsing(fn ($booking) => Payment::factory()->create(['booking_id' => $booking->id]));
+        $xendit = $this->mock(XenditService::class);
+        $xendit->shouldReceive('createInvoice')->once()->andReturnUsing(fn ($booking) => Payment::factory()->create(['booking_id' => $booking->id]));
+        // Booking keluar dari Pending -> listener ExpirePendingPayments membatalkan payment di gateway
+        $xendit->shouldReceive('cancelGatewayPayment')->zeroOrMoreTimes();
         $user = User::factory()->create();
         $vehicle = Vehicle::factory()->create();
         $this->actingAs($user)->post(route('checkout.store', $vehicle->id), [
