@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BookingStatus;
 use App\Events\BookingStatusChanged;
 use App\Exceptions\InvalidTransitionException;
+use App\Exceptions\PendingBookingLimitException;
 use App\Exceptions\VehicleUnavailableException;
 use App\Models\Booking;
 use App\Models\User;
@@ -59,6 +60,20 @@ class BookingService
     public function checkout(User $user, Vehicle $vehicle, CarbonInterface $start, int $days, array $data): Booking
     {
         return DB::transaction(function () use ($user, $vehicle, $start, $days, $data) {
+            // Kunci baris user dulu: dua checkout bersamaan dari akun yang sama
+            // tidak boleh sama-sama lolos batas booking Pending.
+            User::whereKey($user->id)->lockForUpdate()->first(['id']);
+
+            $maxPending = (int) setting('booking.max_pending_per_user', 2);
+            $pending = Booking::where('user_id', $user->id)
+                ->where('status', BookingStatus::Pending->value)
+                ->where('created_at', '>', now()->subMinutes((int) setting('booking.invoice_minutes', 60)))
+                ->count();
+
+            if ($pending >= $maxPending) {
+                throw PendingBookingLimitException::make($maxPending);
+            }
+
             $vehicle = Vehicle::lockForUpdate()->find($vehicle->id);
 
             if (! app(AvailabilityService::class)->isAvailable($vehicle, $start, $days)) {

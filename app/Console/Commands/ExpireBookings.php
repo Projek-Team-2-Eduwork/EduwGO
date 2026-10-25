@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Services\PaymentService;
 use Illuminate\Console\Command;
@@ -22,7 +21,7 @@ class ExpireBookings extends Command
      *
      * @var string
      */
-    protected $description = 'Auto-expire booking pending yang invoice-nya sudah lewat waktu (expired).';
+    protected $description = 'Auto-expire booking pending yang batas bayarnya (created_at + invoice_minutes) sudah lewat.';
 
     public function __construct(private PaymentService $paymentService)
     {
@@ -34,20 +33,17 @@ class ExpireBookings extends Command
      */
     public function handle(): int
     {
-        $bookings = Booking::where('status', BookingStatus::Pending)
-            ->with('latestPayment')
-            ->get()
-            ->filter(function ($booking) {
-                return $booking->latestPayment !== null
-                    && $booking->latestPayment->expires_at
-                    && $booking->latestPayment->expires_at->isPast();
-            });
+        // Kandidat dari batas bayar tetap booking (created_at + invoice_minutes),
+        // bukan dari payment terakhir yang bisa terus diperbarui penyewa.
+        $bookings = Booking::paymentDeadlinePassed()->get();
 
         $count = 0;
 
         foreach ($bookings as $booking) {
-            $this->paymentService->applyInvoiceStatus($booking->latestPayment, ['status' => 'EXPIRED']);
-            $count++;
+            // Status dicek ulang di dalam lock: webhook PAID yang menang duluan tidak ditimpa
+            if ($this->paymentService->expireIfDeadlinePassed($booking)) {
+                $count++;
+            }
         }
 
         $this->info("Berhasil memproses $count booking expired.");

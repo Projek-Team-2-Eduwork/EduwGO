@@ -105,7 +105,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pesanan/{code}/menunggu', [BookingPaymentController::class, 'waiting'])->name('booking.waiting');
 
     // Halaman bayar sendiri (Xendit Payment Request) (EG-53)
-    Route::get('/pembayaran/{code}', [BookingPaymentController::class, 'bayar'])->name('booking.bayar');
+    // Tiap ganti metode bisa membuat payment request baru di Xendit: dibatasi per pengguna.
+    Route::get('/pembayaran/{code}', [BookingPaymentController::class, 'bayar'])
+        ->middleware('throttle:30,1')
+        ->name('booking.bayar');
     Route::post('/pembayaran/{code}/demo-bayar', [BookingPaymentController::class, 'demoBayar'])->name('booking.demo-bayar');
 
     // Halaman pesanan sukses, gagal, dan polling status pembayaran (EG-15)

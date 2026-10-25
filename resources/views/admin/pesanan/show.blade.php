@@ -31,6 +31,19 @@
                 </x-alert>
             @endif
 
+            @php
+                $perluRefund = $booking->payments->where('needs_refund', true);
+            @endphp
+            @if($perluRefund->isNotEmpty())
+                <x-alert type="warning">
+                    Ada pembayaran Xendit yang masuk setelah pesanan ini tidak lagi menunggu pembayaran
+                    (status {{ $booking->status->label() }}). Lakukan refund manual ke penyewa:
+                    @foreach($perluRefund as $p)
+                        <span class="font-mono">{{ $p->gateway_reference }}</span> (Rp {{ number_format($p->amount, 0, ',', '.') }}){{ $loop->last ? '.' : ',' }}
+                    @endforeach
+                </x-alert>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Data Penyewa & Motor -->
                 <div class="space-y-6">
@@ -144,7 +157,12 @@
                                                 <div class="font-medium capitalize text-[var(--navy-900)]">{{ str_replace('_', ' ', $p->method) }}</div>
                                                 <div class="mt-1 font-mono text-xs">{{ $p->gateway_reference }}</div>
                                             </td>
-                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-emerald-700 dark:text-emerald-400' : '' }}">{{ $p->status }}</td>
+                                            <td class="px-4 py-3 capitalize font-semibold {{ $p->status === 'paid' ? 'text-emerald-700 dark:text-emerald-400' : '' }}">
+                                                {{ $p->status }}
+                                                @if($p->needs_refund)
+                                                    <span class="mt-1 block text-xs normal-case text-amber-700 dark:text-amber-400">Perlu refund</span>
+                                                @endif
+                                            </td>
                                             <td class="px-4 py-3 text-xs">{{ $p->paid_at ? $p->paid_at->translatedFormat('d M Y H:i') : '-' }}</td>
                                         </tr>
                                     @empty

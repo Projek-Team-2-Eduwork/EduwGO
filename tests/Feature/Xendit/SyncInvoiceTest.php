@@ -6,8 +6,8 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\User;
-use App\Services\XenditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -34,14 +34,15 @@ class SyncInvoiceTest extends TestCase
             'expires_at' => now()->addHour(),
         ]);
 
-        // Mock XenditService supaya test tidak memanggil API asli
-        $this->mock(XenditService::class, function ($mock) {
-            $mock->shouldReceive('getInvoice')->once()->andReturn([
+        // Palsukan API Invoice v2 supaya test tidak memanggil Xendit asli
+        config(['services.xendit.secret_key' => 'xnd_development_fake']);
+        Http::fake([
+            'api.xendit.co/v2/invoices/inv_999' => Http::response([
                 'id' => 'inv_999',
                 'status' => 'PAID',
                 'paid_at' => now()->toISOString(),
-            ]);
-        });
+            ]),
+        ]);
 
         $response = $this->actingAs($admin)->get(route('admin.pesanan.cek-status', $booking->code));
 
@@ -59,6 +60,65 @@ class SyncInvoiceTest extends TestCase
             'booking_id' => $booking->id,
             'to_status' => BookingStatus::Paid->value,
         ]);
+    }
+
+    public function test_cek_status_admin_memakai_payment_request_v3()
+    {
+        config([
+            'services.xendit.mode' => 'payment_request',
+            'services.xendit.secret_key' => 'xnd_development_fake',
+        ]);
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
+        $admin->assignRole('admin');
+
+        $booking = Booking::factory()->pending()->create();
+        Payment::factory()->create([
+            'booking_id' => $booking->id,
+            'method' => 'xendit_payment_request',
+            'payment_channel' => 'QRIS',
+            'status' => 'pending',
+            'gateway_reference' => 'pr-admin-1',
+            'expires_at' => now()->addHour(),
+        ]);
+
+        Http::fake([
+            'api.xendit.co/v3/payment_requests/pr-admin-1' => Http::response([
+                'payment_request_id' => 'pr-admin-1',
+                'status' => 'SUCCEEDED',
+            ]),
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.pesanan.cek-status', $booking->code))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertEquals(BookingStatus::Paid, $booking->fresh()->status);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/v2/invoices/'));
+    }
+
+    public function test_cek_status_gagal_menampilkan_pesan_generik_tanpa_detail_xendit()
+    {
+        config(['services.xendit.secret_key' => 'xnd_development_fake']);
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
+        $admin->assignRole('admin');
+
+        $booking = Booking::factory()->pending()->create();
+        Payment::factory()->create([
+            'booking_id' => $booking->id,
+            'status' => 'pending',
+            'gateway_reference' => 'inv_rahasia',
+            'expires_at' => now()->addHour(),
+        ]);
+
+        Http::fake([
+            'api.xendit.co/*' => Http::response(['error_code' => 'INVALID_API_KEY', 'message' => 'detail-internal-xendit'], 401),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.pesanan.cek-status', $booking->code));
+
+        $response->assertSessionHas('error', 'Gagal mengecek status ke Xendit. Coba lagi beberapa saat.');
+        $this->assertStringNotContainsString('detail-internal-xendit', (string) session('error'));
+        $this->assertEquals(BookingStatus::Pending, $booking->fresh()->status);
     }
 
     public function test_user_biasa_ditolak()

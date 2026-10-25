@@ -14,7 +14,7 @@ class ExpireCommandTest extends TestCase
 
     public function test_booking_pending_lewat_waktu_diubah_ke_expired_dan_history_sistem()
     {
-        $booking = Booking::factory()->pending()->create();
+        $booking = Booking::factory()->pending()->create(['created_at' => now()->subMinutes(65)]);
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'pending',
