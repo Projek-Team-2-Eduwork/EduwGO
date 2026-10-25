@@ -9,6 +9,8 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Pendaftaran dua tahap: data disimpan sebagai pending, akun baru dibuat setelah kode OTP benar.
@@ -21,32 +23,49 @@ class PendingRegistrationService
     /** Kunci session berisi email pendaftaran yang sedang menunggu kode. */
     public const SESSION_KEY = 'pending_registration_email';
 
+    public const TOKEN_KEY = 'pending_registration_token';
+
     public const ALREADY_REGISTERED = 'Email ini sudah terdaftar. Silakan masuk dengan akun Anda.';
 
     public function __construct(private EmailVerificationCodeService $codes) {}
 
     /**
-     * Simpan (atau timpa) pendaftaran tertunda untuk email ini lalu kirim kode baru.
+     * Simpan pendaftaran milik sesi ini lalu kirim kode sesuai cooldown per email.
      *
      * @param  array{name: string, email: string, phone: string, password: string}  $data
      */
-    public function start(array $data): PendingRegistration
+    public function start(array $data, string $sessionToken): PendingRegistration
     {
         (new PendingRegistration)->prunable()->delete();
 
-        $pending = PendingRegistration::updateOrCreate(
-            ['email' => $data['email']],
-            [
-                'name' => $data['name'],
-                'phone' => $data['phone'],
-                'password' => Hash::make($data['password']),
-                'last_sent_at' => now(),
-            ],
-        );
+        try {
+            return DB::transaction(function () use ($data, $sessionToken) {
+                $pending = PendingRegistration::where('email', $data['email'])->lockForUpdate()->first();
 
-        $this->sendCode($pending);
+                if ($pending && (! $this->owns($pending, $sessionToken) || $this->resendAvailableIn($pending))) {
+                    throw ValidationException::withMessages(['email' => 'Pendaftaran masih menunggu verifikasi. Gunakan sesi awal atau tunggu hingga kedaluwarsa.']);
+                }
 
-        return $pending;
+                $pending ??= new PendingRegistration(['email' => $data['email']]);
+                $pending->fill([
+                    'name' => $data['name'],
+                    'phone' => $data['phone'],
+                    'password' => Hash::make($data['password']),
+                ]);
+                $pending->forceFill(['session_token_hash' => hash('sha256', $sessionToken)]);
+                $this->sendCode($pending);
+
+                return $pending;
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages(['email' => 'Pendaftaran sedang diproses. Silakan coba lagi.']);
+        }
+    }
+
+    public function owns(PendingRegistration $pending, ?string $sessionToken): bool
+    {
+        return $sessionToken && $pending->session_token_hash
+            && hash_equals($pending->session_token_hash, hash('sha256', $sessionToken));
     }
 
     /**
@@ -61,6 +80,15 @@ class PendingRegistrationService
 
     public function sendCode(PendingRegistration $pending): void
     {
+        $key = 'registration-code:'.hash('sha256', strtolower($pending->email));
+        if (RateLimiter::tooManyAttempts($key.':cooldown', 1)) {
+            throw ValidationException::withMessages(['email' => 'Tunggu 60 detik sebelum mengirim ulang kode.']);
+        }
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            throw ValidationException::withMessages(['email' => 'Terlalu banyak pengiriman kode. Silakan coba lagi dalam satu jam.']);
+        }
+        RateLimiter::hit($key, 3600);
+        RateLimiter::hit($key.':cooldown', self::RESEND_COOLDOWN_SECONDS);
         $code = $this->codes->issueForPending($pending);
 
         // Kirim setelah respons dikirim ke browser, tanpa butuh queue worker (sama seperti User).
@@ -77,13 +105,13 @@ class PendingRegistrationService
     /**
      * Cocokkan kode lalu buat akun. Mengembalikan User kalau berhasil, atau pesan error.
      */
-    public function complete(string $email, string $code): User|string
+    public function complete(string $email, string $code, ?string $sessionToken): User|string
     {
         try {
-            return DB::transaction(function () use ($email, $code) {
+            return DB::transaction(function () use ($email, $code, $sessionToken) {
                 $pending = PendingRegistration::where('email', $email)->lockForUpdate()->first();
 
-                if (! $pending) {
+                if (! $pending || ! $this->owns($pending, $sessionToken)) {
                     return 'Pendaftaran tidak ditemukan atau sudah kedaluwarsa. Silakan daftar ulang.';
                 }
 

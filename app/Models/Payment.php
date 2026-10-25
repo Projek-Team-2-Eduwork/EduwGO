@@ -17,6 +17,7 @@ class Payment extends Model
         'expires_at' => 'datetime',
         'gateway_payload' => 'array',
         'instructions' => 'array',
+        'needs_refund' => 'boolean',
     ];
 
     public function booking()

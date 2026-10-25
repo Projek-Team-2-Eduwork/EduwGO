@@ -107,10 +107,11 @@ class RegistrationTest extends TestCase
             ->assertSessionHasErrors('email');
     }
 
-    public function test_pending_email_does_not_block_registering_again(): void
+    public function test_same_session_can_update_pending_after_cooldown(): void
     {
         $this->post('/register', $this->payload());
         $first = $this->lastCode();
+        $this->travel(PendingRegistrationService::RESEND_COOLDOWN_SECONDS + 1)->seconds();
 
         $this->post('/register', $this->payload(['name' => 'Nama Baru', 'phone' => '6281111111111']))
             ->assertSessionHasNoErrors()

@@ -53,6 +53,29 @@ class Booking extends Model
         return $this->hasOne(Payment::class)->latestOfMany();
     }
 
+    /**
+     * Batas bayar tetap: waktu booking dibuat + setting invoice_minutes. Tidak ikut
+     * bergeser saat penyewa membuat payment baru (ganti metode bayar).
+     */
+    public function paymentDeadline(): CarbonInterface
+    {
+        return $this->created_at->copy()->addMinutes((int) setting('booking.invoice_minutes', 60));
+    }
+
+    public function isPaymentDeadlinePassed(): bool
+    {
+        return ! now()->lessThan($this->paymentDeadline());
+    }
+
+    /**
+     * Booking Pending yang batas bayarnya sudah lewat (kandidat auto-expire).
+     */
+    public function scopePaymentDeadlinePassed(Builder $query): Builder
+    {
+        return $query->where('status', BookingStatus::Pending->value)
+            ->where('created_at', '<=', now()->subMinutes((int) setting('booking.invoice_minutes', 60)));
+    }
+
     public function scopeManagedBy(Builder $query, User $user): Builder
     {
         if ($user->isSuperadmin()) {
@@ -80,12 +103,20 @@ class Booking extends Model
     /**
      * Booking yang rentangnya bentrok dengan [start, end], memperhitungkan buffer (menit).
      * Konflik: (start_at − buffer) < end AND (end_at + buffer) > start.
+     *
+     * Sewa Rented yang sudah lewat end_at (overdue) dianggap belum selesai: unit
+     * belum kembali secara fisik, jadi tetap memblokir semua rentang sampai
+     * admin menandai Returned.
      */
     public function scopeOverlapping(Builder $query, CarbonInterface $start, CarbonInterface $end, int $buffer): Builder
     {
         return $query
             ->where('start_at', '<', $end->copy()->addMinutes($buffer))
-            ->where('end_at', '>', $start->copy()->subMinutes($buffer));
+            ->where(fn (Builder $q) => $q
+                ->where('end_at', '>', $start->copy()->subMinutes($buffer))
+                ->orWhere(fn (Builder $overdue) => $overdue
+                    ->where('status', BookingStatus::Rented->value)
+                    ->where('end_at', '<', now())));
     }
 
     /**

@@ -23,7 +23,7 @@ class CronEndpointTest extends TestCase
 
     private function bookingPendingKedaluwarsa(): Booking
     {
-        $booking = Booking::factory()->pending()->create();
+        $booking = Booking::factory()->pending()->create(['created_at' => now()->subMinutes(65)]);
         Payment::factory()->create([
             'booking_id' => $booking->id,
             'status' => 'pending',

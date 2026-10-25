@@ -20,7 +20,7 @@ class KendaraanController extends Controller
             'start' => ['required', 'date', 'after_or_equal:now'],
         ]);
 
-        $start = Carbon::parse($validated['start']);
+        $start = Carbon::parse($validated['start'], config('app.timezone'))->setTimezone(config('app.timezone'));
 
         return response()->json(
             $availability->availableDurations($vehicle, $start, $availability->maxDays())
