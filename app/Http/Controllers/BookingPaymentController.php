@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class BookingPaymentController extends Controller
 {
-    public function waiting(Request $request, $code, XenditService $xenditService)
+    public function waiting(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -24,6 +25,13 @@ class BookingPaymentController extends Controller
             if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
                 return redirect()->route('booking.success', $booking->code);
             }
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
+        // Batas bayar booking habis (cron belum jalan): expire sekarang, jangan buat payment baru
+        if ($booking->isPaymentDeadlinePassed()) {
+            $paymentService->expireIfDeadlinePassed($booking);
 
             return redirect()->route('booking.failed', $booking->code);
         }
@@ -52,7 +60,7 @@ class BookingPaymentController extends Controller
      * Halaman bayar sendiri (Xendit Payment Request): pilih metode lalu lihat
      * instruksi pembayaran (QR / nomor rekening) tanpa hosted checkout (EG-53).
      */
-    public function bayar(Request $request, $code, XenditService $xenditService)
+    public function bayar(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -64,6 +72,13 @@ class BookingPaymentController extends Controller
             if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
                 return redirect()->route('booking.show', $booking->code)->with('bayar_berhasil', true);
             }
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
+        // Batas bayar tetap dari waktu booking dibuat: ganti metode tidak memperpanjang hold unit
+        if ($booking->isPaymentDeadlinePassed()) {
+            $paymentService->expireIfDeadlinePassed($booking);
 
             return redirect()->route('booking.failed', $booking->code);
         }

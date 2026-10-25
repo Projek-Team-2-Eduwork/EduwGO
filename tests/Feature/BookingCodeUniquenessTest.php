@@ -38,16 +38,16 @@ class BookingCodeUniquenessTest extends TestCase
             ], 200),
         ]);
 
-        $user = User::factory()->create();
         $vehicle = Vehicle::factory()->create(['is_active' => true, 'price_per_day' => 100000]);
         $bookingService = app(BookingService::class);
 
         $codes = [];
         $start = now()->addDays(2)->setHour(10)->setMinute(0)->setSecond(0);
 
-        // Simulasi 20 checkout beruntun (masing-masing dalam transaksi independen)
+        // Simulasi 20 checkout beruntun (masing-masing dalam transaksi independen).
+        // User berbeda tiap checkout: satu user dibatasi jumlah booking Pending-nya.
         for ($i = 0; $i < 20; $i++) {
-            $booking = $bookingService->checkout($user, $vehicle, $start->copy()->addDays($i * 5), 1, [
+            $booking = $bookingService->checkout(User::factory()->create(), $vehicle, $start->copy()->addDays($i * 5), 1, [
                 'customer_name' => 'Uji Paralel',
                 'customer_phone' => '0812000000',
             ]);
