@@ -17,13 +17,13 @@
                 <div class="flex flex-col md:flex-row">
                     <!-- Sidebar Tabs -->
                     <div class="space-y-2 border-b border-[var(--border)] p-4 md:w-1/4 md:border-b-0 md:border-e">
-                        <button type="button" @click="tab = 'brand'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'brand', 'hover:bg-[var(--bg)]': tab !== 'brand' }" class="w-full rounded-md px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                        <button type="button" @click="tab = 'brand'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'brand', 'hover:bg-[var(--bg)]': tab !== 'brand' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
                             Identitas & Brand
                         </button>
-                        <button type="button" @click="tab = 'kontak'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'kontak', 'hover:bg-[var(--bg)]': tab !== 'kontak' }" class="w-full rounded-md px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                        <button type="button" @click="tab = 'kontak'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'kontak', 'hover:bg-[var(--bg)]': tab !== 'kontak' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
                             Kontak & Sosial Media
                         </button>
-                        <button type="button" @click="tab = 'aturan'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'aturan', 'hover:bg-[var(--bg)]': tab !== 'aturan' }" class="w-full rounded-md px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                        <button type="button" @click="tab = 'aturan'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'aturan', 'hover:bg-[var(--bg)]': tab !== 'aturan' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
                             Aturan Sewa & S&K
                         </button>
                     </div>
@@ -62,7 +62,7 @@
 
                             <div>
                                 <x-input-label for="brand_description" value="Deskripsi Singkat (Profil Perusahaan)" />
-                                <textarea id="brand_description" name="brand_description" rows="3" class="mt-1 block w-full rounded-md shadow-sm">{{ old('brand_description', setting('brand.description')) }}</textarea>
+                                <textarea id="brand_description" name="brand_description" rows="3" class="mt-1 block w-full rounded-lg shadow-sm">{{ old('brand_description', setting('brand.description')) }}</textarea>
                                 <x-input-error :messages="$errors->get('brand_description')" class="mt-2" />
                             </div>
 
@@ -98,7 +98,7 @@
 
                             <div>
                                 <x-input-label for="contact_address" value="Alamat Toko" />
-                                <textarea id="contact_address" name="contact_address" rows="3" class="mt-1 block w-full rounded-md shadow-sm">{{ old('contact_address', setting('contact.address')) }}</textarea>
+                                <textarea id="contact_address" name="contact_address" rows="3" class="mt-1 block w-full rounded-lg shadow-sm">{{ old('contact_address', setting('contact.address')) }}</textarea>
                             </div>
 
                             <div>
@@ -106,7 +106,7 @@
                                 <x-text-input id="contact_hours" name="contact_hours" type="text" class="mt-1 block w-full" placeholder="Senin - Jumat: 08:00 - 17:00" :value="old('contact_hours', setting('contact.hours'))" />
                             </div>
 
-                            <hr class="border-gray-200 dark:border-gray-700">
+                            <hr class="border-[var(--border)]">
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
@@ -146,7 +146,7 @@
 
                             <div>
                                 <x-input-label for="content_terms" value="Syarat & Ketentuan (1 Poin per baris)" />
-                                <textarea id="content_terms" name="content_terms" rows="8" class="mt-1 block w-full rounded-md shadow-sm">{{ old('content_terms', setting('content.terms')) }}</textarea>
+                                <textarea id="content_terms" name="content_terms" rows="8" class="mt-1 block w-full rounded-lg shadow-sm">{{ old('content_terms', setting('content.terms')) }}</textarea>
                             </div>
                         </div>
 

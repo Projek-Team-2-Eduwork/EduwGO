@@ -14,12 +14,7 @@
         <h3 class="truncate text-base font-bold">
             <a href="{{ $href }}">{{ $vehicle->name }}</a>
         </h3>
-        <p class="mt-0.5 text-xs">
-            {{ $vehicle->type?->name }}
-            @if (($vehicle->booking_count ?? 0) > 0)
-                <span class="ml-1 font-medium text-[var(--navy-900)] opacity-70">&bull; {{ $vehicle->booking_count }}× dipesan</span>
-            @endif
-        </p>
+        <p class="mt-0.5 text-xs">{{ $vehicle->type?->name }}</p>
     </div>
 
     {{-- Foto motor: latar surface (bukan putih hardcode), placeholder bila file belum ada --}}
@@ -50,7 +45,7 @@
         </p>
 
         <a href="{{ $href }}" @class([
-            'btn-primary-edu inline-flex shrink-0 items-center px-4 py-2 text-xs',
+            'btn-primary-edu inline-flex shrink-0 items-center px-3 py-1.5 text-xs',
             'pointer-events-none opacity-50' => $available === false,
         ]) @if ($available === false) aria-disabled="true" @endif>
             {{ $cta }}

@@ -21,7 +21,7 @@
     @endif
 
     @if ($actionLabel && $actionHref)
-        <a href="{{ $actionHref }}" class="btn-primary-edu mt-6 inline-flex items-center px-6 py-2.5 text-sm">{{ $actionLabel }}</a>
+        <a href="{{ $actionHref }}" class="btn-primary-edu mt-6 inline-flex items-center px-5 py-2.5 text-sm">{{ $actionLabel }}</a>
     @endif
 
     {{ $slot }}

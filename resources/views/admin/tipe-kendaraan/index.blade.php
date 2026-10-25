@@ -17,7 +17,7 @@
                         <x-input-label for="name" value="Nama Tipe Baru" />
                         <x-text-input id="name" name="name" type="text" class="w-full mt-1" required placeholder="Contoh: Matic, Sport" />
                     </div>
-                    <x-primary-button class="py-3">Tambah Tipe</x-primary-button>
+                    <x-primary-button>Tambah Tipe</x-primary-button>
                 </form>
             </div>
 
@@ -30,9 +30,9 @@
                     <table class="w-full text-left text-sm">
                         <thead class="bg-[var(--bg)] text-xs uppercase">
                             <tr>
-                                <th class="px-4 py-3">Nama Tipe</th>
-                                <th class="px-4 py-3">Slug / URL Param</th>
-                                <th class="px-4 py-3">Jumlah Kendaraan</th>
+                                <th>Nama Tipe</th>
+                                <th>Slug / URL Param</th>
+                                <th>Jumlah Kendaraan</th>
                                 <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -41,7 +41,7 @@
                                 <tr x-show="editMode !== {{ $type->id }}" class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
                                     <td class="px-4 py-3 font-medium text-[var(--navy-900)]">{{ $type->name }}</td>
                                     <td class="px-4 py-3 font-mono text-xs">{{ $type->slug }}</td>
-                                    <td class="px-4 py-3">{{ $type->vehicles_count }} Unit</td>
+                                    <td>{{ $type->vehicles_count }} Unit</td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-3">
                                         <button @click="editMode = {{ $type->id }}" class="font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>
                                         <form action="{{ route('admin.tipe-kendaraan.destroy', $type->id) }}" method="POST" onsubmit="return confirm('Hapus tipe ini?');">
@@ -52,7 +52,7 @@
                                 </tr>
                                 <!-- Mode Edit -->
                                 <tr x-show="editMode === {{ $type->id }}" x-cloak class="border-b border-[var(--border)] bg-[var(--bg)]">
-                                    <td colspan="4" class="px-4 py-3">
+                                    <td colspan="4">
                                         <form action="{{ route('admin.tipe-kendaraan.update', $type->id) }}" method="POST" class="flex gap-4 items-center">
                                             @csrf @method('PUT')
                                             <x-text-input name="name" value="{{ $type->name }}" aria-label="Nama tipe" class="w-full sm:w-1/2" required />
@@ -78,7 +78,7 @@
                                     <div class="font-bold text-[var(--navy-900)]">{{ $type->name }}</div>
                                     <div class="mt-1 font-mono text-xs">{{ $type->slug }}</div>
                                 </div>
-                                <span class="rounded bg-[var(--bg)] px-2 py-1 text-xs">{{ $type->vehicles_count }} Unit</span>
+                                <span class="rounded-md bg-[var(--bg)] px-2 py-1 text-xs">{{ $type->vehicles_count }} Unit</span>
                             </div>
                             <div class="mt-3 flex justify-end gap-4">
                                 <button @click="editMode = {{ $type->id }}" class="text-sm font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Edit</button>

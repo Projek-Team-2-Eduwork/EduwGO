@@ -16,7 +16,7 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2 !text-red-600 dark:!text-red-400" />
         </div>
 
-        <button type="submit" class="btn-primary-edu w-full px-6 py-3 text-sm">Kirim Tautan Reset</button>
+        <button type="submit" class="btn-primary-edu w-full px-5 py-2.5 text-sm">Kirim Tautan Reset</button>
 
         <p class="text-sm text-center">
             <a class="font-semibold underline text-[var(--navy-900)]" href="{{ route('login') }}">Kembali ke Masuk</a>

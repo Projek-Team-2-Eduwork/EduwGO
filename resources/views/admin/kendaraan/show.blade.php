@@ -5,11 +5,11 @@
                 Detail Kendaraan
             </h2>
             <div class="flex gap-3">
-                <a href="{{ route('admin.kendaraan.edit', $kendaraan->id) }}" class="btn-secondary-edu inline-flex items-center px-4 py-2 text-sm">Update</a>
+                <a href="{{ route('admin.kendaraan.edit', $kendaraan->id) }}" class="btn-secondary-edu inline-flex items-center px-5 py-2.5 text-sm">Update</a>
                 <form action="{{ route('admin.kendaraan.destroy', $kendaraan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kendaraan ini?');">
                     @csrf
                     @method('DELETE')
-                    <x-danger-button type="submit" class="px-4 py-2 text-sm">Hapus</x-danger-button>
+                    <x-danger-button type="submit">Hapus</x-danger-button>
                 </form>
             </div>
         </div>
@@ -32,7 +32,7 @@
                                 <h3 class="text-2xl font-bold text-[var(--navy-900)]">{{ $kendaraan->name }}</h3>
                                 <p class="mt-1">{{ $kendaraan->type?->name ?? 'Tipe Tidak Ditemukan' }} &middot; {{ $kendaraan->brand ?? 'Tanpa Brand' }}</p>
                             </div>
-                            <span class="rounded px-3 py-1 text-sm font-bold {{ $kendaraan->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $kendaraan->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100' }}">
                                 {{ $kendaraan->is_active ? 'Aktif' : 'Nonaktif' }}
                             </span>
                         </div>

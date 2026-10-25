@@ -33,7 +33,7 @@
                                         <h3 class="truncate text-base font-bold text-[var(--navy-900)]">{{ $tempat->name }}</h3>
                                         <p class="mt-0.5 font-mono text-xs">{{ $tempat->slug }}</p>
                                     </div>
-                                    <span class="shrink-0 rounded px-2 py-1 text-xs font-bold {{ $tempat->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                                    <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $tempat->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100' }}">
                                         {{ $tempat->is_active ? 'Aktif' : 'Nonaktif' }}
                                     </span>
                                 </div>

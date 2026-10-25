@@ -21,7 +21,7 @@
         name="{{ $name }}"
         type="{{ $type }}"
         value="{{ old($errorKey, $value) }}"
-        {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-md shadow-sm']) }}
+        {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-lg shadow-sm']) }}
         @error($errorKey) aria-invalid="true" @enderror
     >
 

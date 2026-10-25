@@ -34,7 +34,7 @@
                     </div>
                     <div>
                         <x-input-label for="new-branch" value="Cabang *" />
-                        <select id="new-branch" name="branch_id" required class="mt-1 block w-full rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+                        <select id="new-branch" name="branch_id" required class="mt-1 block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm">
                             <option value="">Pilih cabang</option>
                             @foreach($branches as $id => $name)
                                 <option value="{{ $id }}" @selected(old('branch_id') == $id)>{{ $name }}</option>
@@ -94,7 +94,7 @@
                                     <td class="px-4 py-3">
                                         @include('admin.pengguna.partials.role-badge', ['user' => $user])
                                         @if(!$user->is_active)
-                                            <span class="ml-1 rounded bg-red-100 px-2 py-1 text-xs font-bold text-red-800 dark:bg-red-900/50 dark:text-red-300">Nonaktif</span>
+                                            <span class="ml-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">Nonaktif</span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-right">

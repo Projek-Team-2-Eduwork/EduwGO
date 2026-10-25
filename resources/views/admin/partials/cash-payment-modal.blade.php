@@ -7,7 +7,7 @@
          style="display: none;">
 
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-            <div x-show="open" @click="open = false" x-transition.opacity class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80"></div>
+            <div x-show="open" @click="open = false" x-transition.opacity class="fixed inset-0 transition-opacity bg-[var(--navy-900)] opacity-60"></div>
 
             <div x-show="open" x-transition class="inline-block w-full max-w-lg overflow-hidden px-4 pb-4 pt-5 text-left align-bottom transition-all transform card-surface sm:my-8 sm:align-middle sm:w-full sm:p-6">
                 <h3 class="mb-4 text-lg font-semibold text-[var(--navy-900)]">Catat Pembayaran Tunai</h3>
@@ -23,7 +23,7 @@
                         </div>
                         <div>
                             <x-input-label for="note_{{ $booking->code }}" value="Catatan (opsional)" />
-                            <textarea id="note_{{ $booking->code }}" name="note" rows="3" class="mt-1 block w-full rounded-md shadow-sm"></textarea>
+                            <textarea id="note_{{ $booking->code }}" name="note" rows="3" class="mt-1 block w-full rounded-lg shadow-sm"></textarea>
                         </div>
                     </div>
 

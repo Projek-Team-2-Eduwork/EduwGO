@@ -75,7 +75,7 @@ class PublicPagesTest extends TestCase
         $response = $this->get('/syarat-ketentuan');
 
         $response->assertOk()->assertSee('Syarat &amp; Ketentuan', false)->assertSee('1x24 jam')->assertSee('2 identitas');
-        $this->assertSame(6, substr_count($response->getContent(), 'rounded-full text-sm font-semibold'));
+        $this->assertSame(6, substr_count($response->getContent(), 'data-sk-poin'));
     }
 
     public function test_title_syarat_ketentuan_tidak_double_encode(): void
