@@ -48,7 +48,7 @@ class BranchSelectionTest extends TestCase
     {
         Branch::factory()->create(['name' => 'Cabang Tutup', 'is_active' => false]);
 
-        $this->get('/')
+        $this->get('/kendaraan')
             ->assertOk()
             ->assertSee('Pilih cabang')
             ->assertSee('Cabang Malang')

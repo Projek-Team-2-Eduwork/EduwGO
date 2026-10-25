@@ -7,7 +7,7 @@
     $resendIn ??= 60;
 @endphp
 
-<x-guest-layout>
+<x-guest-layout title="Masukkan Kode Verifikasi">
     <style>
         @keyframes otp-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
         @keyframes otp-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -20,18 +20,18 @@
 
     <p class="mt-2 text-sm">
         Kami mengirim kode 6 angka ke
-        <strong class="break-all text-[var(--navy-900)]">{{ $email }}</strong>.
+        <strong class="break-all text-[var(--ink)]">{{ $email }}</strong>.
         Kode berlaku {{ \App\Services\EmailVerificationCodeService::TTL_MINUTES }} menit.
         {{ $pendingRegistration ? 'Akun Anda dibuat setelah kode benar.' : 'Verifikasi diperlukan sebelum Anda bisa checkout.' }}
     </p>
 
     @if (session('status') == 'verification-code-sent')
-        <div class="mt-4 font-medium text-sm text-green-700 dark:text-green-400">
+        <div class="mt-4 font-medium text-sm text-[var(--success)] dark:text-[var(--success)]">
             Kode verifikasi baru sudah dikirim ke email yang Anda daftarkan.
         </div>
     @endif
 
-    <form
+    <form novalidate
         method="POST"
         action="{{ $verifyAction }}"
         x-ref="form"
@@ -82,7 +82,7 @@
                 <div
                     class="otp-box h-14 w-11 overflow-hidden rounded-lg ring-2 transition-all duration-200 sm:h-16 sm:w-14"
                     :style="`animation-delay: ${(i - 1) * 50}ms`"
-                    :class="hasError ? 'ring-red-400 dark:ring-red-500' : 'ring-[var(--border)] focus-within:ring-[var(--navy-700)]'"
+                    :class="hasError ? 'ring-[var(--line)] dark:ring-[var(--line)]' : 'ring-[var(--line)] focus-within:ring-[var(--ink-muted)]'"
                 >
                     <input
                         type="text"
@@ -103,7 +103,7 @@
         </div>
 
         <div class="mt-3 min-h-[1.5rem] text-center text-sm" aria-live="polite">
-            <p x-show="hasError" x-cloak class="font-medium text-red-600 dark:text-red-400">{{ $errors->first('code') }}</p>
+            <p x-show="hasError" x-cloak class="font-medium text-[var(--danger)] dark:text-[var(--danger)]">{{ $errors->first('code') }}</p>
             <p x-show="submitting" x-cloak class="text-[var(--ink-muted)]">Memverifikasi…</p>
         </div>
     </form>
@@ -112,24 +112,24 @@
         <div class="text-sm">
             <span class="text-[var(--ink-muted)]">Tidak menerima kode?</span>
             <span x-show="countdown > 0" class="text-[var(--ink-muted)]">Kirim ulang dalam <span x-text="countdown"></span> detik</span>
-            <form x-show="countdown === 0" x-cloak method="POST" action="{{ $resendAction }}" class="inline">
+            <form novalidate x-show="countdown === 0" x-cloak method="POST" action="{{ $resendAction }}" class="inline">
                 @csrf
-                <button type="submit" class="font-medium underline text-[var(--navy-900)] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Kirim ulang kode</button>
+                <button type="submit" class="font-medium underline text-[var(--ink)] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Kirim ulang kode</button>
             </form>
         </div>
 
         @if ($pendingRegistration)
-            <form method="POST" action="{{ route('register.restart') }}">
+            <form novalidate method="POST" action="{{ route('register.restart') }}">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                <button type="submit" class="text-sm underline text-[var(--ink)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
                     Ubah email / daftar ulang
                 </button>
             </form>
         @else
-            <form method="POST" action="{{ route('logout') }}">
+            <form novalidate method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                <button type="submit" class="text-sm underline text-[var(--ink)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
                     Keluar
                 </button>
             </form>

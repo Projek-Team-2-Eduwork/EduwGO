@@ -5,7 +5,7 @@
     <span class="sr-only">Memuat kendaraan...</span>
 
     @for ($i = 0; $i < $count; $i++)
-        <div class="card-surface flex flex-col p-4" aria-hidden="true">
+        <div class="section-plain flex flex-col p-4" aria-hidden="true">
             <div class="skeleton h-4 w-3/4"></div>
             <div class="skeleton mt-2 h-3 w-1/3"></div>
             <div class="skeleton my-3 aspect-[4/3] w-full"></div>

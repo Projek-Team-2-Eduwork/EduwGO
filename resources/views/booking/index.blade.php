@@ -1,34 +1,14 @@
-<x-app-layout>
+<x-app-layout title="Pesanan saya">
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <h1 class="text-2xl">Riwayat Transaksi</h1>
-                <form method="GET" action="{{ route('booking.index') }}" class="flex">
-                    <select name="status" aria-label="Filter status pesanan" class="rounded-lg text-sm shadow-sm" onchange="this.form.submit()">
-                        <option value="">Semua Status</option>
-                        @foreach(App\Enums\BookingStatus::cases() as $statusOpt)
-                            <option value="{{ $statusOpt->value }}" {{ request('status') === $statusOpt->value ? 'selected' : '' }}>
-                                {{ $statusOpt->label() }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
+                <h1 class="text-2xl">Pesanan saya</h1>
             </div>
-
-            <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div class="card-surface p-5">
-                    <div class="text-sm text-[var(--ink-muted)] mb-1">Jumlah Transaksi</div>
-                    <div class="text-lg font-bold text-[var(--navy-900)]">{{ $totalTransaksi }}</div>
-                </div>
-                <div class="card-surface p-5">
-                    <div class="text-sm text-[var(--ink-muted)] mb-1">Total Dibayar</div>
-                    <div class="text-lg font-bold text-[var(--navy-900)]">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</div>
-                </div>
-                <div class="card-surface p-5">
-                    <div class="text-sm text-[var(--ink-muted)] mb-1">Menunggu Bayar</div>
-                    <div class="text-lg font-bold text-[var(--navy-900)]">{{ $menungguBayar }}</div>
-                </div>
-            </div>
+            <nav class="mb-8 flex flex-wrap gap-5 border-b border-[var(--line)]" aria-label="Filter pesanan">
+                @foreach(['aktif' => 'Aktif', 'menunggu' => 'Menunggu bayar', 'selesai' => 'Selesai'] as $key => $label)
+                    <a href="{{ route('booking.index', ['tab' => $key]) }}" @if(request('tab', 'aktif') === $key) aria-current="page" @endif class="inline-flex min-h-11 items-center border-b-2 {{ request('tab', 'aktif') === $key ? 'border-[var(--accent)] font-bold text-[var(--ink)]' : 'border-transparent' }}">{{ $label }}</a>
+                @endforeach
+            </nav>
 
             @if(session('success'))
                 <div class="mb-6">
@@ -39,12 +19,12 @@
             @endif
 
             @if($bookings->isEmpty())
-                <x-empty-state title="Belum ada pesanan" description="Sewa motor favoritmu sekarang." action-label="Pilih Kendaraan" :action-href="route('kendaraan.index')" />
+                <x-empty-state illustration="bookings" title="Belum ada pesanan" description="Pilih motor dan jadwal sewa Anda." action-label="Pilih Kendaraan" :action-href="route('kendaraan.index')" />
             @else
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     @foreach($bookings as $booking)
-                        <div class="card-surface group flex flex-col overflow-hidden transition hover:-translate-y-0.5">
-                            <img src="{{ $booking->vehicle?->image ? asset($booking->vehicle->image) : '' }}" alt="{{ $booking->vehicle?->name ?? 'Kendaraan dihapus' }}" class="w-full h-48 object-cover" loading="lazy" onerror="this.outerHTML='<div class=\'w-full h-48 bg-[var(--bg)] flex items-center justify-center\'><svg class=\'w-12 h-12 text-[var(--border)]\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L28 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg></div>'">
+                        <div class="flex flex-col border-b border-[var(--line)] pb-6">
+                            <div class="relative flex h-48 w-full items-center justify-center overflow-hidden"><x-illustration name="vehicles" />@if($booking->vehicle?->image)<x-picture :src="$booking->vehicle->image" alt="{{ $booking->vehicle->name }}" class="absolute inset-0 w-full h-48 object-cover" loading="lazy" onerror="this.remove()" />@endif</div>
                             <div class="p-5 flex flex-col flex-1">
                                 <div class="flex justify-between items-start mb-2">
                                     <h3 class="truncate text-base font-bold">{{ $booking->vehicle?->name ?? 'Kendaraan Dihapus' }}</h3>
@@ -53,44 +33,28 @@
                                 <p class="text-sm mb-2">{{ $booking->vehicle?->type?->name ?? '-' }}</p>
                                 <p class="font-mono text-sm mb-4">{{ $booking->code }}</p>
                                 <p class="text-sm mb-2">Mulai: {{ $booking->start_at->translatedFormat('D, d M H:i') }} &middot; {{ $booking->duration_days }} hari</p>
-                                
+
                                 <div class="mb-4">
-                                    @if($booking->latestPayment)
-                                        @php
-                                            $methodLabel = ucwords(str_replace('_', ' ', $booking->latestPayment->method));
-                                            $paymentStatus = $booking->latestPayment->status;
-                                            $badgeClass = match($paymentStatus) {
-                                                'paid' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
-                                                'pending' => 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
-                                                'expired', 'failed' => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
-                                                default => 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100',
-                                            };
-                                        @endphp
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $badgeClass }}">
-                                            {{ $methodLabel }} - {{ ucfirst($paymentStatus) }}
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100">Belum bayar</span>
-                                    @endif
+                                    <span class="text-sm">{{ payment_label($booking->latestPayment) }}</span>
                                 </div>
 
                                 <div class="mt-auto">
-                                    <p class="mb-4 text-lg font-bold text-[var(--navy-900)]">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</p>
-                                    
+                                    <p class="mb-4 text-lg font-bold text-[var(--ink)]">{{ rupiah($booking->total_amount) }}</p>
+
                                     <div class="flex gap-2">
                                         <a href="{{ route('booking.show', $booking->code) }}" class="btn-secondary-edu inline-flex flex-1 items-center justify-center px-5 py-2.5 text-sm">
                                             Detail
                                         </a>
-                                        
+
                                         @if($booking->status === App\Enums\BookingStatus::Pending)
                                             <x-danger-button x-data @click="$dispatch('open-modal', 'cancel-booking-{{ $booking->code }}')" class="flex-1 justify-center">
                                                 Batalkan
                                             </x-danger-button>
-                                            
+
                                             <x-modal name="cancel-booking-{{ $booking->code }}" focusable>
                                                 <form method="POST" action="{{ route('booking.cancel', $booking->code) }}" class="p-6">
                                                     @csrf
-                                                    <h2 class="text-lg font-semibold text-[var(--navy-900)]">Batalkan Pesanan</h2>
+                                                    <h2 class="text-lg font-semibold text-[var(--ink)]">Batalkan Pesanan</h2>
                                                     <p class="mt-1 text-sm">Apakah Anda yakin ingin membatalkan pesanan ini?</p>
                                                     <div class="mt-6 flex justify-end">
                                                         <x-secondary-button x-on:click="$dispatch('close')">Tutup</x-secondary-button>
@@ -110,7 +74,7 @@
                         </div>
                     @endforeach
                 </div>
-                
+
                 <div class="mt-6">
                     {{ $bookings->links('components.pagination') }}
                 </div>

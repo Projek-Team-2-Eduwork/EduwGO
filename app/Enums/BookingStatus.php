@@ -14,12 +14,12 @@ enum BookingStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'Pending',
+            self::Pending => 'Menunggu pembayaran',
             self::Paid => 'Lunas',
             self::Rented => 'Sedang disewa',
             self::Returned => 'Sudah kembali',
-            self::Cancelled => 'Batal',
-            self::Expired => 'Expired',
+            self::Cancelled => 'Dibatalkan',
+            self::Expired => 'Batas bayar terlewat',
         };
     }
 
@@ -29,14 +29,7 @@ enum BookingStatus: string
      */
     public function headline(): string
     {
-        return match ($this) {
-            self::Pending => 'Menunggu Pembayaran',
-            self::Paid => 'Pembayaran Lunas',
-            self::Rented => 'Sedang Disewa',
-            self::Returned => 'Sewa Selesai',
-            self::Cancelled => 'Pesanan Dibatalkan',
-            self::Expired => 'Pesanan Kedaluwarsa',
-        };
+        return $this->label();
     }
 
     /**
@@ -45,7 +38,7 @@ enum BookingStatus: string
     public function description(): string
     {
         return match ($this) {
-            self::Pending => 'Pesanan sudah dibuat dan unit belum terkunci untuk Anda sampai pembayaran diterima.',
+            self::Pending => 'Unit dicadangkan sampai batas bayar. Selesaikan pembayaran untuk mengonfirmasi pesanan Anda.',
             self::Paid => 'Pembayaran sudah kami terima. Unit disiapkan sesuai jadwal sewa di bawah.',
             self::Rented => 'Unit sedang digunakan. Kembalikan sebelum waktu selesai sewa agar tidak terlambat.',
             self::Returned => 'Unit sudah dikembalikan dan pesanan ini selesai. Terima kasih sudah menyewa di EduwGo.',

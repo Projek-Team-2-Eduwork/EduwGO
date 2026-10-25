@@ -210,8 +210,8 @@ class BranchScopeTest extends TestCase
         $this->actingAsAdmin($this->malang);
         $this->get(route('admin.dashboard', ['branch' => $this->batu->id]))
             ->assertOk()
-            ->assertSee('Rp 100.000')
-            ->assertDontSee('Rp 350.000');
+            ->assertSee('Rp100.000')
+            ->assertDontSee('Rp350.000');
     }
 
     public function test_admin_tanpa_cabang_tidak_melihat_data_apa_pun(): void

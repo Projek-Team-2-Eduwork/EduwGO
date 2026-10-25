@@ -25,7 +25,7 @@ class BookingResultPageTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('booking.success', $booking->code));
         $response->assertOk();
-        $response->assertSee('Yeay! Pembayaran Berhasil');
+        $response->assertSee('Pembayaran diterima');
     }
 
     public function test_booking_pending_owner_lihat_memproses()
@@ -69,7 +69,7 @@ class BookingResultPageTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('booking.failed', $booking->code));
         $response->assertOk();
-        $response->assertSee('Ups, Waktunya Habis!');
+        $response->assertSee('Batas pembayaran terlewat');
         $response->assertSee(route('booking.rebook', $booking->code));
     }
 

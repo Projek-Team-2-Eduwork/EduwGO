@@ -4,6 +4,7 @@
     'value' => null,   // string/Carbon; diformat ke Y-m-d\TH:i untuk datetime-local
     'hint' => null,
     'picker' => false,  // true = picker flatpickr bertema token; nilai tetap Y-m-d\TH:i pada input asli
+    'time' => true,     // false = tanggal saja (nilai Y-m-d), mis. filter periode laporan
 ])
 
 @php
@@ -12,7 +13,7 @@
     $current = old($errorKey, $value);
 
     if ($current instanceof \DateTimeInterface) {
-        $current = $current->format('Y-m-d\TH:i');
+        $current = $current->format($time ? 'Y-m-d\TH:i' : 'Y-m-d');
     }
 @endphp
 
@@ -24,7 +25,7 @@
     <input
         id="{{ $id }}"
         name="{{ $name }}"
-        type="datetime-local"
+        type="{{ $time ? 'datetime-local' : 'date' }}"
         value="{{ $current }}"
         {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-lg shadow-sm']) }}
         @if ($picker) data-picker @endif
@@ -51,6 +52,11 @@
                     // Kalender dipasang di <body> (static: false). Scroll tidak bubbling ke
                     // window, jadi posisinya kita ikuti manual supaya tetap menempel ke input.
                     const pickerAktif = [];
+                    document.addEventListener('keydown', event => {
+                        if (event.key !== 'Escape') return;
+                        const opened = pickerAktif.find(fp => fp.isOpen);
+                        if (opened) { event.preventDefault(); event.stopImmediatePropagation(); opened.close(); opened.altInput?.focus(); }
+                    }, true);
                     // Geser kalender seperlunya supaya selalu utuh di dalam layar (tidak kepotong
                     // atas/bawah) — mis. saat ruang di atas & bawah input sama-sama sempit.
                     const rapikanDiLayar = (fp) => {
@@ -76,7 +82,10 @@
                         const label = document.querySelector(`label[for="${input.id}"]`);
 
                         // Batas bawah = jam min dari server (kalau ada) atau sekarang.
+                        // Tanpa atribut min (mis. filter admin) tanggal lampau boleh dipilih.
+                        const bebas = ! input.getAttribute('min');
                         const batasBawah = () => {
+                            if (bebas) return new Date(0);
                             const minAttr = input.getAttribute('min');
                             const minMs = minAttr ? new Date(minAttr).getTime() : 0;
                             return new Date(Math.max(Date.now(), Number.isNaN(minMs) ? 0 : minMs));
@@ -85,19 +94,21 @@
                         const slotBerikutnya = (dari) => {
                             const d = new Date(dari);
                             d.setSeconds(0, 0);
-                            d.setMinutes(d.getMinutes() + (15 - (d.getMinutes() % 15)));
+                            d.setHours(d.getHours() + 1, 0, 0, 0);
                             return d;
                         };
-                        const jamAwal = slotBerikutnya(batasBawah());
+                        const jamAwal = slotBerikutnya(bebas ? new Date() : batasBawah());
+
+                        const pakaiJam = input.type !== 'date';
 
                         flatpickr(input, {
                             locale: 'id',
-                            enableTime: true,
+                            enableTime: pakaiJam,
                             time_24hr: true,
-                            minuteIncrement: 15,
-                            dateFormat: 'Y-m-d\\TH:i',
+                            minuteIncrement: 60,
+                            dateFormat: pakaiJam ? 'Y-m-d\\TH:i' : 'Y-m-d',
                             altInput: true,
-                            altFormat: 'd M Y, H:i',
+                            altFormat: pakaiJam ? 'd M Y, H:i' : 'd M Y',
                             altInputClass: input.className,
                             minDate: input.min || null,
                             // Jam default saat tanggal dipilih: slot berikutnya, bukan jam yang sudah lewat.
@@ -119,7 +130,7 @@
                                 if (idx > -1) pickerAktif.splice(idx, 1);
                             },
                             onReady(selectedDates, value, fp) {
-                                fp.altInput.placeholder = 'Pilih tanggal & jam';
+                                fp.altInput.placeholder = pakaiJam ? 'Pilih tanggal & jam' : 'Pilih tanggal';
                                 fp.altInput.setAttribute('aria-label', label ? label.textContent.trim() : 'Tanggal & jam');
 
                                 const clear = document.createElement('button');
@@ -135,7 +146,7 @@
                                         fp.close();
                                     }
                                 });
-                                ['change', 'increment'].forEach((evt) => {
+                                if (pakaiJam) ['change', 'increment'].forEach((evt) => {
                                     fp.hourElement.addEventListener(evt, () => fp.minuteElement.focus());
                                     fp.minuteElement.addEventListener(evt, () => setTimeout(() => fp.close(), 0));
                                 });

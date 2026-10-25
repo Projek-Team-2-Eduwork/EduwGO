@@ -15,7 +15,7 @@
     $samplePaginator = (new LengthAwarePaginator(collect(range(1, 10)), 60, 10, 3))->setPath(url('/styleguide'));
 @endphp
 
-<x-app-layout>
+<x-app-layout title="EduwGo Styleguide">
     <x-slot name="header">
         <h1 class="font-serif text-3xl">EduwGo Styleguide</h1>
     </x-slot>
@@ -27,7 +27,7 @@
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 @foreach (['bg', 'surface', 'navy-900', 'navy-700', 'ink-muted', 'orange-500', 'coral-300', 'gold-tan'] as $token)
                     <div class="card-surface p-3">
-                        <div class="mb-2 h-12 rounded" style="background-color: var(--{{ $token }}); border: 1px solid var(--border);"></div>
+                        <div class="mb-2 h-12 rounded" style="background-color: var(--{{ $token }}); border: 1px solid var(--line);"></div>
                         <p class="text-sm">--{{ $token }}</p>
                     </div>
                 @endforeach
@@ -74,7 +74,7 @@
         <section class="space-y-3">
             <h2 class="mb-3 font-serif text-2xl">alert</h2>
             <x-alert type="success" dismissible>Pembayaran berhasil dikonfirmasi.</x-alert>
-            <x-alert type="info">Booking kamu menunggu pembayaran.</x-alert>
+            <x-alert type="info">Booking Anda menunggu pembayaran.</x-alert>
             <x-alert type="warning">Waktu sewa sudah lewat, segera kembalikan unit.</x-alert>
             <x-alert type="error">Unit tidak tersedia di rentang tanggal ini.</x-alert>
         </section>
@@ -118,12 +118,25 @@
         {{-- empty-state --}}
         <section>
             <h2 class="mb-3 font-serif text-2xl">empty-state</h2>
-            <x-empty-state
+            <x-empty-state illustration="bookings"
                 title="Belum ada pesanan"
-                description="Pesanan kamu akan tampil di sini setelah kamu booking motor."
+                description="Pesanan Anda akan tampil di sini setelah Anda booking motor."
                 action-label="Pilih Kendaraan"
                 action-href="#"
             />
+        </section>
+
+
+        <section id="illustrations">
+            <h2 class="mb-4 text-2xl">Ilustrasi EduwGo</h2>
+            <div class="grid gap-6 md:grid-cols-3">
+                @foreach (['welcome' => 'Selamat datang', 'vehicles' => 'Motor tidak ditemukan', 'bookings' => 'Belum ada pesanan', '404' => 'Halaman tidak ditemukan', '403' => 'Akses dibatasi', 'service' => 'Layanan sementara berhenti', 'success' => 'Pembayaran berhasil', 'failed' => 'Pembayaran gagal / kedaluwarsa', 'waiting' => 'Menunggu pembayaran', 'locations' => 'Cabang', 'users' => 'Pengguna'] as $art => $label)
+                    <div class="flex flex-col items-center border border-[var(--line)] p-4 text-center">
+                        <x-illustration :name="$art" />
+                        <p class="mt-3 max-w-full text-sm">{{ $label }}</p>
+                    </div>
+                @endforeach
+            </div>
         </section>
 
         {{-- pagination --}}

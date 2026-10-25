@@ -1,16 +1,12 @@
-@php
-    $name = setting('brand.name', 'EduwGo');
-    $logoLight = setting('brand.logo_light');
-    $logoDark = setting('brand.logo_dark') ?: $logoLight;
-    $imgClass = $attributes->get('class', 'h-9 w-auto');
-@endphp
-
-{{-- Logo dari Pengaturan Toko (terang/gelap); fallback ke wordmark bila belum diatur. --}}
-@if ($logoLight)
-    <img src="{{ $logoLight }}" alt="{{ $name }}" class="{{ $imgClass }} dark:hidden">
-    <img src="{{ $logoDark }}" alt="{{ $name }}" class="{{ $imgClass }} hidden dark:block">
+@props(['variant' => 'full', 'monogram' => false, 'email' => false, 'configured' => true])
+{{-- Legacy monogram/inverse callers share the final identity. Email clients use a raster lockup. --}}
+@if($email)
+    <img src="{{ asset('images/brand/lockup.png') }}" alt="EduwGo" width="226" height="32" {{ $attributes }} style="display: inline-block; max-width: 100%; height: auto; vertical-align: middle;">
 @else
-    <span {{ $attributes->merge(['class' => 'inline-flex items-center']) }}>
-        <span class="text-2xl font-extrabold leading-none tracking-tight" style="color: var(--navy-900);">Eduw<span style="color: var(--orange-500);">Go</span></span>
-    </span>
+<svg {{ $attributes->class(['brand-logo inline-block h-9 w-auto', 'max-w-[11rem]' => $variant !== 'mark' && ! $monogram, 'brand-logo--inverse' => $variant === 'inverse', 'brand-logo--mono' => $variant === 'mono']) }} viewBox="0 0 {{ $variant === 'mark' || $monogram ? 32 : 226 }} 32" role="img" aria-label="EduwGo" xmlns="http://www.w3.org/2000/svg">
+    <path fill="var(--accent, currentColor)" fill-rule="evenodd" d="M8 2H28V6H16V16H6V18H24L20 22H6V24H27L30 27L27 30H22V27H16V30H2V8Q2 2 8 2Z M12 9A3 3 0 1 0 6 9A3 3 0 1 0 12 9Z"/>
+    @unless($variant === 'mark' || $monogram)
+        <path fill="var(--ink, currentColor)" fill-rule="evenodd" d="M46.0 4.0H68.0L64.0 7.428571428571429H50.0V14.285714285714285H65.0L61.0 17.714285714285715H50.0V24.57142857142857H68.0L64.0 28.0H46.0V4.0ZM73.6 4.0H89.6L97.6 10.857142857142858V21.142857142857142L89.6 28.0H73.6V4.0ZM77.6 7.428571428571429V24.57142857142857H87.6L93.6 19.428571428571427V12.571428571428571L87.6 7.428571428571429H77.6ZM103.2 4.0H107.2V21.142857142857142L111.2 24.57142857142857H119.2L123.2 21.142857142857142V4.0H127.2V22.857142857142858L121.2 28.0H109.2L103.2 22.857142857142858V4.0ZM132.8 4.0H136.8L141.8 22.0L146.8 8.285714285714285H150.8L155.8 22.0L160.8 4.0H164.8L157.8 28.0H153.8L148.8 14.285714285714285L143.8 28.0H139.8L132.8 4.0ZM194.4 7.428571428571429 190.4 10.857142857142858 186.4 7.428571428571429H178.4L174.4 10.857142857142858V21.142857142857142L178.4 24.57142857142857H186.4L190.4 21.142857142857142V18.57142857142857H182.4L186.4 15.142857142857142H194.4V22.857142857142858L188.4 28.0H176.4L170.4 22.857142857142858V9.142857142857142L176.4 4.0H188.4L194.4 7.428571428571429ZM206.0 4.0H218.0L224.0 9.142857142857142V22.857142857142858L218.0 28.0H206.0L200.0 22.857142857142858V9.142857142857142L206.0 4.0ZM208.0 7.428571428571429 204.0 10.857142857142858V21.142857142857142L208.0 24.57142857142857H216.0L220.0 21.142857142857142V10.857142857142858L216.0 7.428571428571429H208.0Z"/>
+    @endunless
+</svg>
 @endif

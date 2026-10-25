@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
-use App\Models\Payment;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -19,27 +18,23 @@ class BookingController extends Controller
         $user = $request->user();
 
         $query = Booking::where('user_id', $user->id)
-            ->with(['vehicle.type', 'payments', 'latestPayment'])
+            ->with(['vehicle.type', 'vehicle.branch', 'payments', 'latestPayment'])
             ->latest();
 
         if ($request->filled('status') && BookingStatus::tryFrom($request->status)) {
             $query->where('status', $request->status);
+        } else {
+            $statuses = match ($request->query('tab', 'aktif')) {
+                'menunggu' => [BookingStatus::Pending],
+                'selesai' => [BookingStatus::Returned, BookingStatus::Cancelled, BookingStatus::Expired],
+                default => [BookingStatus::Pending, BookingStatus::Paid, BookingStatus::Rented],
+            };
+            $query->whereIn('status', $statuses);
         }
 
         $bookings = $query->paginate(10)->withQueryString();
 
-        $totalTransaksi = Booking::where('user_id', $user->id)->count();
-
-        $totalDibayar = Payment::join('bookings', 'payments.booking_id', '=', 'bookings.id')
-            ->where('bookings.user_id', $user->id)
-            ->where('payments.status', 'paid')
-            ->sum('payments.amount');
-
-        $menungguBayar = Booking::where('user_id', $user->id)
-            ->where('status', BookingStatus::Pending->value)
-            ->count();
-
-        return view('booking.index', compact('bookings', 'totalTransaksi', 'totalDibayar', 'menungguBayar'));
+        return view('booking.index', compact('bookings'));
     }
 
     /**
@@ -48,7 +43,7 @@ class BookingController extends Controller
     public function show(Request $request, $code)
     {
         $booking = Booking::where('code', $code)
-            ->with(['vehicle.type', 'histories.changer', 'user', 'latestPayment'])
+            ->with(['vehicle.type', 'vehicle.branch', 'histories.changer', 'user', 'latestPayment'])
             ->firstOrFail();
 
         Gate::authorize('view', $booking);

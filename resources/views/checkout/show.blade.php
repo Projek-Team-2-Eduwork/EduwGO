@@ -1,8 +1,8 @@
-<x-app-layout>
+<x-app-layout title="Konfirmasi sewa">
     <div class="py-12">
         <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-            <div class="card-surface p-6">
-                <h2 class="mb-6 text-2xl font-bold text-[var(--navy-900)]">Konfirmasi Checkout</h2>
+            <x-rental-stepper :step="2" /><div>
+                <h2 class="mb-6 text-2xl font-bold text-[var(--ink)]">Konfirmasi sewa</h2>
 
                 @if(session('error'))
                     <div class="mb-4">
@@ -12,27 +12,24 @@
                     </div>
                 @endif
 
-                <div class="mb-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4">
-                    <h3 class="text-lg font-semibold text-[var(--navy-900)]">{{ $vehicle->name }}</h3>
-                    <p class="text-sm text-[var(--ink-muted)]">Harga per hari: Rp {{ number_format($vehicle->price_per_day, 0, ',', '.') }}</p>
+                <div class="mb-8 border-b border-[var(--line)] pb-6">
+                    @if($vehicle->image)<x-picture :src="$vehicle->image" alt="{{ $vehicle->name }}" class="mb-4 h-44 w-full object-contain" />@endif
+                    <h3 class="text-lg font-semibold text-[var(--ink)]">{{ $vehicle->name }}</h3>
+                    <p class="text-sm text-[var(--ink-muted)]">Harga per hari: {{ rupiah($vehicle->price_per_day) }}</p>
 
-                    <div class="mt-4 grid grid-cols-2 gap-4">
-                        <div>
-                            <span class="block text-xs">Mulai</span>
-                            <span class="font-medium text-[var(--navy-900)]">{{ $start->translatedFormat('D, d M Y H:i') }}</span>
-                        </div>
-                        <div>
-                            <span class="block text-xs">Selesai</span>
-                            <span class="font-medium text-[var(--navy-900)]">{{ $end->translatedFormat('D, d M Y H:i') }}</span>
-                        </div>
-                    </div>
+                    <dl class="receipt mt-4 text-sm">
+                        <div><dt>Mulai</dt><dd>{{ $start->translatedFormat('D, d M Y H:i') }}</dd></div>
+                        <div><dt>Selesai</dt><dd>{{ $end->translatedFormat('D, d M Y H:i') }}</dd></div>
+                    </dl>
 
-                    <div class="mt-4 flex justify-between items-center border-t border-[var(--border)] pt-4">
+                    <div class="mt-4 flex justify-between items-center border-t border-[var(--line)] pt-4">
                         <span class="font-medium">Durasi: {{ $days }} hari</span>
-                        <span class="text-lg font-bold text-[var(--orange-500)]">Total: Rp {{ number_format($vehicle->price_per_day * $days, 0, ',', '.') }}</span>
+                        <span class="text-lg font-bold text-[var(--accent)]">Total: {{ rupiah($vehicle->price_per_day * $days) }}</span>
                     </div>
                 </div>
 
+                <a href="{{ route('kendaraan.detail', ['vehicle' => $vehicle, 'start' => $start->toIso8601String(), 'days' => $days, 'ulang' => 1]) }}" class="mb-6 inline-flex min-h-11 items-center text-sm font-semibold underline">Ubah tanggal &amp; durasi</a>
+                <x-pickup-location :vehicle="$vehicle" class="mb-8" />
                 <form method="POST" action="{{ route('checkout.store', $vehicle->id) }}">
                     @csrf
                     <input type="hidden" name="start" value="{{ $start->toIso8601String() }}">
@@ -46,7 +43,7 @@
 
                     <div class="mb-4">
                         <x-input-label for="customer_phone" value="Nomor WhatsApp" />
-                        <x-text-input id="customer_phone" class="block mt-1 w-full" type="text" name="customer_phone" value="{{ old('customer_phone', auth()->user()->phone) }}" required />
+                        <x-text-input id="customer_phone" class="block mt-1 w-full" type="tel" inputmode="tel" autocomplete="tel" name="customer_phone" value="{{ old('customer_phone', auth()->user()->phone) }}" required />
                         <x-input-error :messages="$errors->get('customer_phone')" class="mt-2" />
                     </div>
 
@@ -57,7 +54,7 @@
 
                     <div class="flex items-center justify-end mt-4">
                         <x-primary-button>
-                            Konfirmasi & Bayar
+                            Lanjut bayar
                         </x-primary-button>
                     </div>
                 </form>

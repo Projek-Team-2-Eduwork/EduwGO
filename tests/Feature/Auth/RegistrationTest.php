@@ -65,7 +65,7 @@ class RegistrationTest extends TestCase
     {
         $this->get('/register')
             ->assertStatus(200)
-            ->assertSee('Syarat &amp; Ketentuan', false)
+            ->assertSee('Syarat &amp; ketentuan', false)
             ->assertSee('Nomor WhatsApp');
     }
 

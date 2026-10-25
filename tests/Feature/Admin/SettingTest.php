@@ -82,7 +82,7 @@ class SettingTest extends TestCase
             ->assertSeeInOrder(['Toko Mantap', 'Toko Mantap', 'Toko Mantap']);
     }
 
-    public function test_ubah_warna_ter_render_sebagai_override_css(): void
+    public function test_warna_lama_tidak_mengubah_palet_ui(): void
     {
         $admin = $this->actingAsSuperadmin();
 
@@ -98,8 +98,8 @@ class SettingTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('--navy-900: #123456', false)
-            ->assertSee('--orange-500: #654321', false);
+            ->assertDontSee('--navy-900: #123456', false)
+            ->assertDontSee('--orange-500: #654321', false);
     }
 
     public function test_ubah_buffer_dipakai_oleh_availability_service(): void

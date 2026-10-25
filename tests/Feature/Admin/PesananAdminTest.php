@@ -131,9 +131,11 @@ class PesananAdminTest extends TestCase
 
         $html = $this->get(route('admin.pesanan.index'))->assertOk()->getContent();
 
-        $this->assertSame('2', $this->summaryNumber($html, 'Pending'));
-        $this->assertSame('3', $this->summaryNumber($html, 'Sukses'));
-        $this->assertSame('1', $this->summaryNumber($html, 'Expired'));
+        $this->assertSame('2', $this->summaryNumber($html, 'Menunggu pembayaran'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Lunas'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Sedang disewa'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Sudah kembali'));
+        $this->assertSame('1', $this->summaryNumber($html, 'Batas bayar terlewat'));
     }
 
     public function test_klik_kartu_pending_dan_expired_memfilter_tabel()
@@ -158,7 +160,7 @@ class PesananAdminTest extends TestCase
             ->assertDontSee('EG.200003');
     }
 
-    public function test_klik_kartu_sukses_menampilkan_paid_rented_returned()
+    public function test_filter_lunas_hanya_menampilkan_paid()
     {
         $this->actingAsAdmin();
         Booking::factory()->paid()->create(['code' => 'EG.300001']);
@@ -168,11 +170,11 @@ class PesananAdminTest extends TestCase
         Booking::factory()->expired()->create(['code' => 'EG.300005']);
         Booking::factory()->cancelled()->create(['code' => 'EG.300006']);
 
-        $this->get(route('admin.pesanan.index', ['status' => 'sukses']))
+        $this->get(route('admin.pesanan.index', ['status' => 'paid']))
             ->assertOk()
             ->assertSee('EG.300001')
-            ->assertSee('EG.300002')
-            ->assertSee('EG.300003')
+            ->assertDontSee('EG.300002')
+            ->assertDontSee('EG.300003')
             ->assertDontSee('EG.300004')
             ->assertDontSee('EG.300005')
             ->assertDontSee('EG.300006');
@@ -195,5 +197,46 @@ class PesananAdminTest extends TestCase
 
         // Klik kartu aktif → kembali menampilkan semua pesanan.
         $this->get($href)->assertOk()->assertSee('EG.500001')->assertSee('EG.500002');
+    }
+
+    public function test_urutkan_index_berdasarkan_kode_terendah_dan_tertinggi()
+    {
+        $this->actingAsAdmin();
+
+        Booking::factory()->pending()->create([
+            'code' => 'EG.000020',
+            'start_at' => now()->addDays(2),
+            'end_at' => now()->addDays(4),
+        ]);
+        Booking::factory()->pending()->create([
+            'code' => 'EG.000010',
+            'start_at' => now()->addDays(1),
+            'end_at' => now()->addDays(3),
+        ]);
+        Booking::factory()->pending()->create([
+            'code' => 'EG.000030',
+            'start_at' => now()->addDays(3),
+            'end_at' => now()->addDays(5),
+        ]);
+
+        // Tanpa filter urut: tetap urut jadwal terbaru (start_at desc).
+        $this->get(route('admin.pesanan.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000030', 'EG.000020', 'EG.000010']);
+
+        // Kode terendah → tertinggi.
+        $this->get(route('admin.pesanan.index', ['urut' => 'kode_asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000010', 'EG.000020', 'EG.000030']);
+
+        // Kode tertinggi → terendah.
+        $this->get(route('admin.pesanan.index', ['urut' => 'kode_desc']))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000030', 'EG.000020', 'EG.000010']);
+
+        // Nilai urut yang tidak dikenal diabaikan (kembali ke urutan default).
+        $this->get(route('admin.pesanan.index', ['urut' => 'ngawur']))
+            ->assertOk()
+            ->assertSeeInOrder(['EG.000030', 'EG.000020', 'EG.000010']);
     }
 }

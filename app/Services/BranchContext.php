@@ -42,6 +42,18 @@ class BranchContext
         return $this->current;
     }
 
+    /**
+     * Pasang relasi branch dari daftar cabang aktif yang sudah dimuat (tanpa query eager tambahan).
+     */
+    public function attachTo(iterable $vehicles): void
+    {
+        $byId = $this->active()->keyBy('id');
+
+        foreach ($vehicles as $vehicle) {
+            $vehicle->setRelation('branch', $byId->get($vehicle->branch_id));
+        }
+    }
+
     public function currentId(): ?int
     {
         return $this->current()?->id;

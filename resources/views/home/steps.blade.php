@@ -1,26 +1,20 @@
 @php
     $steps = [
-        ['title' => 'Pilih Motor', 'text' => 'Telusuri katalog dan pilih motor yang sesuai kebutuhan perjalanan Anda.', 'icon' => 'M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z'],
-        ['title' => 'Pilih Durasi & Bayar', 'text' => 'Tentukan lama sewa lalu bayar online lewat VA, QRIS, e-wallet, atau retail.', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
-        ['title' => 'Ambil di Lokasi', 'text' => 'Konfirmasi via WhatsApp, bawa identitas, cek kondisi motor, lalu berangkat.', 'icon' => 'M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z'],
+        ['title' => 'Pilih motor dan jadwal', 'text' => 'Cari motor di cabang pilihan Anda sesuai waktu dan durasi sewa.'],
+        ['title' => 'Konfirmasi dan bayar', 'text' => 'Periksa pesanan Anda, lalu selesaikan pembayaran online.'],
+        ['title' => 'Ambil di cabang', 'text' => 'Datang sesuai jadwal, bawa identitas, dan cek kondisi motor bersama petugas.'],
     ];
 @endphp
-
-<section id="cara-sewa" class="mx-auto max-w-[1320px] px-4 pt-12 sm:px-6 lg:pt-20 xl:px-0">
-    <h2 class="text-2xl">Mulai Perjalanan Anda dalam 3 Langkah</h2>
-    <p class="mt-2 text-sm">Tidak perlu repot! Proses penyewaan motor tercepat, paling aman, dan transparan.</p>
-
-    <ol class="mt-6 grid gap-4 md:grid-cols-3">
-        @foreach ($steps as $i => $step)
-            <li class="card-surface flex items-center gap-4 p-5">
-                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-[var(--surface)]" style="background-color: var(--orange-500);" aria-hidden="true">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $step['icon'] }}"/></svg>
-                </span>
-                <div>
-                    <h3 class="text-base">{{ $i + 1 }}. {{ $step['title'] }}</h3>
-                    <p class="mt-1 text-sm leading-relaxed">{{ $step['text'] }}</p>
-                </div>
-            </li>
-        @endforeach
-    </ol>
+<section id="cara-sewa" class="landing-section">
+    <div class="landing-inner">
+        <h2 class="reveal text-2xl">Cara sewa</h2>
+        <ol class="reveal-group mt-6 grid gap-8 md:grid-cols-3">
+            @foreach($steps as $step)
+                <li class="reveal flex items-start gap-4">
+                    <span class="text-3xl font-semibold leading-none text-[var(--accent)]" aria-hidden="true">{{ $loop->iteration }}</span>
+                    <div><h3 class="text-base">{{ $step['title'] }}</h3><p class="mt-2 text-sm leading-6">{{ $step['text'] }}</p></div>
+                </li>
+            @endforeach
+        </ol>
+    </div>
 </section>

@@ -1,11 +1,11 @@
-<x-admin-layout>
+<x-admin-layout title="Pengaturan Toko">
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight">
             Pengaturan Toko
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ tab: 'brand' }">
+    <div class="py-6" x-data="{ tab: @js($errors->isNotEmpty() ? (collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'booking_') || $key === 'content_terms') ? 'aturan' : (collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'contact_') || str_starts_with($key, 'social_')) ? 'kontak' : 'brand')) : old('active_tab', 'brand')) }">
         <div class="max-w-7xl mx-auto space-y-6">
             @if(session('success'))
                 <x-alert type="success">
@@ -13,17 +13,17 @@
                 </x-alert>
             @endif
 
-            <div class="card-surface overflow-hidden">
+            <div class="section-plain overflow-hidden">
                 <div class="flex flex-col md:flex-row">
                     <!-- Sidebar Tabs -->
-                    <div class="space-y-2 border-b border-[var(--border)] p-4 md:w-1/4 md:border-b-0 md:border-e">
-                        <button type="button" @click="tab = 'brand'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'brand', 'hover:bg-[var(--bg)]': tab !== 'brand' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                    <div class="space-y-2 border-b border-[var(--line)] p-4 md:w-1/4 md:border-b-0 md:border-e">
+                        <button type="button" @click="tab = 'brand'" :class="{ 'bg-[var(--accent-soft)] text-[var(--ink)]': tab === 'brand', 'hover:bg-[var(--bg)]': tab !== 'brand' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
                             Identitas & Brand
                         </button>
-                        <button type="button" @click="tab = 'kontak'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'kontak', 'hover:bg-[var(--bg)]': tab !== 'kontak' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                        <button type="button" @click="tab = 'kontak'" :class="{ 'bg-[var(--accent-soft)] text-[var(--ink)]': tab === 'kontak', 'hover:bg-[var(--bg)]': tab !== 'kontak' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
                             Kontak & Sosial Media
                         </button>
-                        <button type="button" @click="tab = 'aturan'" :class="{ 'bg-[var(--coral-300)] text-[var(--navy-900)]': tab === 'aturan', 'hover:bg-[var(--bg)]': tab !== 'aturan' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                        <button type="button" @click="tab = 'aturan'" :class="{ 'bg-[var(--accent-soft)] text-[var(--ink)]': tab === 'aturan', 'hover:bg-[var(--bg)]': tab !== 'aturan' }" class="w-full rounded-lg px-4 py-3 text-left font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
                             Aturan Sewa & S&K
                         </button>
                     </div>
@@ -33,6 +33,7 @@
                     <form method="POST" action="{{ route('admin.pengaturan.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="active_tab" :value="tab">
 
                         <!-- TAB: BRAND -->
                         <div x-show="tab === 'brand'" x-cloak class="space-y-6">
@@ -41,24 +42,12 @@
                                 <x-text-input id="brand_name" name="brand_name" type="text" class="mt-1 block w-full" :value="old('brand_name', setting('brand.name', 'EduwGo'))" required />
                                 <x-input-error :messages="$errors->get('brand_name')" class="mt-2" />
                             </div>
-                            
+
                             <div>
                                 <x-input-label for="brand_tagline" value="Slogan (Tagline)" />
                                 <x-text-input id="brand_tagline" name="brand_tagline" type="text" class="mt-1 block w-full" :value="old('brand_tagline', setting('brand.tagline'))" />
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <x-input-label for="brand_primary_color" value="Warna Utama (Hex)" />
-                                    <x-text-input id="brand_primary_color" name="brand_primary_color" type="text" placeholder="#1e3a8a" class="mt-1 block w-full font-mono" :value="old('brand_primary_color', setting('brand.primary_color'))" />
-                                    <x-input-error :messages="$errors->get('brand_primary_color')" class="mt-2" />
-                                </div>
-                                <div>
-                                    <x-input-label for="brand_accent_color" value="Warna Aksen (Hex)" />
-                                    <x-text-input id="brand_accent_color" name="brand_accent_color" type="text" placeholder="#f97316" class="mt-1 block w-full font-mono" :value="old('brand_accent_color', setting('brand.accent_color'))" />
-                                    <x-input-error :messages="$errors->get('brand_accent_color')" class="mt-2" />
-                                </div>
-                            </div>
 
                             <div>
                                 <x-input-label for="brand_description" value="Deskripsi Singkat (Profil Perusahaan)" />
@@ -69,19 +58,19 @@
                             <div class="space-y-4">
                                 <div>
                                     <x-input-label for="brand_logo_light" value="Logo Mode Terang (Max 512KB)" />
-                                    <input type="file" id="brand_logo_light" name="brand_logo_light" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-[var(--ink-muted)]">
+                                    <x-form.file name="brand_logo_light" label="" accept=".png,.jpg,.svg,.ico" />
                                     <x-input-error :messages="$errors->get('brand_logo_light')" class="mt-2" />
                                     @if(setting('brand.logo_light')) <p class="text-xs text-[var(--ink-muted)] mt-1">Logo saat ini telah terpasang.</p> @endif
                                 </div>
                                 <div>
                                     <x-input-label for="brand_logo_dark" value="Logo Mode Gelap (Max 512KB)" />
-                                    <input type="file" id="brand_logo_dark" name="brand_logo_dark" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-[var(--ink-muted)]">
+                                    <x-form.file name="brand_logo_dark" label="" accept=".png,.jpg,.svg,.ico" />
                                     <x-input-error :messages="$errors->get('brand_logo_dark')" class="mt-2" />
                                     @if(setting('brand.logo_dark')) <p class="text-xs text-[var(--ink-muted)] mt-1">Logo dark saat ini telah terpasang.</p> @endif
                                 </div>
                                 <div>
                                     <x-input-label for="brand_favicon" value="Favicon (Max 512KB)" />
-                                    <input type="file" id="brand_favicon" name="brand_favicon" accept=".png,.jpg,.svg,.ico" class="mt-1 block w-full text-sm text-[var(--ink-muted)]">
+                                    <x-form.file name="brand_favicon" label="" accept=".png,.jpg,.svg,.ico" />
                                     <x-input-error :messages="$errors->get('brand_favicon')" class="mt-2" />
                                 </div>
                             </div>
@@ -106,7 +95,7 @@
                                 <x-text-input id="contact_hours" name="contact_hours" type="text" class="mt-1 block w-full" placeholder="Senin - Jumat: 08:00 - 17:00" :value="old('contact_hours', setting('contact.hours'))" />
                             </div>
 
-                            <hr class="border-[var(--border)]">
+                            <hr class="border-[var(--line)]">
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>

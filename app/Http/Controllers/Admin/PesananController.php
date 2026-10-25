@@ -13,6 +13,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\BookingService;
 use App\Services\XenditService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,13 +33,11 @@ class PesananController extends Controller
         Gate::authorize('viewAny', Booking::class);
 
         // Kartu ringkasan status: jumlah global per kategori (EG-51)
-        $summary = [
-            'pending' => $this->countStatus($request, 'pending'),
-            'sukses' => $this->countStatus($request, 'sukses'),
-            'expired' => $this->countStatus($request, 'expired'),
-        ];
+        // Satu query GROUP BY untuk semua status (bukan satu count per status)
+        $counts = $this->scopedQuery($request)->toBase()->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
+        $summary = collect(BookingStatus::cases())->mapWithKeys(fn ($s) => [$s->value => (int) ($counts[$s->value] ?? 0)])->all();
 
-        $query = $this->scopedQuery($request)->with(['user', 'vehicle.type', 'payments', 'histories.changer']);
+        $query = $this->scopedQuery($request)->with('vehicle.type');
 
         // Filter Status — aturan tunggal direuse kartu ringkasan (EG-51)
         $this->applyStatusFilter($query, $request->input('status'));
@@ -50,11 +49,10 @@ class PesananController extends Controller
             });
         }
 
-        // Filter Rentang Waktu (Beririsan)
-        if ($request->filled('mulai') && $request->filled('selesai')) {
-            $query->where('start_at', '<=', $request->selesai)
-                ->where('end_at', '>=', $request->mulai);
-        }
+        // Filter Rentang Waktu (Beririsan); boleh diisi salah satu
+        $request->validate(['mulai' => ['nullable', 'date'], 'selesai' => ['nullable', 'date']]);
+        $query->when($request->filled('selesai'), fn ($q) => $q->where('start_at', '<=', Carbon::parse($request->selesai)))
+            ->when($request->filled('mulai'), fn ($q) => $q->where('end_at', '>=', Carbon::parse($request->mulai)));
 
         // Search Query (q)
         if ($request->filled('q')) {
@@ -68,7 +66,17 @@ class PesananController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('start_at', 'desc')->paginate(12)->withQueryString();
+        // Urutan kode booking (opsional): terendah → tertinggi atau sebaliknya.
+        // Kode dibuat berurutan dengan 6 digit ('EG.000001'), jadi urutan teks
+        // sama dengan urutan angkanya.
+        $urut = $request->input('urut');
+        if (in_array($urut, ['kode_asc', 'kode_desc'], true)) {
+            $query->orderBy('code', $urut === 'kode_asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderBy('start_at', 'desc');
+        }
+
+        $bookings = $query->paginate(12)->withQueryString();
         $types = VehicleType::orderBy('name')->pluck('name', 'id');
         $branches = $request->user()->isSuperadmin() ? Branch::orderBy('name')->pluck('name', 'id') : collect();
 
@@ -90,7 +98,7 @@ class PesananController extends Controller
 
     /**
      * Terapkan filter status pada query. Satu-satunya tempat aturan status
-     * (termasuk 'sukses' = paid+rented+returned) — dipakai tabel & kartu (EG-51).
+     * dipakai tabel dan ringkasan status.
      */
     private function applyStatusFilter(Builder $query, ?string $status): void
     {
@@ -104,8 +112,8 @@ class PesananController extends Controller
             return;
         }
 
-        if ($status === 'sukses') {
-            $query->whereIn('status', ['paid', 'rented', 'returned']);
+        if ($status === 'aktif') {
+            $query->active();
 
             return;
         }
@@ -114,17 +122,6 @@ class PesananController extends Controller
         if ($statusEnum) {
             $query->where('status', $statusEnum->value);
         }
-    }
-
-    /**
-     * Jumlah pesanan untuk satu nilai filter status (dipakai kartu ringkasan).
-     */
-    private function countStatus(Request $request, string $status): int
-    {
-        $query = $this->scopedQuery($request);
-        $this->applyStatusFilter($query, $status);
-
-        return $query->count();
     }
 
     public function show(string $code): View
@@ -216,8 +213,10 @@ class PesananController extends Controller
         $booking = Booking::where('code', $code)->firstOrFail();
         Gate::authorize('adminUpdate', $booking);
 
+        // Nominal dari input number bisa berbentuk "80000.00" (total_amount
+        // bertipe decimal), jadi validasi integer akan menolak nilai yang sah.
         $request->validate([
-            'amount' => 'required|integer|min:1',
+            'amount' => 'required|numeric|min:1',
             'note' => 'nullable|string|max:500',
         ]);
 
@@ -226,26 +225,46 @@ class PesananController extends Controller
         }
 
         // Tunai = pelunasan penuh: nominal wajib sama dengan total tagihan
-        if ((int) $request->amount !== (int) round((float) $booking->total_amount)) {
+        $amount = round((float) $request->input('amount'), 2);
+        if ($amount !== round((float) $booking->total_amount, 2)) {
             $pesan = 'Nominal tunai harus sama dengan total tagihan Rp '.number_format((float) $booking->total_amount, 0, ',', '.').'.';
 
             return back()->withErrors(['amount' => $pesan])->withInput()->with('error', $pesan);
         }
 
         try {
-            DB::transaction(function () use ($request, $booking) {
-                Payment::create([
-                    'booking_id' => $booking->id,
-                    'method' => 'cash',
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'amount' => (int) $request->amount,
-                    'gateway_reference' => null,
-                    'gateway_url' => null,
-                ]);
+            DB::transaction(function () use ($request, $booking, $amount) {
+                // COD sudah membuat baris tunai pending saat penyewa memilih
+                // "Bayar di Tempat". Tandai baris itu lunas agar tidak ada
+                // pembayaran ganda.
+                $payment = $booking->payments()
+                    ->where('method', 'cash')
+                    ->where('status', 'pending')
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'amount' => $amount,
+                    ]);
+                } else {
+                    $payment = Payment::create([
+                        'booking_id' => $booking->id,
+                        'method' => 'cash',
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'amount' => $amount,
+                        'gateway_reference' => null,
+                        'gateway_url' => null,
+                    ]);
+                }
 
                 // Payment Xendit yang masih pending ditutup listener ExpirePendingPayments
-                $note = trim('Bayar tunai'.($request->filled('note') ? ': '.$request->note : ''));
+                $label = $payment->payment_channel === XenditService::COD ? 'Bayar tunai COD' : 'Bayar tunai';
+                $note = trim($label.($request->filled('note') ? ': '.$request->note : ''));
                 app(BookingService::class)->transition($booking, BookingStatus::Paid, auth()->user(), $note);
             });
         } catch (InvalidTransitionException $e) {

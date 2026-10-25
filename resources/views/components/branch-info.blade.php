@@ -10,16 +10,16 @@
 
 <dl {{ $attributes->class(['space-y-3']) }}>
     <div>
-        <dt class="{{ $label }}" style="color: var(--orange-500);">Alamat</dt>
+        <dt class="{{ $label }}" style="color: var(--accent);">Alamat</dt>
         <dd class="mt-1 {{ $text }} leading-relaxed">{{ $branch->address ?: 'Alamat akan diinformasikan oleh admin.' }}</dd>
     </div>
     <div>
-        <dt class="{{ $label }}" style="color: var(--orange-500);">Jam operasional</dt>
+        <dt class="{{ $label }}" style="color: var(--accent);">Jam operasional</dt>
         <dd class="mt-1 {{ $text }} leading-relaxed">{{ $branch->operating_hours ?: 'Hubungi admin untuk jam operasional.' }}</dd>
     </div>
     @if ($wa || $socials)
         <div>
-            <dt class="{{ $label }}" style="color: var(--orange-500);">Kontak &amp; Media Sosial</dt>
+            <dt class="{{ $label }}" style="color: var(--accent);">Kontak &amp; Media Sosial</dt>
             <dd class="mt-2 flex flex-wrap gap-2">
                 @if ($wa)
                     <a href="{{ $wa }}" target="_blank" rel="noopener" class="btn-secondary-edu inline-flex items-center {{ $pill }}">WhatsApp</a>

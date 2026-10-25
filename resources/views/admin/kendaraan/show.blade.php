@@ -1,27 +1,28 @@
-<x-admin-layout>
+<x-admin-layout title="Detail kendaraan">
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold leading-tight">
+            <h2 class="truncate text-xl font-semibold leading-tight">
                 Detail Kendaraan
             </h2>
-            <div class="flex gap-3">
-                <a href="{{ route('admin.kendaraan.edit', $kendaraan->id) }}" class="btn-secondary-edu inline-flex items-center px-5 py-2.5 text-sm">Update</a>
+
+        </div>
+    </x-slot>
+
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="mb-6 flex flex-wrap gap-3" aria-label="Aksi halaman">
+                <a href="{{ route('admin.kendaraan.edit', $kendaraan->id) }}" class="btn-secondary-edu inline-flex items-center px-5 py-2.5 text-sm">Ubah</a>
                 <form action="{{ route('admin.kendaraan.destroy', $kendaraan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kendaraan ini?');">
                     @csrf
                     @method('DELETE')
                     <x-danger-button type="submit">Hapus</x-danger-button>
                 </form>
             </div>
-        </div>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto space-y-6">
-            <div class="card-surface overflow-hidden">
+            <div class="section-plain overflow-hidden">
                 <div class="flex flex-col md:flex-row">
-                    <div class="flex items-center justify-center border-b bg-[var(--bg)] p-6 md:w-1/3 md:border-b-0 md:border-e border-[var(--border)]">
+                    <div class="flex items-center justify-center border-b bg-[var(--bg)] p-6 md:w-1/3 md:border-b-0 md:border-e border-[var(--line)]">
                         @if($kendaraan->image)
-                            <img src="{{ asset($kendaraan->image) }}" class="w-full rounded-lg object-contain shadow-sm" alt="{{ $kendaraan->name }}">
+                            <x-picture :src="$kendaraan->image" class="w-full rounded-lg object-contain shadow-sm" alt="{{ $kendaraan->name }}" />
                         @else
                             <span>Tidak ada foto</span>
                         @endif
@@ -29,10 +30,10 @@
                     <div class="p-6 md:w-2/3">
                         <div class="mb-4 flex items-start justify-between gap-3">
                             <div>
-                                <h3 class="text-2xl font-bold text-[var(--navy-900)]">{{ $kendaraan->name }}</h3>
+                                <h3 class="text-2xl font-bold text-[var(--ink)]">{{ $kendaraan->name }}</h3>
                                 <p class="mt-1">{{ $kendaraan->type?->name ?? 'Tipe Tidak Ditemukan' }} &middot; {{ $kendaraan->brand ?? 'Tanpa Brand' }}</p>
                             </div>
-                            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $kendaraan->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100' }}">
+                            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $kendaraan->is_active ? 'bg-[var(--success-soft)] text-[var(--success)] dark:bg-[var(--success-soft)] dark:text-[var(--success)]' : 'bg-[var(--bg)] text-[var(--ink)] dark:bg-[var(--bg)] dark:text-[var(--ink-muted)]' }}">
                                 {{ $kendaraan->is_active ? 'Aktif' : 'Nonaktif' }}
                             </span>
                         </div>
@@ -40,19 +41,19 @@
                         <div class="mb-6 grid grid-cols-2 gap-4">
                             <div>
                                 <p class="text-sm">Plat Nomor</p>
-                                <p class="font-mono font-bold text-[var(--navy-900)]">{{ $kendaraan->plate_number }}</p>
+                                <p class="font-mono font-bold text-[var(--ink)]">{{ $kendaraan->plate_number }}</p>
                             </div>
                             <div>
                                 <p class="text-sm">Harga per Hari</p>
-                                <p class="font-bold text-[var(--orange-500)]">Rp {{ number_format($kendaraan->price_per_day, 0, ',', '.') }}</p>
+                                <p class="font-bold text-[var(--accent)]">{{ rupiah($kendaraan->price_per_day) }}</p>
                             </div>
                             <div>
                                 <p class="text-sm">Kapasitas Tangki</p>
-                                <p class="font-semibold text-[var(--navy-900)]">{{ $kendaraan->tank_capacity ? $kendaraan->tank_capacity . ' L' : '-' }}</p>
+                                <p class="font-semibold text-[var(--ink)]">{{ $kendaraan->tank_capacity ? $kendaraan->tank_capacity . ' L' : '-' }}</p>
                             </div>
                             <div>
                                 <p class="text-sm">Tanggal Didaftarkan</p>
-                                <p class="font-semibold text-[var(--navy-900)]">{{ $kendaraan->created_at->format('d M Y') }}</p>
+                                <p class="font-semibold text-[var(--ink)]">{{ $kendaraan->created_at->translatedFormat('d M Y') }}</p>
                             </div>
                         </div>
 
@@ -65,9 +66,9 @@
             </div>
 
             {{-- Jadwal Booking --}}
-            <div class="card-surface overflow-hidden p-6">
+            <div class="section-plain overflow-hidden p-6">
                 <h3 class="mb-4 font-bold">Jadwal Booking</h3>
-                
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-[var(--bg)] text-xs uppercase">
@@ -92,22 +93,22 @@
 
                              @forelse($jadwal as $range)
                                 @php $booking = $range['booking']; @endphp
-                                <tr class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
-                                    <td class="px-4 py-3 font-mono text-xs font-semibold text-[var(--orange-500)]">{{ $booking->code }}</td>
-                                    <td class="px-4 py-3 font-medium text-[var(--navy-900)]">{{ $booking->customer_name }}</td>
+                                <tr class="border-b border-[var(--line)] transition hover:bg-[var(--bg)]">
+                                    <td class="px-4 py-3 font-mono text-xs font-semibold text-[var(--accent)]">{{ $booking->code }}</td>
+                                    <td class="px-4 py-3 font-medium text-[var(--ink)]">{{ $booking->customer_name }}</td>
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-[var(--navy-900)]">
-                                            {{ $booking->start_at->format('d M Y H:i') }} - {{ $booking->end_at->format('d M Y H:i') }}
+                                        <div class="font-medium text-[var(--ink)]">
+                                            {{ $booking->start_at->translatedFormat('d M Y H:i') }} - {{ $booking->end_at->translatedFormat('d M Y H:i') }}
                                         </div>
                                         <div class="mt-1 text-xs">
-                                            {{ $range['mulai']->format('d M Y H:i') }} - {{ $range['selesai']->format('d M Y H:i') }} (+{{ $bufferText }} buffer)
+                                            {{ $range['mulai']->translatedFormat('d M Y H:i') }} - {{ $range['selesai']->translatedFormat('d M Y H:i') }} (+{{ $bufferText }} buffer)
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
                                         <x-badge-status :status="$booking->status" />
                                     </td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('admin.pesanan.show', $booking->code) }}" class="font-medium text-[var(--orange-500)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Detail</a>
+                                        <a href="{{ route('admin.pesanan.show', $booking->code) }}" class="font-medium text-[var(--accent)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Detail</a>
                                     </td>
                                 </tr>
                             @empty

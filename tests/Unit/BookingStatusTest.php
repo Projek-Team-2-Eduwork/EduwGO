@@ -51,11 +51,11 @@ class BookingStatusTest extends TestCase
     {
         $this->assertSame('Lunas', BookingStatus::from('paid')->label());
         $this->assertSame('success', BookingStatus::Paid->color());
-        $this->assertSame('Pending', BookingStatus::Pending->label());
+        $this->assertSame('Menunggu pembayaran', BookingStatus::Pending->label());
         $this->assertSame('Sedang disewa', BookingStatus::Rented->label());
         $this->assertSame('Sudah kembali', BookingStatus::Returned->label());
-        $this->assertSame('Batal', BookingStatus::Cancelled->label());
-        $this->assertSame('Expired', BookingStatus::Expired->label());
+        $this->assertSame('Dibatalkan', BookingStatus::Cancelled->label());
+        $this->assertSame('Batas bayar terlewat', BookingStatus::Expired->label());
     }
 
     #[DataProvider('validTransitions')]
