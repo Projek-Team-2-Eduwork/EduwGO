@@ -59,6 +59,10 @@ class BookingService
     public function checkout(User $user, Vehicle $vehicle, CarbonInterface $start, int $days, array $data): Booking
     {
         return DB::transaction(function () use ($user, $vehicle, $start, $days, $data) {
+            // Serialisasi checkout dengan penghapusan/anonimisasi akun.
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            abort_unless($user->is_active, 403, 'Akun tidak aktif.');
+            $start = $start->copy()->setTimezone(config('app.timezone'));
             $vehicle = Vehicle::lockForUpdate()->find($vehicle->id);
 
             if (! app(AvailabilityService::class)->isAvailable($vehicle, $start, $days)) {

@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -94,9 +96,38 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        DB::transaction(function () use ($user) {
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-        $user->delete();
+            if ($user->isStaff()) {
+                throw ValidationException::withMessages(['password' => 'Akun admin dan superadmin tidak dapat menghapus diri sendiri.'])
+                    ->errorBag('userDeletion');
+            }
+
+            if ($user->bookings()->whereIn('status', self::ACTIVE_STATUSES)->exists()) {
+                throw ValidationException::withMessages(['password' => 'Akun tidak dapat dihapus selama masih memiliki booking pending, lunas, atau sedang disewa.'])
+                    ->errorBag('userDeletion');
+            }
+
+            if ($user->bookings()->exists()) {
+                // Pertahankan relasi dan snapshot transaksi untuk audit keuangan.
+                $user->forceFill([
+                    'name' => 'Pengguna dihapus',
+                    'email' => 'deleted-'.Str::uuid().'@example.invalid',
+                    'phone' => null,
+                    'social_account' => null,
+                    'password' => Str::random(64),
+                    'remember_token' => null,
+                    'email_verified_at' => null,
+                    'is_active' => false,
+                ])->save();
+                DB::table('email_verification_codes')->where('user_id', $user->id)->delete();
+            } else {
+                $user->delete();
+            }
+        });
+
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

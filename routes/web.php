@@ -87,7 +87,7 @@ Route::middleware('auth')->group(function () {
     // Alias sesuai spesifikasi EG-28 (Figma: Profil > Home).
     Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit.indonesian');
 
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile', [ProfileController::class, 'update'])->middleware('throttle:6,1')->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Preferensi tema (Dark/Light mode), juga dipakai theme-toggle di navbar.
