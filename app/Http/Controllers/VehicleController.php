@@ -153,7 +153,7 @@ class VehicleController extends Controller
         }
 
         try {
-            $start = Carbon::parse($value);
+            $start = Carbon::parse($value, config('app.timezone'))->setTimezone(config('app.timezone'));
         } catch (\Throwable) {
             return null;
         }

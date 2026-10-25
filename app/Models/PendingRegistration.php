@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['email', 'name', 'phone', 'password', 'code_hash', 'expires_at', 'attempts', 'last_sent_at'])]
-#[Hidden(['password', 'code_hash'])]
+#[Hidden(['password', 'code_hash', 'session_token_hash'])]
 class PendingRegistration extends Model
 {
     use MassPrunable, Notifiable;

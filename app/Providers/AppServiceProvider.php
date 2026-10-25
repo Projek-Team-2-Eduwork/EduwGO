@@ -7,6 +7,7 @@ use App\Services\PendingRegistrationService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->isProduction()) {
+            URL::forceRootUrl(config('app.url'));
+            URL::forceScheme('https');
+        }
+
         // Kirim ulang kode verifikasi email: 3/menit + 10/jam per akun. Tiap kode
         // memberi 5 kali tebakan, jadi batas per jam menahan brute force 6 angka.
         // Pendaftar yang belum punya akun dihitung per email pendaftaran tertunda.

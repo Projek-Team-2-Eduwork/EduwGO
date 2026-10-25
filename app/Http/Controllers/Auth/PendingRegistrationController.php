@@ -53,10 +53,10 @@ class PendingRegistrationController extends Controller
             'code.digits' => 'Kode verifikasi terdiri dari 6 angka.',
         ]);
 
-        $result = $this->registrations->complete($email, $data['code']);
+        $result = $this->registrations->complete($email, $data['code'], $request->session()->get(PendingRegistrationService::TOKEN_KEY));
 
         if ($result === PendingRegistrationService::ALREADY_REGISTERED) {
-            $request->session()->forget(PendingRegistrationService::SESSION_KEY);
+            $request->session()->forget([PendingRegistrationService::SESSION_KEY, PendingRegistrationService::TOKEN_KEY]);
 
             return redirect()->route('login')
                 ->withInput(['email' => $email])
@@ -67,7 +67,7 @@ class PendingRegistrationController extends Controller
             throw ValidationException::withMessages(['code' => $result]);
         }
 
-        $request->session()->forget(PendingRegistrationService::SESSION_KEY);
+        $request->session()->forget([PendingRegistrationService::SESSION_KEY, PendingRegistrationService::TOKEN_KEY]);
 
         Auth::login($result);
         $request->session()->regenerate();
@@ -102,7 +102,7 @@ class PendingRegistrationController extends Controller
     {
         $pending = $this->pending($request);
 
-        $request->session()->forget(PendingRegistrationService::SESSION_KEY);
+        $request->session()->forget([PendingRegistrationService::SESSION_KEY, PendingRegistrationService::TOKEN_KEY]);
 
         if (! $pending) {
             return redirect()->route('register');
@@ -117,16 +117,19 @@ class PendingRegistrationController extends Controller
     {
         $email = $request->session()->get(PendingRegistrationService::SESSION_KEY);
 
-        return $email
+        $pending = $email
             ? PendingRegistration::where('email', $email)
                 ->where('last_sent_at', '>=', now()->subHours(PendingRegistration::TTL_HOURS))
                 ->first()
             : null;
+
+        return $pending && $this->registrations->owns($pending, $request->session()->get(PendingRegistrationService::TOKEN_KEY))
+            ? $pending : null;
     }
 
     private function restart(Request $request): RedirectResponse
     {
-        $request->session()->forget(PendingRegistrationService::SESSION_KEY);
+        $request->session()->forget([PendingRegistrationService::SESSION_KEY, PendingRegistrationService::TOKEN_KEY]);
 
         return redirect()->route('register')
             ->withErrors(['email' => 'Sesi pendaftaran tidak ditemukan atau sudah kedaluwarsa. Silakan daftar ulang.']);
