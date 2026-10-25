@@ -1,80 +1,32 @@
-@props([
-    'name',
-    'show' => false,
-    'maxWidth' => '2xl'
-])
-
+@props(['name', 'show' => false, 'maxWidth' => '2xl', 'inlineDesktop' => false])
 @php
-$maxWidth = [
-    'sm' => 'sm:max-w-sm',
-    'md' => 'sm:max-w-md',
-    'lg' => 'sm:max-w-lg',
-    'xl' => 'sm:max-w-xl',
-    '2xl' => 'sm:max-w-2xl',
-][$maxWidth];
+    $width = ['sm' => 'sm:max-w-sm', 'md' => 'sm:max-w-md', 'lg' => 'sm:max-w-lg', 'xl' => 'sm:max-w-xl', '2xl' => 'sm:max-w-2xl'][$maxWidth];
+    // 'contents': di desktop kotak modal hilang, isinya ikut grid induk (field satu form ditata bebas).
+    $desktopDisplay = $inlineDesktop === 'contents' ? 'lg:contents' : 'lg:block';
 @endphp
-
-<div
-    x-data="{
-        show: @js($show),
-        focusables() {
-            // All focusable element types...
-            let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
-            return [...$el.querySelectorAll(selector)]
-                // All non-disabled elements...
-                .filter(el => ! el.hasAttribute('disabled'))
-        },
-        firstFocusable() { return this.focusables()[0] },
-        lastFocusable() { return this.focusables().slice(-1)[0] },
-        nextFocusable() { return this.focusables()[this.nextFocusableIndex()] || this.firstFocusable() },
-        prevFocusable() { return this.focusables()[this.prevFocusableIndex()] || this.lastFocusable() },
-        nextFocusableIndex() { return (this.focusables().indexOf(document.activeElement) + 1) % (this.focusables().length + 1) },
-        prevFocusableIndex() { return Math.max(0, this.focusables().indexOf(document.activeElement)) -1 },
-    }"
-    x-init="$watch('show', value => {
-        if (value) {
-            document.body.classList.add('overflow-y-hidden');
-            {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
-        } else {
-            document.body.classList.remove('overflow-y-hidden');
+<div x-data="{ show: @js($show), desktop: false, opener: null,
+        focusables() { return [...$el.querySelectorAll('a[href],button,input,textarea,select,[tabindex]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length) },
+        trap(event) {
+            if (!show || desktop) return;
+            const items = this.focusables();
+            if (!items.length) { event.preventDefault(); return; }
+            const first = items[0], last = items[items.length - 1];
+            if (event.shiftKey && (document.activeElement === first || !items.includes(document.activeElement))) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && (document.activeElement === last || !items.includes(document.activeElement))) { event.preventDefault(); first.focus(); }
         }
-    })"
-    x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
-    x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null"
+    }"
+    x-init="if (@js($inlineDesktop)) { const media = window.matchMedia('(min-width: 1024px)'); desktop = media.matches; media.addEventListener('change', event => { desktop = event.matches; if (desktop) show = false; }); } $watch('show', value => { document.body.classList.toggle('overflow-y-hidden', value); if(value) { opener = document.activeElement; $nextTick(() => (focusables()[0] || $refs.dialog).focus()); } else { opener?.focus(); } })"
+    x-on:open-modal.window="if ($event.detail === @js($name)) show = true"
+    x-on:close-modal.window="if ($event.detail === @js($name)) show = false"
     x-on:close.stop="show = false"
-    x-on:keydown.escape.window="show = false"
-    x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
-    x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
-    x-show="show"
-    class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
-    style="display: {{ $show ? 'block' : 'none' }};"
->
-    <div
-        x-show="show"
-        class="fixed inset-0 transform transition-all"
-        x-on:click="show = false"
-        x-transition:enter="ease-out duration-150"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-    >
-        <div class="absolute inset-0 bg-[var(--navy-900)] opacity-60"></div>
-    </div>
-
-    <div
-        x-show="show"
-        role="dialog"
-        aria-modal="true"
-        class="card-surface relative mb-6 transform overflow-hidden shadow-xl transition-all sm:mx-auto sm:w-full {{ $maxWidth }}"
-        x-transition:enter="ease-out duration-150"
-        x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100"
-        x-transition:leave="ease-in duration-150"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-95"
-    >
+    x-on:keydown.escape.window="if (show && !$event.defaultPrevented) { $event.preventDefault(); show = false; }"
+    x-on:keydown.tab="trap($event)"
+    x-show="show || desktop" x-cloak
+    class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6 {{ $inlineDesktop ? 'lg:static lg:z-auto '.$desktopDisplay.' lg:p-0' : '' }}"
+    style="display: {{ $show ? 'flex' : 'none' }};">
+    <div x-show="!desktop" class="scrim absolute inset-0" x-on:click="show = false" x-transition.opacity aria-hidden="true"></div>
+    <div x-ref="dialog" role="dialog" aria-modal="true" :role="desktop ? null : 'dialog'" :aria-modal="desktop ? null : 'true'" aria-label="{{ $attributes->get('aria-label', 'Dialog konfirmasi') }}" tabindex="-1"
+        class="relative max-h-[90dvh] w-full overflow-y-auto rounded-t-lg bg-[var(--surface)] text-[var(--ink-muted)] sm:rounded-lg {{ $width }} {{ $inlineDesktop ? 'lg:max-h-none lg:max-w-none lg:overflow-visible lg:rounded-none lg:bg-transparent '.($inlineDesktop === 'contents' ? 'lg:contents' : '') : '' }}" x-transition>
         {{ $slot }}
     </div>
 </div>

@@ -27,7 +27,7 @@ class PublicPagesTest extends TestCase
         $this->get('/halaman-yang-tidak-ada')
             ->assertNotFound()
             ->assertSee('Halaman tidak ditemukan')
-            ->assertSee('Kembali ke Home');
+            ->assertSee('Kembali ke beranda');
     }
 
     public function test_user_biasa_mengakses_admin_menampilkan_403_custom(): void
@@ -38,7 +38,7 @@ class PublicPagesTest extends TestCase
         $this->actingAs($user)->get('/admin/dashboard')
             ->assertForbidden()
             ->assertSee('Akses ditolak')
-            ->assertSee('Kembali ke Home');
+            ->assertSee('Kembali ke beranda');
     }
 
     public function test_halaman_error_419_500_503_menampilkan_pesan_indonesia(): void
@@ -46,7 +46,7 @@ class PublicPagesTest extends TestCase
         Route::get('/_uji-error/{code}', fn (int $code) => abort($code));
 
         foreach ([419 => 'Sesi telah berakhir', 500 => 'Terjadi kesalahan di server', 503 => 'Sedang dalam pemeliharaan'] as $code => $text) {
-            $this->get("/_uji-error/{$code}")->assertStatus($code)->assertSee($text)->assertSee('Kembali ke Home');
+            $this->get("/_uji-error/{$code}")->assertStatus($code)->assertSee($text)->assertSee('Kembali ke beranda');
         }
     }
 
@@ -54,10 +54,10 @@ class PublicPagesTest extends TestCase
     {
         Route::get('/_uji-error-401', fn () => abort(401));
 
-        $this->get('/_uji-error-401')->assertUnauthorized()->assertSee('401')->assertSee('Kembali ke Home');
+        $this->get('/_uji-error-401')->assertUnauthorized()->assertSee('401')->assertSee('Kembali ke beranda');
 
         // Endpoint khusus POST dibuka lewat browser (405)
-        $this->get('/cron/run')->assertMethodNotAllowed()->assertSee('405')->assertSee('Kembali ke Home');
+        $this->get('/cron/run')->assertMethodNotAllowed()->assertSee('405')->assertSee('Kembali ke beranda');
     }
 
     public function test_halaman_500_tetap_render_tanpa_query_database(): void
@@ -74,13 +74,13 @@ class PublicPagesTest extends TestCase
     {
         $response = $this->get('/syarat-ketentuan');
 
-        $response->assertOk()->assertSee('Syarat &amp; Ketentuan', false)->assertSee('1x24 jam')->assertSee('2 identitas');
+        $response->assertOk()->assertSee('Syarat &amp; ketentuan', false)->assertSee('1x24 jam')->assertSee('2 identitas');
         $this->assertSame(6, substr_count($response->getContent(), 'data-sk-poin'));
     }
 
     public function test_title_syarat_ketentuan_tidak_double_encode(): void
     {
-        $this->get('/syarat-ketentuan')->assertSee('<title>Syarat &amp; Ketentuan — EduwGo</title>', false);
+        $this->get('/syarat-ketentuan')->assertSee('<title>Syarat &amp; ketentuan — EduwGo</title>', false);
     }
 
     public function test_tentang_menampilkan_default_aman_dan_link_footer(): void
@@ -111,7 +111,7 @@ class PublicPagesTest extends TestCase
         $this->assertStringContainsString('<title>xJudul — EduwGo</title>', $html);
         $this->assertStringNotContainsString('<script>', $html);
         $this->assertStringContainsString('<meta name="description" content="EduwGo menyediakan rental motor', $html);
-        $this->assertStringNotContainsString('og:image', $html);
+        $this->assertStringContainsString('/images/brand/og.png', $html);
     }
 
     public function test_halaman_dapat_mengatur_meta_lewat_section(): void

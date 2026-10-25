@@ -5,10 +5,10 @@
 
 @php
     $classes = match ($type) {
-        'success' => 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100',
-        'error' => 'border-red-300 bg-red-50 text-red-900 dark:border-red-700 dark:bg-red-900/30 dark:text-red-100',
-        'warning' => 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100',
-        default => 'border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-100',
+        'success' => 'border-[var(--line)] bg-[var(--success-soft)] text-[var(--success)] dark:border-[var(--line)] dark:bg-[var(--success-soft)] dark:text-[var(--success)]',
+        'error' => 'border-[var(--line)] bg-[var(--danger-soft)] text-[var(--danger)] dark:border-[var(--line)] dark:bg-[var(--danger-soft)] dark:text-[var(--danger)]',
+        'warning' => 'border-[var(--line)] bg-[var(--warning-soft)] text-[var(--warning)] dark:border-[var(--line)] dark:bg-[var(--warning-soft)] dark:text-[var(--warning)]',
+        default => 'border-[var(--accent)] bg-[var(--info-soft)] text-[var(--info)] dark:border-[var(--accent)] dark:bg-[var(--info-soft)] dark:text-[var(--info)]',
     };
 @endphp
 

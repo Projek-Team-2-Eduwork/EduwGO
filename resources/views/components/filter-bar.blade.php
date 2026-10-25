@@ -4,7 +4,7 @@
 <form
     @if ($action) action="{{ $action }}" @endif
     method="{{ $method }}"
-    {{ $attributes->merge(['class' => 'card-surface p-4']) }}
+    {{ $attributes->merge(['class' => 'section-plain p-4']) }}
 >
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
         {{ $slot }}

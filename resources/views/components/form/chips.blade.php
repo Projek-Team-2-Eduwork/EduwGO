@@ -14,7 +14,7 @@
 {{-- Chip pilihan tunggal berbasis radio: dikirim sebagai query ?name=value, sama seperti <select> --}}
 <fieldset {{ $attributes }}>
     @if ($label)
-        <legend class="block text-sm font-medium text-[var(--navy-900)]">{{ $label }}</legend>
+        <legend class="block text-sm font-medium text-[var(--ink)]">{{ $label }}</legend>
     @endif
 
     <div class="mt-1 flex flex-wrap gap-2">

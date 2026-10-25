@@ -23,7 +23,7 @@ class ProfileThemeTest extends TestCase
         $this->actingAs($user)
             ->get('/profil')
             ->assertOk()
-            ->assertSee('Ringkasan Booking');
+            ->assertSee('Ringkasan pesanan');
     }
 
     /**
