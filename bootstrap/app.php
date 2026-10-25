@@ -36,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // SESSION_DRIVER=cookie di produksi: batas cookie ~4 KB, teks panjang tidak ikut di-flash sebagai old input
+        $exceptions->dontFlash(['content_terms', 'notes']);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

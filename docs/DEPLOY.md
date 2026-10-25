@@ -111,9 +111,9 @@ Cocok dengan `.env.example` dan `render.yaml`. "Rahasia" = `sync: false` di `ren
 | `DB_CONNECTION` | `mysql` | | |
 | `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | dari Aiven | ya | |
 | `MYSQL_ATTR_SSL_CA` | `/etc/secrets/aiven-ca.pem` | | Path Secret File (bagian 3.C) |
-| `SESSION_DRIVER` | `database` | | Jangan `file` (disk container hilang) |
+| `SESSION_DRIVER` | `cookie` | | Sesi di cookie terenkripsi, tanpa query DB (7.6). Jangan `file` (disk container hilang) |
 | `SESSION_SECURE_COOKIE` | `true` | | Cookie sesi hanya lewat HTTPS |
-| `CACHE_STORE` | `database` | | |
+| `CACHE_STORE` | `file` | | Cache per container; hilang saat deploy/restart (7.6) |
 | `QUEUE_CONNECTION` | `sync` | | Tanpa worker |
 | `FILESYSTEM_DISK` | `local` | | |
 | `MAIL_MAILER` / `MAIL_SCHEME` / `MAIL_HOST` / `MAIL_PORT` | `smtp` / `smtp` / `smtp-relay.brevo.com` / `2525` | ya | Brevo; port 2525 karena 25/465/587 diblokir Render free (7.4) |
@@ -237,7 +237,36 @@ Hilang: upload admin (bagian 8) dan file log (`storage/logs`, termasuk channel `
 Koneksi wajib TLS. Kapasitas dan koneksi terbatas; service free bisa dimatikan otomatis bila lama tidak aktif.
 Cek dashboard Aiven sebelum demo dan nyalakan lagi bila perlu.
 
+### 7.6 Latensi DB lintas region (sesi & cache)
+Web service di Singapura, DB Aiven di Bengaluru: setiap query membayar round-trip jaringan (halaman sempat
+1,7–3,5 detik, sedangkan `/up` tanpa DB 0,12 detik). Karena itu:
+
+- `SESSION_DRIVER=cookie`: isi sesi disimpan di cookie terenkripsi (`APP_KEY`), tanpa `select/update sessions`
+  per request. Trade-off: batas cookie ~4 KB (teks panjang `content_terms`/`notes` tidak di-flash sebagai old input,
+  `bootstrap/app.php`), sesi tidak bisa dicabut dari server (logout perangkat lain tidak ada; akun nonaktif tetap
+  ditendang middleware `EnsureUserIsActive`), dan ganti `APP_KEY` = semua orang logout. Tabel `sessions` tidak dipakai.
+- `CACHE_STORE=file`: cache di disk container. Hilang saat deploy/restart/bangun dari sleep, dan tidak dibagi antar
+  instance. Aman di sini karena isinya turunan (settings dibaca ulang dari DB, hitungan rate limiter login/OTP/throttle
+  mulai dari nol setelah restart) dan Render free hanya satu instance. Bila nanti >1 instance, pindah ke Redis.
+- `setting()` membaca seluruh tabel `settings` sekali per request (memo di container), dan cabang/tipe kendaraan
+  dipakai ulang dari `BranchContext` tanpa eager load kedua. Jumlah query (lokal, `DB::listen`, sesi cookie + cache file):
+
+| Halaman | Sebelum | Sesudah |
+|---|---|---|
+| `/` | 22 | 5 |
+| `/kendaraan` | 18 | 5 |
+| `/kendaraan/{slug}` | 19 | 5 |
+| `/login` | 6 | 0 |
+| `/tentang` | 13 | 1 |
+| `/admin/dashboard` (superadmin) | 25 | 16 |
+| `/admin/pesanan` | 27 | 10 |
+
 ## 8. Gambar
+
+- **AVIF + fallback**: foto motor seeder (`images/vehicles/*.jpg`) dan hero (`images/home/hero-road*.webp`) punya
+  versi `.avif` di sebelahnya, disajikan lewat `<picture>` (`<x-picture>` / `avif_url()`); JPG/WebP tetap sebagai
+  fallback. Total 2,46 MB (JPG+WebP) → 0,81 MB (AVIF), -67%. `og.png` dan `lockup.png` (email) tetap PNG karena crawler sosial
+  dan klien email belum mendukung AVIF. Upload admin tetap JPG/PNG/WebP: GD di image tidak punya `imageavif`.
 
 - **Foto motor seeder ikut ter-deploy**: `public/images/vehicles/*.jpg` (10 file + `CREDITS.md`) ter-track di git,
   tidak di-ignore `.gitignore` maupun `.dockerignore`, dan disajikan Apache (diuji: `/images/vehicles/honda-beat.jpg` 200).
@@ -283,7 +312,7 @@ Ulang di lokal:
 docker build -f docker/production/Dockerfile -t eduwgo-prod .
 docker run --rm -p 8080:10000 -e PORT=10000 -e APP_KEY=base64:... -e APP_ENV=production -e APP_DEBUG=false \
   -e DB_CONNECTION=mysql -e DB_HOST=... -e DB_DATABASE=... -e DB_USERNAME=... -e DB_PASSWORD=... \
-  -e SESSION_DRIVER=database -e CACHE_STORE=database -e LOG_CHANNEL=stderr eduwgo-prod
+  -e SESSION_DRIVER=cookie -e CACHE_STORE=file -e LOG_CHANNEL=stderr eduwgo-prod
 ```
 
 ## 10. Pemisahan lokal vs demo

@@ -53,13 +53,14 @@ services:
       - key: MYSQL_ATTR_SSL_CA
         value: /etc/secrets/aiven-ca.pem
 
-      # Sesi, cache, queue, file
+      # Sesi, cache, queue, file. DB Aiven di region lain: sesi di cookie terenkripsi & cache di disk
+      # container supaya request tidak membayar round-trip DB hanya untuk sesi/cache (docs/DEPLOY.md).
       - key: SESSION_DRIVER
-        value: database
+        value: cookie
       - key: SESSION_SECURE_COOKIE
         value: "true"
       - key: CACHE_STORE
-        value: database
+        value: file
       - key: QUEUE_CONNECTION
         value: sync
       - key: FILESYSTEM_DISK
