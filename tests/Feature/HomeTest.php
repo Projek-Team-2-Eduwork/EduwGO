@@ -20,8 +20,9 @@ class HomeTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSeeInOrder(['Rental Motor Cepat &amp; Aman, Mulai', 'Rp75.000', '/hari'], false)
-            ->assertSee('Mulai Perjalanan Anda dalam 3 Langkah')
+            ->assertSee('Sewa motor harian,', false)
+            ->assertDontSee('Rp75.000')
+            ->assertSee('Cara sewa')
             ->assertSee('Syarat &amp; Ketentuan Rental Motor', false)
             ->assertSee('minimal 1x24 jam', false)
             ->assertSee(url('/kendaraan'));
@@ -36,6 +37,8 @@ class HomeTest extends TestCase
         $response = $this->get('/')->assertOk()->assertDontSee($nonaktif->name);
 
         $this->assertCount(8, $response->viewData('vehicles'));
+        $this->assertSame(9, $response->viewData('activeVehicleCount'));
+        $response->assertSee('9 motor aktif');
         $response->assertSee('Tersedia');
         $response->assertSee('Lihat semua');
     }
@@ -50,7 +53,10 @@ class HomeTest extends TestCase
             'end_at' => now()->addDay(),
         ]);
 
-        $this->get('/')->assertOk()->assertSee('Disewa')->assertDontSee('Tersedia');
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Sedang disewa')
+            ->assertViewHas('availableIds', fn ($ids) => ! in_array($vehicle->id, $ids, true));
     }
 
     public function test_tanpa_motor_menampilkan_empty_state(): void
@@ -110,7 +116,14 @@ class HomeTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('Tentang Penyewaan')
-            ->assertSee('EduwGo menyediakan rental motor cepat, aman, dan terjangkau')
+            ->assertSee('EduwGo menyediakan sewa motor harian')
             ->assertSee('Alamat lokasi pengambilan akan diinformasikan oleh admin');
+    }
+
+    public function test_deskripsi_profil_menghapus_klaim_lama_dari_pengaturan(): void
+    {
+        Setting::updateOrCreate(['key' => 'brand.description'], ['value' => 'EduwGo menyediakan rental motor cepat, aman, dan terjangkau. Pilih jadwal Anda.']);
+
+        $this->get('/')->assertOk()->assertViewHas('profil', fn ($profil) => $profil['deskripsi'] === 'EduwGo menyediakan rental motor. Pilih jadwal Anda.');
     }
 }

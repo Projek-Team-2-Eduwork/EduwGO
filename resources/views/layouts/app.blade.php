@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if(!request()->routeIs('home')) data-nav-pill @endif>
     <head>
         @include('layouts.partials.head', ['title' => $title ?? null])
     </head>
@@ -9,7 +9,7 @@
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="border-b border-[var(--border)]" style="background-color: var(--surface);">
+                <header class="border-b border-[var(--line)]" style="background-color: var(--surface);">
                     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
