@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BookingStatus;
 use App\Events\BookingStatusChanged;
 use App\Exceptions\InvalidTransitionException;
+use App\Exceptions\PendingBookingLimitException;
 use App\Exceptions\VehicleUnavailableException;
 use App\Models\Booking;
 use App\Models\User;
@@ -23,9 +24,17 @@ class BookingService
             throw InvalidTransitionException::make($booking->status, $to);
         }
 
-        $oldStatus = $booking->status;
+        return DB::transaction(function () use ($booking, $to, $by, $note) {
+            // Kunci baris booking lalu cek ulang status terbaru: dua proses bersamaan
+            // (webhook ganda, webhook vs scheduler, admin vs penyewa) tidak boleh
+            // sama-sama lolos dari status lama yang sudah basi di memori.
+            $oldStatus = Booking::whereKey($booking->getKey())->lockForUpdate()->first(['id', 'status'])?->status
+                ?? $booking->status;
 
-        return DB::transaction(function () use ($booking, $oldStatus, $to, $by, $note) {
+            if (! $oldStatus->canTransitionTo($to)) {
+                throw InvalidTransitionException::make($oldStatus, $to);
+            }
+
             // Update status (menggunakan assignment agar tidak terdeteksi grep `update(['status'`)
             $booking->status = $to;
             $booking->save();
@@ -51,6 +60,22 @@ class BookingService
     public function checkout(User $user, Vehicle $vehicle, CarbonInterface $start, int $days, array $data): Booking
     {
         return DB::transaction(function () use ($user, $vehicle, $start, $days, $data) {
+            // Kunci baris user: serialisasi dengan penghapusan/anonimisasi akun, dan dua
+            // checkout bersamaan dari akun yang sama tidak boleh sama-sama lolos batas Pending.
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            abort_unless($user->is_active, 403, 'Akun tidak aktif.');
+            $start = $start->copy()->setTimezone(config('app.timezone'));
+
+            $maxPending = (int) setting('booking.max_pending_per_user', 2);
+            $pending = Booking::where('user_id', $user->id)
+                ->where('status', BookingStatus::Pending->value)
+                ->where('created_at', '>', now()->subMinutes((int) setting('booking.invoice_minutes', 60)))
+                ->count();
+
+            if ($pending >= $maxPending) {
+                throw PendingBookingLimitException::make($maxPending);
+            }
+
             $vehicle = Vehicle::lockForUpdate()->find($vehicle->id);
 
             if (! app(AvailabilityService::class)->isAvailable($vehicle, $start, $days)) {

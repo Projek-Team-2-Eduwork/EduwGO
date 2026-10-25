@@ -70,8 +70,8 @@
 
                 <x-slot name="actions" class="lg:hidden">
                     <x-primary-button class="flex-1 justify-center">Terapkan</x-primary-button>
-                    <a href="{{ route('cabang.reset', $cabang->slug) }}" class="btn-secondary-edu inline-flex flex-1 items-center justify-center px-4 py-2 text-sm">Reset</a>
-                    <button type="button" class="btn-secondary-edu px-3 py-1.5 text-sm" x-on:click="filterOpen = false">Tutup</button>
+                    <a href="{{ route('cabang.reset', $cabang->slug) }}" class="btn-secondary-edu inline-flex flex-1 items-center justify-center px-5 py-2.5 text-sm">Reset</a>
+                    <button type="button" class="btn-secondary-edu px-3 py-1.5 text-xs" x-on:click="filterOpen = false">Tutup</button>
                 </x-slot>
             </x-filter-bar>
 

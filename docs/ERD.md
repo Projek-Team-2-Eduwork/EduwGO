@@ -254,6 +254,22 @@ Key yang dipakai:
 
 Diambil dengan `lockForUpdate()` di dalam transaksi checkout supaya kode booking tidak dobel saat request paralel.
 
+### pending_registrations
+
+Pendaftaran yang belum memasukkan kode OTP. Baris `users` (+ role `user`) baru dibuat setelah kode benar, lalu baris ini dihapus. Tidak ada FK; satu baris per email (pendaftaran ulang dengan email sama menimpa data lama).
+
+| Kolom | Tipe | Null | Keterangan |
+|---|---|---|---|
+| email | varchar(255) | – | unique; tidak dicek ke `users.email` (unique users tetap di validasi register) |
+| name | varchar(255) | – | |
+| phone | varchar(20) | – | nomor WhatsApp |
+| password | varchar(255) | – | sudah di-hash, dipindah apa adanya ke `users.password` |
+| code_hash | varchar(255) | ✓ | hash kode 6 angka; null = kode hangus (kedaluwarsa / salah 5×) |
+| expires_at | timestamp | ✓ | kode berlaku 10 menit |
+| attempts | tinyint unsigned | – | percobaan salah, default 0 |
+| last_sent_at | timestamp | – | jeda kirim ulang 60 detik; baris dihapus `model:prune` 24 jam setelahnya |
+| created_at, updated_at | timestamp | ✓ | |
+
 ## Ketersediaan unit (aturan query)
 
 Unit `vehicle` **tersedia** untuk rentang `[start, end]` (end = start + days × 24 jam) jika **tidak ada** baris `bookings` yang memenuhi semua:

@@ -20,6 +20,7 @@
         <div>
             <x-input-label for="phone" value="Nomor WhatsApp" class="!text-[var(--navy-900)]" />
             <x-text-input id="phone" class="block mt-1 w-full" type="tel" inputmode="numeric" name="phone" :value="old('phone')" required autocomplete="tel" placeholder="081234567890" />
+            <p class="mt-1 text-xs text-[var(--ink-muted)]">Hanya angka. Nomor luar negeri tulis dengan kode negara tanpa + (contoh: 14155552671).</p>
             <x-input-error :messages="$errors->get('phone')" class="mt-2 !text-red-600 dark:!text-red-400" />
         </div>
 
@@ -46,7 +47,7 @@
             <x-input-error :messages="$errors->get('terms')" class="mt-2 !text-red-600 dark:!text-red-400" />
         </div>
 
-        <button type="submit" class="btn-primary-edu w-full px-6 py-3 text-sm disabled:opacity-60 disabled:cursor-wait" x-bind:disabled="submitting" x-text="submitting ? 'Memproses...' : 'Buat Akun'">Buat Akun</button>
+        <button type="submit" class="btn-primary-edu w-full px-5 py-2.5 text-sm disabled:opacity-60 disabled:cursor-wait" x-bind:disabled="submitting" x-text="submitting ? 'Memproses...' : 'Buat Akun'">Buat Akun</button>
 
         <p class="text-sm text-center">
             Sudah punya akun?
@@ -59,7 +60,7 @@
             <h2 class="text-2xl">Syarat &amp; Ketentuan</h2>
             <div class="mt-4 max-h-[60vh] overflow-y-auto whitespace-pre-line text-sm">{{ $terms }}</div>
             <div class="mt-6 flex justify-end">
-                <button type="button" class="btn-primary-edu px-6 py-2 text-sm" x-on:click="$dispatch('close-modal', 'terms-modal')">Tutup</button>
+                <button type="button" class="btn-primary-edu px-5 py-2.5 text-sm" x-on:click="$dispatch('close-modal', 'terms-modal')">Tutup</button>
             </div>
         </div>
     </x-modal>

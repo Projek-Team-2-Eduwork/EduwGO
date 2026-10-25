@@ -1,3 +1,12 @@
+@php
+    // Dipakai dua alur: pendaftar tertunda (belum punya akun) dan user lama yang login tapi belum verifikasi.
+    $pendingRegistration ??= false;
+    $email ??= auth()->user()->email;
+    $verifyAction ??= route('verification.verify');
+    $resendAction ??= route('verification.send');
+    $resendIn ??= 60;
+@endphp
+
 <x-guest-layout>
     <style>
         @keyframes otp-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
@@ -11,8 +20,9 @@
 
     <p class="mt-2 text-sm">
         Kami mengirim kode 6 angka ke
-        <strong class="text-[var(--navy-900)]">{{ auth()->user()->email }}</strong>.
-        Kode berlaku {{ \App\Services\EmailVerificationCodeService::TTL_MINUTES }} menit. Verifikasi diperlukan sebelum Anda bisa checkout.
+        <strong class="break-all text-[var(--navy-900)]">{{ $email }}</strong>.
+        Kode berlaku {{ \App\Services\EmailVerificationCodeService::TTL_MINUTES }} menit.
+        {{ $pendingRegistration ? 'Akun Anda dibuat setelah kode benar.' : 'Verifikasi diperlukan sebelum Anda bisa checkout.' }}
     </p>
 
     @if (session('status') == 'verification-code-sent')
@@ -23,7 +33,7 @@
 
     <form
         method="POST"
-        action="{{ route('verification.verify') }}"
+        action="{{ $verifyAction }}"
         x-ref="form"
         class="mt-8"
         x-data="{
@@ -98,21 +108,31 @@
         </div>
     </form>
 
-    <div class="mt-6 flex flex-wrap items-center justify-between gap-3" x-data="{ countdown: 60 }" x-init="setInterval(() => { if (countdown > 0) countdown-- }, 1000)">
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3" x-data="{ countdown: {{ (int) $resendIn }} }" x-init="setInterval(() => { if (countdown > 0) countdown-- }, 1000)">
         <div class="text-sm">
             <span class="text-[var(--ink-muted)]">Tidak menerima kode?</span>
             <span x-show="countdown > 0" class="text-[var(--ink-muted)]">Kirim ulang dalam <span x-text="countdown"></span> detik</span>
-            <form x-show="countdown === 0" x-cloak method="POST" action="{{ route('verification.send') }}" class="inline">
+            <form x-show="countdown === 0" x-cloak method="POST" action="{{ $resendAction }}" class="inline">
                 @csrf
                 <button type="submit" class="font-medium underline text-[var(--navy-900)] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">Kirim ulang kode</button>
             </form>
         </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
-                Keluar
-            </button>
-        </form>
+        @if ($pendingRegistration)
+            <form method="POST" action="{{ route('register.restart') }}">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                    Ubah email / daftar ulang
+                </button>
+            </form>
+        @else
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+                    Keluar
+                </button>
+            </form>
+        @endif
     </div>
 </x-guest-layout>

@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\PendingRegistration;
 use App\Models\User;
+use App\Notifications\VerifyEmailCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -44,6 +47,8 @@ class RoleAccessTest extends TestCase
 
     public function test_registrasi_otomatis_assign_role_user(): void
     {
+        Notification::fake();
+
         $response = $this->post('/register', [
             'name' => 'Penyewa Baru',
             'email' => 'penyewa@example.com',
@@ -53,7 +58,12 @@ class RoleAccessTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $response->assertRedirect(route('verification.notice', absolute: false));
+        $response->assertRedirect(route('register.verify', absolute: false));
+        $pending = PendingRegistration::where('email', 'penyewa@example.com')->firstOrFail();
+        $code = Notification::sent($pending, VerifyEmailCode::class)->last()->code;
+
+        $this->post(route('register.verify.store'), ['code' => $code]);
+
         $this->assertTrue(User::where('email', 'penyewa@example.com')->first()->hasRole('user'));
     }
 

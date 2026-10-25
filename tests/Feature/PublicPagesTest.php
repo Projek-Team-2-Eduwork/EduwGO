@@ -50,6 +50,16 @@ class PublicPagesTest extends TestCase
         }
     }
 
+    public function test_status_tanpa_view_khusus_memakai_layout_error_minimal(): void
+    {
+        Route::get('/_uji-error-401', fn () => abort(401));
+
+        $this->get('/_uji-error-401')->assertUnauthorized()->assertSee('401')->assertSee('Kembali ke Home');
+
+        // Endpoint khusus POST dibuka lewat browser (405)
+        $this->get('/cron/run')->assertMethodNotAllowed()->assertSee('405')->assertSee('Kembali ke Home');
+    }
+
     public function test_halaman_500_tetap_render_tanpa_query_database(): void
     {
         Route::get('/_uji-error-500', fn () => abort(500));
@@ -65,7 +75,7 @@ class PublicPagesTest extends TestCase
         $response = $this->get('/syarat-ketentuan');
 
         $response->assertOk()->assertSee('Syarat &amp; Ketentuan', false)->assertSee('1x24 jam')->assertSee('2 identitas');
-        $this->assertSame(6, substr_count($response->getContent(), 'rounded-full text-sm font-semibold'));
+        $this->assertSame(6, substr_count($response->getContent(), 'data-sk-poin'));
     }
 
     public function test_title_syarat_ketentuan_tidak_double_encode(): void

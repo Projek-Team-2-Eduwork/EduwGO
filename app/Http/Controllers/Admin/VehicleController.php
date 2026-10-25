@@ -196,7 +196,7 @@ class VehicleController extends Controller
             $newImage = imagecreatetruecolor($newWidth, $newHeight);
 
             // Pertahankan transparansi PNG / WEBP
-            $ext = strtolower($file->getClientOriginalExtension());
+            $ext = $this->imageExtension($file);
             if (in_array($ext, ['png', 'webp'])) {
                 imagealphablending($newImage, false);
                 imagesavealpha($newImage, true);
@@ -209,7 +209,7 @@ class VehicleController extends Controller
             $image = $newImage;
         }
 
-        $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+        $ext = $this->imageExtension($file);
         $filename = uniqid('veh_').'_'.time().'.'.$ext;
         $relativePath = 'vehicles/'.$filename;
 
@@ -238,5 +238,18 @@ class VehicleController extends Controller
         }
 
         return 'storage/'.$relativePath;
+    }
+
+    /**
+     * Ekstensi file hasil resize, ditentukan dari isi file (bukan nama dari klien)
+     * dan dibatasi ke whitelist agar nama seperti "foto.html" (polyglot) tidak ikut tersimpan.
+     */
+    private function imageExtension($file): string
+    {
+        return match ($file->guessExtension()) {
+            'png' => 'png',
+            'webp' => 'webp',
+            default => 'jpg',
+        };
     }
 }

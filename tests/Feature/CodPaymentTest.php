@@ -164,4 +164,89 @@ class CodPaymentTest extends TestCase
             ->assertDontSee('inv_lama_123')
             ->assertDontSee('Cek Status Xendit');
     }
+
+    private function codPending(): Payment
+    {
+        return Payment::create([
+            'booking_id' => $this->booking->id,
+            'method' => 'cash',
+            'status' => 'pending',
+            'payment_channel' => 'COD',
+            'amount' => 150000,
+        ]);
+    }
+
+    public function test_cod_tidak_ikut_batas_bayar_online_dan_expire_setelah_waktu_ambil_plus_buffer(): void
+    {
+        $this->booking->forceFill(['created_at' => now()->subHours(3)])->save();
+        $this->codPending();
+
+        $this->artisan('bookings:expire')->assertSuccessful();
+        $this->assertEquals(BookingStatus::Pending, $this->booking->fresh()->status);
+
+        // Tidak diambil sampai start_at + buffer (default 60 menit) → expired
+        $this->travelTo($this->booking->start_at->copy()->addMinutes(61));
+        $this->artisan('bookings:expire')->assertSuccessful();
+        $this->assertEquals(BookingStatus::Expired, $this->booking->fresh()->status);
+    }
+
+    public function test_booking_non_cod_tetap_expire_setelah_batas_bayar_online(): void
+    {
+        $this->booking->forceFill(['created_at' => now()->subHours(3)])->save();
+
+        $this->artisan('bookings:expire')->assertSuccessful();
+        $this->assertEquals(BookingStatus::Expired, $this->booking->fresh()->status);
+    }
+
+    public function test_pilih_cod_membatalkan_payment_gateway_pending(): void
+    {
+        Http::fake();
+
+        $gateway = Payment::create([
+            'booking_id' => $this->booking->id,
+            'method' => 'xendit_payment_request',
+            'status' => 'pending',
+            'payment_channel' => 'QRIS',
+            'gateway_reference' => 'pr-qris-lama',
+            'amount' => 150000,
+            'expires_at' => now()->addHour(),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('booking.bayar', ['code' => 'BOOK-COD-001', 'metode' => 'COD']))
+            ->assertOk();
+
+        $this->assertEquals('expired', $gateway->fresh()->status);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'payment_requests/pr-qris-lama/cancel'));
+    }
+
+    public function test_pindah_dari_cod_ke_online_setelah_batas_online_tetap_cod(): void
+    {
+        Http::fake();
+        $this->booking->forceFill(['created_at' => now()->subHours(3)])->save();
+        $cod = $this->codPending();
+
+        $this->actingAs($this->user)
+            ->get(route('booking.bayar', ['code' => 'BOOK-COD-001', 'metode' => 'QRIS']))
+            ->assertOk()
+            ->assertSee('Bayar di Tempat (COD)');
+
+        Http::assertNothingSent();
+        $this->assertEquals('pending', $cod->fresh()->status);
+    }
+
+    public function test_tandai_cod_lunas_ditolak_bila_nominal_tidak_sama_total(): void
+    {
+        Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::factory()->create(['branch_id' => $this->defaultBranch()->id]);
+        $admin->assignRole('admin');
+        $cod = $this->codPending();
+
+        $this->actingAs($admin)
+            ->post(route('admin.pesanan.pay-cash', 'BOOK-COD-001'), ['amount' => 100000])
+            ->assertSessionHasErrors('amount');
+
+        $this->assertEquals('pending', $cod->fresh()->status);
+        $this->assertEquals(BookingStatus::Pending, $this->booking->fresh()->status);
+    }
 }

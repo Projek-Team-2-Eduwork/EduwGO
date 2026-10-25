@@ -16,5 +16,5 @@
     <h1 class="mt-4 font-serif text-3xl sm:text-4xl">{{ $heading }}</h1>
     <p class="mt-3 max-w-md text-sm sm:text-base">{{ $message }}</p>
 
-    <a href="{{ url('/') }}" class="btn-primary-edu mt-8 inline-flex items-center px-6 py-2.5 text-sm">Kembali ke Home</a>
+    <a href="{{ url('/') }}" class="btn-primary-edu mt-8 inline-flex items-center px-5 py-2.5 text-sm">Kembali ke Home</a>
 </section>

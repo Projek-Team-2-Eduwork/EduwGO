@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Password Akun Seeder
+    |--------------------------------------------------------------------------
+    |
+    | Password untuk akun yang dibuat UserSeeder (superadmin, admin cabang,
+    | akun demo). Kosong di lokal/testing = "password". Di production wajib
+    | diisi (min. 12 karakter), kalau tidak UserSeeder menolak berjalan.
+    |
+    */
+
+    'seed_user_password' => env('SEED_USER_PASSWORD'),
+
 ];

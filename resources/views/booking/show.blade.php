@@ -36,9 +36,9 @@
                     <div class="flex flex-col md:flex-row gap-6 mb-8 pb-8 border-b border-[var(--border)]">
                         <div class="w-full md:w-1/3">
                             @if($booking->vehicle?->image)
-                                <img src="{{ asset($booking->vehicle->image) }}" class="w-full h-48 object-cover rounded-lg bg-gray-100 dark:bg-gray-900 shadow-sm" alt="{{ $booking->vehicle->name }}" onerror="this.outerHTML='<div class=\'w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm\'><svg class=\'w-12 h-12 text-[var(--ink-muted)]\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10\'></path></svg></div>'">
+                                <img src="{{ asset($booking->vehicle->image) }}" class="w-full h-48 object-cover rounded-lg bg-[var(--bg)] shadow-sm" alt="{{ $booking->vehicle->name }}" onerror="this.outerHTML='<div class=\'w-full h-48 flex items-center justify-center bg-[var(--bg)] rounded-lg shadow-sm\'><svg class=\'w-12 h-12 text-[var(--ink-muted)]\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10\'></path></svg></div>'">
                             @else
-                                <div class="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm">
+                                <div class="w-full h-48 flex items-center justify-center bg-[var(--bg)] rounded-lg shadow-sm">
                                     <svg class="w-12 h-12 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                 </div>
                             @endif
@@ -49,7 +49,7 @@
                                 <x-badge-status :status="$booking->status" />
                             </div>
                             <p class="text-[var(--ink-muted)] dark:text-[var(--ink-muted)] font-medium mb-1">{{ $booking->vehicle?->type?->name ?? '-' }}</p>
-                            <p class="text-gray-700 dark:text-gray-300 font-mono bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded inline-block self-start">{{ $booking->vehicle?->plate_number ?? '-' }}</p>
+                            <p class="text-[var(--navy-900)] font-mono bg-[var(--bg)] px-3 py-1 rounded-md inline-block self-start">{{ $booking->vehicle?->plate_number ?? '-' }}</p>
                         </div>
                     </div>
 
@@ -96,7 +96,7 @@
                                 </div>
                             </dl>
                             <div class="pt-3 border-t border-[var(--border)] flex justify-between items-center">
-                                <span class="font-bold text-gray-700 dark:text-gray-300">Total Pembayaran</span>
+                                <span class="font-bold text-[var(--navy-900)]">Total Pembayaran</span>
                                 <span class="text-xl font-black text-[var(--orange-500)]">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
                             </div>
                         </div>
@@ -168,7 +168,7 @@
                                         @endif
 
                                         @if($h->note)
-                                            <p class="mt-2 flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 text-sm text-gray-700 dark:text-gray-300">
+                                            <p class="mt-2 flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 text-sm text-[var(--navy-700)]">
                                                 <svg class="mt-0.5 h-4 w-4 shrink-0 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m-6 8l-4-4V6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H7z" />
                                                 </svg>
@@ -185,14 +185,14 @@
                         <!-- Lokasi & Jam -->
                         <div class="md:col-span-2">
                             <h3 class="text-lg font-bold mb-4">Lokasi Pengambilan</h3>
-                            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-[var(--border)]">
+                            <div class="bg-[var(--bg)] rounded-lg p-4 border border-[var(--border)]">
                                 <div class="mb-4">
                                     <span class="block text-xs font-semibold text-[var(--ink-muted)] dark:text-[var(--ink-muted)] uppercase tracking-wider mb-1">Alamat</span>
-                                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ setting('contact.address', '-') }}</p>
+                                    <p class="text-sm text-[var(--navy-900)]">{{ setting('contact.address', '-') }}</p>
                                 </div>
                                 <div>
                                     <span class="block text-xs font-semibold text-[var(--ink-muted)] dark:text-[var(--ink-muted)] uppercase tracking-wider mb-1">Jam Operasional</span>
-                                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ setting('contact.hours', '-') }}</p>
+                                    <p class="text-sm text-[var(--navy-900)]">{{ setting('contact.hours', '-') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -225,12 +225,12 @@
 
                     <!-- Footer & Aksi -->
                     <div class="flex flex-col-reverse md:flex-row justify-between items-center gap-4">
-                        <a href="{{ route('booking.index') }}" class="btn-secondary-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm md:w-auto">
+                        <a href="{{ route('booking.index') }}" class="btn-secondary-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm md:w-auto">
                             &larr; Kembali ke Daftar
                         </a>
 
                         <div class="w-full md:w-auto flex flex-col sm:flex-row gap-3">
-                            <a href="https://wa.me/{{ setting('contact.whatsapp', '6281234567890') }}?text={{ urlencode('Halo, saya ingin bertanya soal pesanan '.$booking->code) }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm sm:w-auto">
+                            <a href="https://wa.me/{{ setting('contact.whatsapp', '6281234567890') }}?text={{ urlencode('Halo, saya ingin bertanya soal pesanan '.$booking->code) }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm sm:w-auto">
                                 Chat Admin
                             </a>
 
@@ -239,7 +239,7 @@
                                     Batalkan
                                 </x-danger-button>
 
-                                <a href="{{ route('booking.waiting', $booking->code) }}" class="btn-primary-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm sm:w-auto">
+                                <a href="{{ route('booking.waiting', $booking->code) }}" class="btn-primary-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm sm:w-auto">
                                     Bayar
                                 </a>
 

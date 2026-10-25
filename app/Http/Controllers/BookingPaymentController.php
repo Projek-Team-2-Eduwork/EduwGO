@@ -5,14 +5,16 @@ namespace App\Http\Controllers;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class BookingPaymentController extends Controller
 {
-    public function waiting(Request $request, $code, XenditService $xenditService)
+    public function waiting(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -30,6 +32,13 @@ class BookingPaymentController extends Controller
             return redirect()->route('booking.failed', $booking->code);
         }
 
+        // Batas bayar booking habis (cron belum jalan): expire sekarang, jangan buat payment baru
+        if ($booking->isPaymentDeadlinePassed()) {
+            $paymentService->expireIfDeadlinePassed($booking);
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
         // Mode Payment Request (EG-52/53): arahkan ke halaman bayar sendiri.
         // Mode 'invoice' (default) tetap pakai halaman waiting lama — rollback aman.
         if (config('services.xendit.mode', 'invoice') === 'payment_request') {
@@ -39,7 +48,12 @@ class BookingPaymentController extends Controller
         try {
             $payment = $xenditService->createInvoice($booking);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            Log::channel('xendit')->error('Halaman menunggu: gagal membuat invoice.', [
+                'booking' => $booking->code,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal menghubungi penyedia pembayaran. Silakan coba lagi.');
         }
 
         return view('booking.waiting', compact('booking', 'payment'));
@@ -49,7 +63,7 @@ class BookingPaymentController extends Controller
      * Halaman bayar sendiri (Xendit Payment Request): pilih metode lalu lihat
      * instruksi pembayaran (QR / nomor rekening) tanpa hosted checkout (EG-53).
      */
-    public function bayar(Request $request, $code, XenditService $xenditService)
+    public function bayar(Request $request, $code, XenditService $xenditService, PaymentService $paymentService)
     {
         $booking = Booking::where('code', $code)->firstOrFail();
 
@@ -61,6 +75,13 @@ class BookingPaymentController extends Controller
             if (in_array($booking->status, [BookingStatus::Paid, BookingStatus::Rented, BookingStatus::Returned])) {
                 return redirect()->route('booking.show', $booking->code)->with('bayar_berhasil', true);
             }
+
+            return redirect()->route('booking.failed', $booking->code);
+        }
+
+        // Batas bayar tetap dari waktu booking dibuat: ganti metode tidak memperpanjang hold unit
+        if ($booking->isPaymentDeadlinePassed()) {
+            $paymentService->expireIfDeadlinePassed($booking);
 
             return redirect()->route('booking.failed', $booking->code);
         }
@@ -78,7 +99,18 @@ class BookingPaymentController extends Controller
 
         // Bayar di tempat (COD): tidak lewat gateway sama sekali.
         if ($channel === XenditService::COD) {
-            return $this->bayarDiTempat($booking);
+            return $this->bayarDiTempat($booking, $xenditService);
+        }
+
+        // Pindah dari COD ke bayar online hanya selama batas bayar online masih
+        // berlaku; lewat dari itu penyewa tetap bayar di tempat.
+        $cod = Booking::pendingCod($booking->payments())->first();
+        if ($cod) {
+            if (! now()->lessThan($booking->onlinePaymentDeadline())) {
+                return $this->bayarDiTempat($booking, $xenditService);
+            }
+
+            $cod->update(['status' => 'expired']);
         }
 
         // Kartu kredit/debit tidak didukung Payments API v3 untuk negara ID
@@ -154,29 +186,43 @@ class BookingPaymentController extends Controller
      * catatan pembayaran tunai pending yang nanti ditandai lunas admin lewat
      * "Tandai Sudah Dibayar (COD)" saat uang benar-benar diterima di cabang.
      */
-    private function bayarDiTempat(Booking $booking): View
+    private function bayarDiTempat(Booking $booking, XenditService $xenditService): View
     {
         $booking->loadMissing(['vehicle.branch']);
 
-        // Idempoten: pilihan COD yang sama tidak menumpuk baris pembayaran.
-        $payment = Payment::where('booking_id', $booking->id)
-            ->where('method', 'cash')
-            ->where('status', 'pending')
-            ->latest('id')
-            ->first();
+        $payment = DB::transaction(function () use ($booking, $xenditService) {
+            Booking::whereKey($booking->id)->lockForUpdate()->first();
 
-        if (! $payment) {
-            $payment = Payment::create([
-                'booking_id' => $booking->id,
-                'method' => 'cash',
-                'status' => 'pending',
-                'payment_channel' => XenditService::COD,
-                'amount' => $booking->total_amount,
-                // Batas bayar = waktu pengambilan, jadi bookings:expire ikut
-                // menutup pesanan yang tidak pernah diambil.
-                'expires_at' => $booking->start_at,
-            ]);
-        }
+            // Payment gateway yang masih pending ditutup: penyewa sudah memilih
+            // bayar tunai, QR/VA lama tidak boleh dibayar lagi.
+            $gateway = $booking->payments()
+                ->whereIn('method', ['xendit_invoice', 'xendit_payment_request'])
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($gateway as $p) {
+                $p->update(['status' => 'expired']);
+            }
+
+            DB::afterCommit(function () use ($gateway, $xenditService) {
+                foreach ($gateway as $p) {
+                    $xenditService->cancelGatewayPayment($p);
+                }
+            });
+
+            // Idempoten: pilihan COD yang sama tidak menumpuk baris pembayaran.
+            return Booking::pendingCod($booking->payments())->latest('id')->first()
+                ?? Payment::create([
+                    'booking_id' => $booking->id,
+                    'method' => 'cash',
+                    'status' => 'pending',
+                    'payment_channel' => XenditService::COD,
+                    'amount' => $booking->total_amount,
+                    // Batas bayar COD = waktu pengambilan + buffer (lihat Booking::paymentDeadline)
+                    'expires_at' => $booking->start_at->copy()->addMinutes((int) setting('booking.buffer_minutes', 60)),
+                ]);
+        });
 
         return view('booking.bayar', [
             'booking' => $booking,

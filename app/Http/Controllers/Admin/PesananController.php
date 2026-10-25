@@ -12,19 +12,18 @@ use App\Models\Payment;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Services\BookingService;
-use App\Services\PaymentService;
 use App\Services\XenditService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class PesananController extends Controller
 {
     public function __construct(
-        private PaymentService $paymentService,
         private XenditService $xenditService
     ) {}
 
@@ -200,26 +199,26 @@ class PesananController extends Controller
         $booking = Booking::where('code', $code)->firstOrFail();
         Gate::authorize('adminUpdate', $booking);
 
-        // Cari pembayaran gateway yang masih pending — pembayaran tunai (COD)
-        // yang menunggu admin tidak boleh menghalangi sinkronisasi Xendit.
-        $payment = $booking->payments()
-            ->whereIn('method', ['xendit_invoice', 'xendit_payment_request'])
-            ->where('status', 'pending')
-            ->latest('id')
-            ->first();
-
-        if (! $payment) {
-            return back()->with('error', 'Tidak ada invoice pending untuk disinkronkan.');
+        if ($booking->status !== BookingStatus::Pending) {
+            return back()->with('error', 'Hanya pesanan Pending yang bisa dicek ke Xendit.');
         }
 
+        // syncPaymentStatus menangani payment request v3 dan invoice v2 sekaligus
         try {
-            $invoice = $this->xenditService->getInvoice($payment->gateway_reference);
-            $this->paymentService->applyInvoiceStatus($payment, $invoice);
-
-            return back()->with('success', 'Status Xendit berhasil disinkronkan: '.$invoice['status']);
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            $ok = $this->xenditService->syncPaymentStatus($booking);
+        } catch (\Throwable $e) {
+            Log::channel('xendit')->error('Admin Cek Status gagal.', [
+                'booking' => $booking->code,
+                'error' => $e->getMessage(),
+            ]);
+            $ok = false;
         }
+
+        if (! $ok) {
+            return back()->with('error', 'Gagal mengecek status ke Xendit. Coba lagi beberapa saat.');
+        }
+
+        return back()->with('success', 'Status Xendit berhasil disinkronkan: '.$booking->fresh()->status->label());
     }
 
     public function payCash(Request $request, string $code)
@@ -238,13 +237,19 @@ class PesananController extends Controller
             return back()->with('error', 'Hanya booking pending yang bisa dibayar tunai.');
         }
 
+        // Tunai = pelunasan penuh: nominal wajib sama dengan total tagihan
         $amount = round((float) $request->input('amount'), 2);
+        if ($amount !== round((float) $booking->total_amount, 2)) {
+            $pesan = 'Nominal tunai harus sama dengan total tagihan Rp '.number_format((float) $booking->total_amount, 0, ',', '.').'.';
+
+            return back()->withErrors(['amount' => $pesan])->withInput()->with('error', $pesan);
+        }
 
         try {
             DB::transaction(function () use ($request, $booking, $amount) {
                 // COD sudah membuat baris tunai pending saat penyewa memilih
                 // "Bayar di Tempat". Tandai baris itu lunas agar tidak ada
-                // pembayaran ganda, lalu kunci nominal & waktunya.
+                // pembayaran ganda.
                 $payment = $booking->payments()
                     ->where('method', 'cash')
                     ->where('status', 'pending')
@@ -270,6 +275,7 @@ class PesananController extends Controller
                     ]);
                 }
 
+                // Payment Xendit yang masih pending ditutup listener ExpirePendingPayments
                 $label = $payment->payment_channel === XenditService::COD ? 'Bayar tunai COD' : 'Bayar tunai';
                 $note = trim($label.($request->filled('note') ? ': '.$request->note : ''));
                 app(BookingService::class)->transition($booking, BookingStatus::Paid, auth()->user(), $note);

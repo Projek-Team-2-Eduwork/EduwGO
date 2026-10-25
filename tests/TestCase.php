@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\Support\PermissiveFilesystemManager;
 
@@ -25,6 +26,10 @@ abstract class TestCase extends BaseTestCase
 
         // Pastikan cache settings tidak bocor antar test
         Cache::flush();
+
+        // Test tidak boleh memanggil API Xendit asli (mis. pembatalan payment
+        // otomatis saat booking keluar dari Pending): wajib lewat Http::fake().
+        Http::preventStrayRequests();
     }
 
     protected function defaultBranch(): Branch

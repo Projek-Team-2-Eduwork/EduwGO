@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -49,8 +50,8 @@ class CashPaymentTest extends TestCase
             'amount' => 300000,
         ]);
 
-        // Memastikan payment lama xendit tidak dihapus/dirubah status paid
-        $this->assertEquals('pending', $paymentLama->fresh()->status);
+        // Payment Xendit yang masih pending ditutup (tidak bisa dibayar dobel), tidak dihapus
+        $this->assertEquals('expired', $paymentLama->fresh()->status);
 
         // Cek History
         $this->assertDatabaseHas('booking_status_histories', [
@@ -87,5 +88,45 @@ class CashPaymentTest extends TestCase
 
         // Booking status harus tetap Paid, bukan Expired
         $this->assertEquals(BookingStatus::Paid->value, $booking->fresh()->status->value);
+    }
+
+    public function test_bayar_tunai_nominal_tidak_sama_dengan_tagihan_ditolak()
+    {
+        $admin = $this->getAdmin();
+        $booking = Booking::factory()->create(['status' => BookingStatus::Pending, 'code' => 'EG.400003', 'total_amount' => 300000]);
+
+        $this->actingAs($admin)->post(route('admin.pesanan.pay-cash', $booking->code), ['amount' => 1])
+            ->assertSessionHasErrors(['amount' => 'Nominal tunai harus sama dengan total tagihan Rp 300.000.']);
+
+        $this->assertEquals(BookingStatus::Pending, $booking->fresh()->status);
+        $this->assertDatabaseMissing('payments', ['booking_id' => $booking->id, 'method' => 'cash']);
+    }
+
+    public function test_bayar_tunai_membatalkan_payment_pending_di_xendit()
+    {
+        config(['services.xendit.secret_key' => 'xnd_development_fake']);
+        Http::fake(['api.xendit.co/*' => Http::response(['status' => 'CANCELED'])]);
+
+        $admin = $this->getAdmin();
+        $booking = Booking::factory()->create(['status' => BookingStatus::Pending, 'code' => 'EG.400004', 'total_amount' => 300000]);
+        $qris = Payment::create([
+            'booking_id' => $booking->id, 'method' => 'xendit_payment_request', 'status' => 'pending', 'amount' => 300000, 'gateway_reference' => 'pr-cash-1',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.pesanan.pay-cash', $booking->code), ['amount' => 300000])->assertRedirect();
+
+        $this->assertEquals('expired', $qris->fresh()->status);
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.xendit.co/v3/payment_requests/pr-cash-1/cancel');
+    }
+
+    public function test_admin_tidak_bisa_set_lunas_lewat_form_status()
+    {
+        $admin = $this->getAdmin();
+        $booking = Booking::factory()->create(['status' => BookingStatus::Pending, 'code' => 'EG.400005', 'total_amount' => 300000]);
+
+        $this->actingAs($admin)->post(route('admin.pesanan.update', $booking->code), ['to' => 'paid'])
+            ->assertSessionHasErrors(['to' => 'Status Lunas hanya bisa diset lewat Catat Bayar Tunai atau pembayaran Xendit.']);
+
+        $this->assertEquals(BookingStatus::Pending, $booking->fresh()->status);
     }
 }

@@ -1,6 +1,15 @@
 @props(['vehicle'])
 
-<div x-data="bookingDurationModal({{ $vehicle->id }}, '{{ session()->pull('booking.start_at', request('start', '')) }}', {{$vehicle->price_per_day }}, '{{ session()->pull('booking.days', request('days', '')) }}', {{ request()->boolean('ulang') ? 'true' : 'false' }})"
+@php
+    // Nilai dari query string adalah input pengguna: di-encode lewat @js agar tidak bisa
+    // keluar dari string JavaScript di atribut x-data (reflected XSS).
+    $initialStart = session()->pull('booking.start_at', request('start', ''));
+    $initialDays = session()->pull('booking.days', request('days', ''));
+    $initialStart = is_scalar($initialStart) ? (string) $initialStart : '';
+    $initialDays = is_scalar($initialDays) ? (string) $initialDays : '';
+@endphp
+
+<div x-data="bookingDurationModal({{ $vehicle->id }}, @js($initialStart), {{ $vehicle->price_per_day }}, @js($initialDays), {{ request()->boolean('ulang') ? 'true' : 'false' }})"
      @if(request()->boolean('ulang')) x-init="fetchDurations()" @endif>
     
     <x-primary-button type="button" @click="openModal">Booking</x-primary-button>

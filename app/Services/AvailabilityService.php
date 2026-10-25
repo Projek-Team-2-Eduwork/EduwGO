@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
@@ -116,8 +117,11 @@ class AvailabilityService
             return $this->availableVehicles($start, $days, $typeId, $search, $branchId);
         }
 
-        // Status saat ini: sedang ada booking aktif yang berjalan.
-        $running = fn (Builder $query) => $query->active()->where('start_at', '<=', now())->where('end_at', '>', now());
+        // Status saat ini: sedang ada booking aktif yang berjalan. Sewa Rented
+        // yang overdue tetap dihitung berjalan sampai unit dikembalikan.
+        $running = fn (Builder $query) => $query->active()
+            ->where('start_at', '<=', now())
+            ->where(fn (Builder $q) => $q->where('end_at', '>', now())->orWhere('status', BookingStatus::Rented->value));
 
         return Vehicle::query()
             ->where('is_active', true)

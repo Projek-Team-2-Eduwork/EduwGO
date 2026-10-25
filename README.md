@@ -102,7 +102,7 @@ Default lokal: email ditulis ke log (`storage/logs/laravel.log`), jadi kode veri
    ```
 
 4. Bersihkan cache config: `./vendor/bin/sail artisan config:clear`.
-5. Email status booking dikirim lewat queue (`QUEUE_CONNECTION=database`), jadi worker harus jalan: `./vendor/bin/sail artisan queue:work`. Setelah ubah `.env`/kode, jalankan `./vendor/bin/sail artisan queue:restart`. Di hosting tanpa worker (mis. Vercel) set `QUEUE_CONNECTION=sync`. Email verifikasi dikirim setelah halaman merespons dan reset password dikirim langsung, keduanya tidak butuh worker.
+5. Email status booking dikirim lewat queue (`QUEUE_CONNECTION=database`), jadi worker harus jalan: `./vendor/bin/sail artisan queue:work`. Setelah ubah `.env`/kode, jalankan `./vendor/bin/sail artisan queue:restart`. Di hosting tanpa worker (mis. Render free, `docs/DEPLOY.md`) set `QUEUE_CONNECTION=sync`. Email verifikasi dikirim setelah halaman merespons dan reset password dikirim langsung, keduanya tidak butuh worker.
 
 Catatan:
 - Batas Gmail sekitar 500 email/hari; cukup untuk demo.

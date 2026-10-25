@@ -1,7 +1,7 @@
 @php
     $steps = [
-        ['title' => 'Pilih Motor', 'text' => 'Telusuri katalog dan pilih motor yang sesuai kebutuhan perjalanan Anda.', 'icon' => 'M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM7 17h8M3 17h2m14 0h2M6 9h6l3 5M12 9V6h3'],
-        ['title' => 'Pilih Durasi & Bayar', 'text' => 'Tentukan lama sewa lalu bayar online lewat VA, QRIS, e-wallet, atau retail.', 'icon' => 'M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z'],
+        ['title' => 'Pilih Motor', 'text' => 'Telusuri katalog dan pilih motor yang sesuai kebutuhan perjalanan Anda.', 'icon' => 'M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z'],
+        ['title' => 'Pilih Durasi & Bayar', 'text' => 'Tentukan lama sewa lalu bayar online lewat VA, QRIS, e-wallet, atau retail.', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
         ['title' => 'Ambil di Lokasi', 'text' => 'Konfirmasi via WhatsApp, bawa identitas, cek kondisi motor, lalu berangkat.', 'icon' => 'M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z'],
     ];
 @endphp
@@ -12,13 +12,13 @@
 
     <ol class="mt-6 grid gap-4 md:grid-cols-3">
         @foreach ($steps as $i => $step)
-            <li class="card-surface flex items-start gap-4 p-5">
-                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white" style="background-color: var(--orange-500);" aria-hidden="true">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $step['icon'] }}"/></svg>
+            <li class="card-surface flex items-center gap-4 p-5">
+                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-[var(--surface)]" style="background-color: var(--orange-500);" aria-hidden="true">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $step['icon'] }}"/></svg>
                 </span>
                 <div>
-                    <h3 class="text-sm">{{ $i + 1 }}. {{ $step['title'] }}</h3>
-                    <p class="mt-1 text-xs leading-relaxed">{{ $step['text'] }}</p>
+                    <h3 class="text-base">{{ $i + 1 }}. {{ $step['title'] }}</h3>
+                    <p class="mt-1 text-sm leading-relaxed">{{ $step['text'] }}</p>
                 </div>
             </li>
         @endforeach

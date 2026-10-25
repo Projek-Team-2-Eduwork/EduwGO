@@ -301,14 +301,14 @@ class VehicleCatalogTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder(['Motor A', 'Motor B', 'Motor C']);
-        $response->assertSee('3× dipesan');
-        $response->assertSee('1× dipesan');
-        $response->assertDontSee('0× dipesan');
+        // Jumlah booking hanya dipakai untuk urutan, tidak ditampilkan di kartu
+        $response->assertDontSee('dipesan');
     }
 
-    public function test_jumlah_dipesan_hanya_tampil_bila_lewat_nol()
+    public function test_kartu_katalog_tidak_menampilkan_jumlah_dipesan()
     {
-        $this->vehicle('Sepi Sekali');
+        $motor = $this->vehicle('Laris Manis');
+        $this->book($motor, now()->addDays(1), now()->addDays(2), BookingStatus::Paid);
 
         $response = $this->get('/kendaraan');
         $response->assertOk();

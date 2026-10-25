@@ -26,7 +26,7 @@
         name="{{ $name }}"
         type="datetime-local"
         value="{{ $current }}"
-        {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-md shadow-sm']) }}
+        {{ $attributes->except('id')->merge(['class' => 'mt-1 block w-full rounded-lg shadow-sm']) }}
         @if ($picker) data-picker @endif
         @error($errorKey) aria-invalid="true" @enderror
     >

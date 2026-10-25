@@ -24,7 +24,7 @@
     <div class="mt-5">
         <a
             href="{{ \Illuminate\Support\Facades\Route::has('pesanan.index') ? route('pesanan.index') : route('dashboard') }}"
-            class="btn-secondary-edu inline-flex items-center px-4 py-2 text-xs uppercase"
+            class="btn-secondary-edu inline-flex items-center px-3 py-1.5 text-xs uppercase"
         >
             Lihat Daftar Pesanan
         </a>

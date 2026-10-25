@@ -43,4 +43,9 @@ return [
         'mode' => env('XENDIT_MODE', 'invoice'),
     ],
 
+    // Token endpoint POST /cron/run untuk cron eksternal (docs/DEPLOY.md)
+    'cron' => [
+        'token' => env('CRON_TOKEN'),
+    ],
+
 ];

@@ -145,4 +145,28 @@ class EmailVerificationTest extends TestCase
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
+
+    public function test_existing_unverified_user_can_login_and_verify_with_old_flow(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create();
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->assertAuthenticatedAs($user);
+
+        $this->get('/dashboard')->assertRedirect(route('verification.notice', absolute: false));
+        $this->get('/verify-email')->assertOk()->assertSee($user->email)->assertSee('Keluar');
+
+        $this->post(route('verification.send'))->assertSessionHas('status', 'verification-code-sent');
+        $code = Notification::sent($user, VerifyEmailCode::class)->last()->code;
+
+        // Kembali ke halaman yang tadi diminta (intended).
+        $this->post(route('verification.verify'), ['code' => $code])
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+        $this->get('/dashboard')->assertOk();
+        $this->assertDatabaseCount('pending_registrations', 0);
+    }
 }

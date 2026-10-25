@@ -268,4 +268,30 @@ class AvailabilityTest extends TestCase
             60
         )->count());
     }
+
+    // ===== Sewa overdue =====
+
+    public function test_sewa_rented_overdue_tetap_memblokir_unit_sampai_dikembalikan(): void
+    {
+        $vehicle = Vehicle::factory()->create(['is_active' => true]);
+        // Seharusnya kembali kemarin, tapi unit belum dikembalikan
+        $sewa = $this->bookingAktif($vehicle, now()->subDays(2)->toDateTimeString(), now()->subDay()->toDateTimeString(), 'rented');
+
+        $besok = now()->addDay()->startOfHour();
+        $this->assertFalse($this->service->isAvailable($vehicle, $besok, 1));
+        $this->assertFalse($this->service->availableVehicles($besok, 1)->whereKey($vehicle->id)->exists());
+        $this->assertTrue((bool) $this->service->catalogQuery(null, null)->whereKey($vehicle->id)->first()->is_rented);
+
+        // Setelah ditandai Returned, unit tersedia lagi
+        $sewa->forceFill(['status' => 'returned'])->save();
+        $this->assertTrue($this->service->isAvailable($vehicle, $besok, 1));
+    }
+
+    public function test_booking_paid_lampau_yang_bukan_rented_tidak_memblokir(): void
+    {
+        $vehicle = Vehicle::factory()->create(['is_active' => true]);
+        $this->bookingAktif($vehicle, now()->subDays(2)->toDateTimeString(), now()->subDay()->toDateTimeString(), 'paid');
+
+        $this->assertTrue($this->service->isAvailable($vehicle, now()->addDay()->startOfHour(), 1));
+    }
 }

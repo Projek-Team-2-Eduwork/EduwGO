@@ -24,6 +24,14 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, HasRoles, Notifiable;
 
     /**
+     * Nomor WhatsApp: hanya angka 0-9, 8-15 digit (batas E.164), tanpa spasi/+/-.
+     * Boleh format lokal (08xx) maupun internasional tanpa + (62xx, 1415xx, 4479xx).
+     */
+    public const PHONE_REGEX = '/^[0-9]{8,15}$/D';
+
+    public const PHONE_MESSAGE = 'Nomor WhatsApp hanya boleh berisi angka (8-15 digit) tanpa spasi, tanda + atau - (contoh: 081234567890 atau 14155552671).';
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

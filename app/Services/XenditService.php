@@ -42,10 +42,11 @@ class XenditService
             return $existingPayment;
         }
 
-        // 2. Kalkulasi Durasi & Load Relasi
+        // 2. Kalkulasi Durasi & Load Relasi. Masa berlaku invoice = sisa waktu
+        // sampai batas bayar booking, jadi tidak bisa memperpanjang hold unit.
         $booking->loadMissing(['user', 'vehicle']);
         $durationDays = $booking->start_at->diffInDays($booking->end_at) ?: 1;
-        $invoiceDurationSeconds = setting('booking.invoice_minutes', 60) * 60;
+        $invoiceDurationSeconds = $this->remainingSeconds($booking);
 
         $payload = [
             'external_id' => $booking->code,
@@ -77,7 +78,7 @@ class XenditService
             'status' => 'pending',
             'gateway_reference' => $data['id'],
             'gateway_url' => $data['invoice_url'],
-            'expires_at' => Carbon::parse($data['expiry_date'])->setTimezone(config('app.timezone')),
+            'expires_at' => $this->capToDeadline($booking, $data['expiry_date'] ?? null),
             'gateway_payload' => $data,
             'amount' => $booking->total_amount,
         ]);
@@ -291,7 +292,10 @@ class XenditService
             return $existingPayment;
         }
 
-        // 2. Kalkulasi durasi & load relasi
+        // 2. Batas bayar booking tetap: payment baru tidak boleh dibuat setelahnya
+        $this->remainingSeconds($booking);
+
+        // 3. Kalkulasi durasi & load relasi
         $booking->loadMissing(['user', 'vehicle']);
         $durationDays = $booking->start_at->diffInDays($booking->end_at) ?: 1;
 
@@ -327,9 +331,8 @@ class XenditService
         // 4. Instruksi untuk UI bayar disusun dari aksi respons (QR / VA / tautan)
         $instructions = $this->buildPaymentInstructions($channel, $actions, $data);
 
-        // 5. Masa berlaku: ikuti respons bila ada, kalau tidak pakai setting invoice_minutes
-        $expiresAt = $data['channel_properties']['expires_at']
-            ?? Carbon::now()->addMinutes((int) setting('booking.invoice_minutes', 60));
+        // 5. Masa berlaku: ikuti respons bila ada, tapi tidak pernah melewati batas bayar booking
+        $expiresAt = $this->capToDeadline($booking, $data['channel_properties']['expires_at'] ?? null);
 
         // 6. Simpan log Payment (status booking tetap di BookingService, seperti invoice)
         return Payment::create([
@@ -342,7 +345,7 @@ class XenditService
             'amount' => $booking->total_amount,
             'payment_channel' => $channel, // channel_code pilihan UI (idempotensi per channel)
             'instructions' => $instructions,
-            'expires_at' => Carbon::parse($expiresAt)->setTimezone(config('app.timezone')),
+            'expires_at' => $expiresAt,
         ]);
     }
 
@@ -499,7 +502,7 @@ class XenditService
             'amount' => $booking->total_amount,
             'payer_email' => $booking->user->email,
             'description' => "Sewa {$booking->vehicle->name} {$durationDays} hari",
-            'invoice_duration' => ((int) setting('booking.invoice_minutes', 60)) * 60,
+            'invoice_duration' => $this->remainingSeconds($booking),
             'success_redirect_url' => route('booking.success', $booking->code),
             'failure_redirect_url' => route('booking.failed', $booking->code),
             'currency' => 'IDR',
@@ -528,8 +531,81 @@ class XenditService
             'gateway_payload' => $data,
             'amount' => $booking->total_amount,
             'payment_channel' => 'CREDIT_CARD',
-            'expires_at' => Carbon::parse($data['expiry_date'])->setTimezone(config('app.timezone')),
+            'expires_at' => $this->capToDeadline($booking, $data['expiry_date'] ?? null),
         ]);
+    }
+
+    /**
+     * Sisa detik sampai batas bayar booking. Kurang dari 1 menit dianggap habis:
+     * payment baru ditolak supaya hold unit tidak bisa diperpanjang.
+     */
+    private function remainingSeconds(Booking $booking): int
+    {
+        $remaining = (int) floor(now()->diffInSeconds($booking->paymentDeadline(), false));
+
+        if ($remaining < 60) {
+            throw new Exception("Batas waktu pembayaran booking {$booking->code} sudah habis.");
+        }
+
+        return $remaining;
+    }
+
+    /**
+     * Masa berlaku payment lokal: dari respons gateway bila ada, dibatasi batas bayar booking.
+     */
+    private function capToDeadline(Booking $booking, ?string $gatewayExpiry): Carbon
+    {
+        $deadline = Carbon::instance($booking->paymentDeadline())->setTimezone(config('app.timezone'));
+
+        if ($gatewayExpiry === null) {
+            return $deadline;
+        }
+
+        $expiresAt = Carbon::parse($gatewayExpiry)->setTimezone(config('app.timezone'));
+
+        return $expiresAt->greaterThan($deadline) ? $deadline : $expiresAt;
+    }
+
+    /**
+     * Membatalkan instrumen pembayaran di Xendit (booking sudah tidak Pending):
+     * invoice v2 lewat endpoint expire!, payment request v3 lewat cancel.
+     * Best effort: kegagalan hanya dicatat, PAID susulan tetap ditandai perlu refund.
+     */
+    public function cancelGatewayPayment(Payment $payment): void
+    {
+        $secretKey = config('services.xendit.secret_key');
+
+        if (! $payment->gateway_reference || ! $secretKey) {
+            return;
+        }
+
+        try {
+            $response = match ($payment->method) {
+                'xendit_invoice' => Http::withBasicAuth($secretKey, '')
+                    ->timeout(10)
+                    ->post('https://api.xendit.co/invoices/'.$payment->gateway_reference.'/expire!'),
+                'xendit_payment_request' => Http::withBasicAuth($secretKey, '')
+                    ->withHeaders(['api-version' => self::API_VERSION])
+                    ->timeout(10)
+                    ->post('https://api.xendit.co/v3/payment_requests/'.$payment->gateway_reference.'/cancel'),
+                default => null,
+            };
+        } catch (Exception $e) {
+            Log::channel('xendit')->warning('Gagal membatalkan payment di Xendit.', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        if ($response !== null && ! $response->successful()) {
+            Log::channel('xendit')->warning('Gagal membatalkan payment di Xendit.', [
+                'payment_id' => $payment->id,
+                'http' => $response->status(),
+                'body' => $response->body(),
+            ]);
+        }
     }
 
     /**
@@ -575,7 +651,7 @@ class XenditService
     {
         if ($channel === 'QRIS') {
             return [
-                'expires_at' => now('UTC')->addMinutes((int) setting('booking.invoice_minutes', 60))->format('Y-m-d\TH:i:s\Z'),
+                'expires_at' => $booking->paymentDeadline()->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
             ];
         }
 
@@ -599,13 +675,15 @@ class XenditService
 
         // OVO mewajibkan nomor HP pembeli dalam format E.164 (+62..., tanpa nol depan)
         if ($channel === 'OVO') {
+            // Hanya format lokal 08xx yang diubah ke +62; nomor lain sudah berkode negara.
             $phone = preg_replace('/\D/', '', (string) ($booking->user->phone ?? ''));
-            $phone = ltrim($phone, '0');
 
-            if (str_starts_with($phone, '62')) {
+            if (str_starts_with($phone, '0')) {
+                $phone = '62'.ltrim($phone, '0');
+            }
+
+            if ($phone !== '') {
                 $returnUrls['account_mobile_number'] = '+'.$phone;
-            } elseif (str_starts_with($phone, '8')) {
-                $returnUrls['account_mobile_number'] = '+62'.$phone;
             }
         }
 
@@ -696,37 +774,45 @@ class XenditService
 
     /**
      * Menyelaraskan status pembayaran dengan API Xendit tanpa menunggu
-     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56) dan halaman
-     * berhasil: kalo webhook telat nyampe (atau gak nyampe — tunnel mati),
-     * status ke-deteksi juga. Aman dipanggil berkali-kali — idempoten.
+     * webhook. Dipakai polling "Saya Sudah Bayar" (EG-56), halaman berhasil,
+     * dan tombol Cek Status admin. Aman dipanggil berkali-kali — idempoten.
+     *
+     * Semua payment pending booking dicek (penyewa bisa membuka beberapa metode),
+     * baik payment request v3 maupun invoice v2. Mengembalikan false bila ada
+     * panggilan API yang gagal (detail hanya di log).
      */
-    public function syncPaymentStatus(Booking $booking): void
+    public function syncPaymentStatus(Booking $booking): bool
     {
-        // Kedua jalur dijalankan berurutan; tiap jalur cuma menyentuh payment
-        // miliknya sendiri dan hanya menerapkan status terminal. Jadi booking
-        // dengan payment request pending TAPI invoice lama yang sudah PAID
-        // (mis. bekas ganti-ganti mode) tetap kebaca.
-        $this->syncPaymentRequestStatus($booking);
-        $this->syncInvoiceStatus($booking);
+        $payments = Payment::where('booking_id', $booking->id)
+            ->whereIn('method', ['xendit_payment_request', 'xendit_invoice'])
+            ->where('status', 'pending')
+            ->whereNotNull('gateway_reference')
+            ->latest('id')
+            ->get();
+
+        $ok = true;
+
+        foreach ($payments as $payment) {
+            // Payment lain bisa sudah ditutup oleh payment sebelumnya yang ternyata PAID
+            if (Payment::whereKey($payment->id)->value('status') !== 'pending') {
+                continue;
+            }
+
+            $ok = ($payment->method === 'xendit_payment_request'
+                ? $this->syncPaymentRequestStatus($payment)
+                : $this->syncInvoiceStatus($payment)) && $ok;
+        }
+
+        return $ok;
     }
 
     /**
-     * Menyelaraskan payment request (mode payment_request) — jalur utama.
+     * Menyelaraskan satu payment request (mode payment_request) — jalur utama.
      */
-    private function syncPaymentRequestStatus(Booking $booking): void
+    private function syncPaymentRequestStatus(Payment $payment): bool
     {
-        $payment = Payment::where('booking_id', $booking->id)
-            ->where('method', 'xendit_payment_request')
-            ->where('status', 'pending')
-            ->latest('id')
-            ->first();
-
-        if (! $payment || ! $payment->gateway_reference) {
-            return;
-        }
-
         if (config('services.xendit.mode', 'invoice') !== 'payment_request') {
-            return;
+            return true;
         }
 
         try {
@@ -738,14 +824,14 @@ class XenditService
                 'error' => $e->getMessage(),
             ]);
 
-            return;
+            return false;
         }
 
         $status = strtoupper((string) ($data['status'] ?? ''));
         $map = ['SUCCEEDED' => 'PAID', 'FAILED' => 'FAILED', 'EXPIRED' => 'EXPIRED'];
 
         if (! isset($map[$status])) {
-            return; // REQUIRES_ACTION / PENDING / lainnya → belum bayar
+            return true; // REQUIRES_ACTION / PENDING / lainnya → belum bayar
         }
 
         $this->paymentService->applyInvoiceStatus($payment, [
@@ -755,24 +841,16 @@ class XenditService
                 ?? $data['updated']
                 ?? null,
         ]);
+
+        return true;
     }
 
     /**
-     * Sinkron payment invoice lama (mis. sisa pengujian mode invoice)
+     * Sinkron satu payment invoice (kartu kredit / mode invoice)
      * lewat GET /v2/invoices/{id} — pelengkap webhook.
      */
-    private function syncInvoiceStatus(Booking $booking): void
+    private function syncInvoiceStatus(Payment $payment): bool
     {
-        $payment = Payment::where('booking_id', $booking->id)
-            ->where('method', 'xendit_invoice')
-            ->where('status', 'pending')
-            ->latest('id')
-            ->first();
-
-        if (! $payment || ! $payment->gateway_reference) {
-            return;
-        }
-
         try {
             $invoice = $this->getInvoice($payment->gateway_reference);
         } catch (Exception $e) {
@@ -781,19 +859,21 @@ class XenditService
                 'error' => $e->getMessage(),
             ]);
 
-            return;
+            return false;
         }
 
         $status = strtoupper((string) ($invoice['status'] ?? ''));
 
         if (! in_array($status, ['PAID', 'SETTLED', 'EXPIRED'], true)) {
-            return;
+            return true;
         }
 
         $this->paymentService->applyInvoiceStatus($payment, [
             'status' => $status,
             'paid_at' => $invoice['paid_at'] ?? null,
         ]);
+
+        return true;
     }
 
     /**

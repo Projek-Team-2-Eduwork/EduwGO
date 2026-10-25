@@ -14,10 +14,10 @@
             </h2>
             <div class="flex gap-3">
                 @if(Route::has('admin.pesanan.update') && in_array($booking->status->value, ['pending', 'paid', 'rented']))
-                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">Update Status</button>
+                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">Update Status</button>
                 @endif
                 @if($booking->status === App\Enums\BookingStatus::Pending)
-                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="{{ $codPending ? 'btn-primary-edu' : 'btn-secondary-edu' }} inline-flex items-center px-4 py-2 text-sm">
+                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="{{ $codPending ? 'btn-primary-edu' : 'btn-secondary-edu' }} inline-flex items-center px-5 py-2.5 text-sm">
                         {{ $codPending ? 'Tandai Sudah Dibayar (COD)' : 'Catat Bayar Tunai' }}
                     </button>
                 @endif
@@ -36,6 +36,19 @@
             @if(session('error'))
                 <x-alert type="error">
                     {{ session('error') }}
+                </x-alert>
+            @endif
+
+            @php
+                $perluRefund = $booking->payments->where('needs_refund', true);
+            @endphp
+            @if($perluRefund->isNotEmpty())
+                <x-alert type="warning">
+                    Ada pembayaran Xendit yang masuk setelah pesanan ini tidak lagi menunggu pembayaran
+                    (status {{ $booking->status->label() }}). Lakukan refund manual ke penyewa:
+                    @foreach($perluRefund as $p)
+                        <span class="font-mono">{{ $p->gateway_reference }}</span> (Rp {{ number_format($p->amount, 0, ',', '.') }}){{ $loop->last ? '.' : ',' }}
+                    @endforeach
                 </x-alert>
             @endif
 
@@ -79,7 +92,7 @@
                                         $wa = '62' . substr($wa, 1);
                                     }
                                 @endphp
-                                <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm sm:w-auto">
+                                <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm sm:w-auto">
                                     Chat Penyewa (WA)
                                 </a>
                             </div>
@@ -104,7 +117,7 @@
                                 <div>
                                     <div class="text-lg font-bold text-[var(--navy-900)]">{{ $booking->vehicle?->name ?? 'Kendaraan Dihapus' }}</div>
                                     <div class="text-sm">{{ $booking->vehicle?->type?->name ?? '-' }}</div>
-                                    <div class="mt-2 inline-block rounded bg-[var(--bg)] px-2 py-1 font-mono text-sm">{{ $booking->vehicle?->plate_number ?? '-' }}</div>
+                                    <div class="mt-2 inline-block rounded-md bg-[var(--bg)] px-2 py-1 font-mono text-sm">{{ $booking->vehicle?->plate_number ?? '-' }}</div>
                                 </div>
                             </div>
                             
@@ -147,14 +160,15 @@
                                 </thead>
                                 <tbody>
                                     @php
-                                        // Cukup satu baris: pembayaran terakhir yang benar-benar
-                                        // terjadi (yang sudah lunas bila ada). Percobaan online yang
+                                        // Tampilkan pembayaran yang lunas (termasuk yang perlu refund);
+                                        // bila belum ada, cukup percobaan terakhir. Percobaan online yang
                                         // batal/kedaluwarsa tidak lagi menumpuk di sini.
                                         $riwayat = $booking->payments->sortByDesc('id');
-                                        $terakhir = $riwayat->firstWhere('status', 'paid') ?? $riwayat->first();
+                                        $tampil = $riwayat->where('status', 'paid');
+                                        $tampil = $tampil->isNotEmpty() ? $tampil : $riwayat->take(1);
                                     @endphp
 
-                                    @if($terakhir)
+                                    @forelse($tampil as $terakhir)
                                         <tr class="border-b border-[var(--border)] transition hover:bg-[var(--bg)]">
                                             <td class="px-4 py-3">
                                                 <div class="font-medium text-[var(--navy-900)]">{{ App\Services\XenditService::paymentLabel($terakhir->payment_channel, $terakhir->method) }}</div>
@@ -163,6 +177,9 @@
                                             <td class="px-4 py-3">
                                                 <div class="flex flex-wrap items-center gap-2">
                                                     <span class="font-semibold capitalize {{ $terakhir->status === 'paid' ? 'text-emerald-700 dark:text-emerald-400' : '' }}">{{ $terakhir->status }}</span>
+                                                    @if($terakhir->needs_refund)
+                                                        <span class="text-xs text-amber-700 dark:text-amber-400">Perlu refund</span>
+                                                    @endif
                                                     @if($terakhir->status === 'pending' && $terakhir->method === 'cash' && $booking->status === App\Enums\BookingStatus::Pending)
                                                         <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-2.5 py-1 text-xs">
                                                             Tandai Lunas
@@ -172,11 +189,11 @@
                                             </td>
                                             <td class="px-4 py-3 text-xs">{{ $terakhir->paid_at ? $terakhir->paid_at->translatedFormat('d M Y H:i') : '-' }}</td>
                                         </tr>
-                                    @else
+                                    @empty
                                         <tr>
                                             <td colspan="3" class="px-4 py-6 text-center">Belum ada riwayat pembayaran.</td>
                                         </tr>
-                                    @endif
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -206,7 +223,7 @@
                         <form action="{{ route('admin.pesanan.notes', $booking->code) }}" method="POST" class="border-t border-[var(--border)] pt-6">
                             @csrf
                             <label for="notes" class="mb-2 block text-sm font-semibold text-[var(--navy-900)]">Catatan Internal Admin (Tidak terlihat oleh penyewa)</label>
-                            <textarea id="notes" name="notes" rows="4" class="w-full rounded-md shadow-sm" placeholder="Tuliskan catatan terkait pesanan ini...">{{ old('notes', $booking->notes) }}</textarea>
+                            <textarea id="notes" name="notes" rows="4" class="w-full rounded-lg shadow-sm" placeholder="Tuliskan catatan terkait pesanan ini...">{{ old('notes', $booking->notes) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('notes')" />
                             <div class="mt-3 flex justify-end">
                                 <x-primary-button>Simpan Catatan</x-primary-button>

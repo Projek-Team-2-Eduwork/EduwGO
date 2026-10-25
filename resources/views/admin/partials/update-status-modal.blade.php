@@ -17,7 +17,7 @@
                 <p class="mb-3 text-sm">Tandai bahwa unit telah diserahkan ke penyewa dan masa sewa dimulai.</p>
                 <div class="mb-3">
                     <x-input-label for="note_rented_{{ $booking->code }}" value="Catatan Serah Terima (Opsional)" />
-                    <textarea id="note_rented_{{ $booking->code }}" name="note" rows="2" class="mt-1 w-full rounded-md shadow-sm"></textarea>
+                    <textarea id="note_rented_{{ $booking->code }}" name="note" rows="2" class="mt-1 w-full rounded-lg shadow-sm"></textarea>
                 </div>
                 <x-primary-button class="w-full justify-center">Serah Terima Unit</x-primary-button>
             </form>
@@ -28,7 +28,7 @@
                 <input type="hidden" name="to" value="cancelled">
                 <div class="mb-3">
                     <x-input-label for="reason_paid_{{ $booking->code }}" value="Alasan Pembatalan *" />
-                    <textarea id="reason_paid_{{ $booking->code }}" name="reason" rows="2" required class="mt-1 w-full rounded-md shadow-sm"></textarea>
+                    <textarea id="reason_paid_{{ $booking->code }}" name="reason" rows="2" required class="mt-1 w-full rounded-lg shadow-sm"></textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('reason')" />
                     <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">Catat kesepakatan refund dari chat WA</p>
                 </div>
@@ -50,7 +50,7 @@
                 <input type="hidden" name="to" value="cancelled">
                 <div class="mb-3">
                     <x-input-label for="reason_pending_{{ $booking->code }}" value="Alasan Pembatalan *" />
-                    <textarea id="reason_pending_{{ $booking->code }}" name="reason" rows="2" required class="mt-1 w-full rounded-md shadow-sm"></textarea>
+                    <textarea id="reason_pending_{{ $booking->code }}" name="reason" rows="2" required class="mt-1 w-full rounded-lg shadow-sm"></textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('reason')" />
                 </div>
                 <x-danger-button class="w-full justify-center">Batalkan Pesanan</x-danger-button>
@@ -64,7 +64,7 @@
                 <p class="mb-3 text-sm">Tandai bahwa unit telah dikembalikan oleh penyewa.</p>
                 <div class="mb-3">
                     <x-input-label for="note_returned_{{ $booking->code }}" value="Catatan Kondisi (Opsional)" />
-                    <textarea id="note_returned_{{ $booking->code }}" name="note" rows="2" class="mt-1 w-full rounded-md shadow-sm"></textarea>
+                    <textarea id="note_returned_{{ $booking->code }}" name="note" rows="2" class="mt-1 w-full rounded-lg shadow-sm"></textarea>
                 </div>
                 <x-primary-button class="w-full justify-center">Unit Sudah Kembali</x-primary-button>
             </form>
