@@ -110,7 +110,7 @@
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
+            <button type="submit" class="text-sm underline text-[var(--navy-900)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]">
                 Keluar
             </button>
         </form>

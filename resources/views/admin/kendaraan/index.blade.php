@@ -4,7 +4,7 @@
             <h2 class="text-xl font-semibold leading-tight">
                 {{ __('Kelola Kendaraan') }}
             </h2>
-            <a href="{{ route('admin.kendaraan.create') }}" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">
+            <a href="{{ route('admin.kendaraan.create') }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">
                 + Tambah Kendaraan
             </a>
         </div>
@@ -27,7 +27,7 @@
                     </div>
                     @include('admin.partials.branch-filter', ['class' => 'md:self-end'])
                     <div>
-                        <select name="tipe" aria-label="Filter tipe kendaraan" class="w-full rounded-md shadow-sm">
+                        <select name="tipe" aria-label="Filter tipe kendaraan" class="w-full rounded-lg shadow-sm">
                             <option value="">Semua Tipe</option>
                             @foreach($types as $id => $name)
                                 <option value="{{ $id }}" {{ request('tipe') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -35,7 +35,7 @@
                         </select>
                     </div>
                     <div>
-                        <select name="status" aria-label="Filter status kendaraan" class="w-full rounded-md shadow-sm">
+                        <select name="status" aria-label="Filter status kendaraan" class="w-full rounded-lg shadow-sm">
                             <option value="">Semua Status</option>
                             <option value="tersedia" {{ request('status') === 'tersedia' ? 'selected' : '' }}>Tersedia</option>
                             <option value="disewa" {{ request('status') === 'disewa' ? 'selected' : '' }}>Disewa</option>
@@ -59,20 +59,20 @@
                     @foreach($vehicles as $vehicle)
                         @php
                             if (!$vehicle->is_active) {
-                                $badge = ['text' => 'Nonaktif', 'class' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'];
+                                $badge = ['text' => 'Nonaktif', 'class' => 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100'];
                             } elseif ($vehicle->is_rented) {
-                                $badge = ['text' => 'Disewa', 'class' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'];
+                                $badge = ['text' => 'Disewa', 'class' => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'];
                             } else {
-                                $badge = ['text' => 'Tersedia', 'class' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'];
+                                $badge = ['text' => 'Tersedia', 'class' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'];
                             }
                         @endphp
 
-                        <div class="card-surface group flex flex-col overflow-hidden transition hover:-translate-y-0.5">
+                        <div class="card-surface card-lift group flex flex-col overflow-hidden">
                             <div class="relative h-48 bg-[var(--bg)]">
                                 @if($vehicle->image)
                                     <img src="{{ asset($vehicle->image) }}" class="w-full h-full object-cover" alt="{{ $vehicle->name }}" loading="lazy">
                                 @endif
-                                <span class="absolute top-2 right-2 px-2 py-1 text-xs font-bold rounded {{ $badge['class'] }}">
+                                <span class="absolute top-2 right-2 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $badge['class'] }}">
                                     {{ $badge['text'] }}
                                 </span>
                             </div>
@@ -81,7 +81,7 @@
                                 <p class="mb-2 text-sm">{{ $vehicle->type?->name ?? '-' }}@if($branches->isNotEmpty()) &middot; {{ $vehicle->branch?->name }}@endif</p>
                                 
                                 <div class="mt-auto flex items-center justify-between pt-4">
-                                    <div class="rounded bg-[var(--bg)] px-2 py-1 font-mono text-sm">
+                                    <div class="rounded-md bg-[var(--bg)] px-2 py-1 font-mono text-sm">
                                         {{ $vehicle->plate_number }}
                                     </div>
                                     <div class="font-bold text-[var(--orange-500)]">

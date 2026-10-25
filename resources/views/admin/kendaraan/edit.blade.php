@@ -25,7 +25,7 @@
                         </div>
                         <div>
                             <x-input-label for="vehicle_type_id" value="Tipe Kendaraan *" />
-                            <select id="vehicle_type_id" name="vehicle_type_id" class="mt-1 block w-full rounded-md shadow-sm" required>
+                            <select id="vehicle_type_id" name="vehicle_type_id" class="mt-1 block w-full rounded-lg shadow-sm" required>
                                 <option value="">Pilih Tipe</option>
                                 @foreach($types as $id => $name)
                                     <option value="{{ $id }}" {{ old('vehicle_type_id', $kendaraan->vehicle_type_id) == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -51,18 +51,18 @@
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="image" value="Foto Baru (Kosongkan jika tidak ingin mengubah)" />
-                            <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-[var(--bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--navy-900)] hover:file:brightness-95">
+                            <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--navy-900)] hover:file:brightness-95">
                             <x-input-error class="mt-2" :messages="$errors->get('image')" />
                             @if($kendaraan->image)
                                 <div class="mt-3">
                                     <p class="mb-1 text-sm">Foto saat ini:</p>
-                                    <img src="{{ asset($kendaraan->image) }}" class="h-24 w-auto rounded border border-[var(--border)] object-cover shadow-sm" alt="">
+                                    <img src="{{ asset($kendaraan->image) }}" class="h-24 w-auto rounded-lg border border-[var(--border)] object-cover shadow-sm" alt="">
                                 </div>
                             @endif
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="description" value="Deskripsi" />
-                            <textarea id="description" name="description" rows="4" class="mt-1 block w-full rounded-md shadow-sm">{{ old('description', $kendaraan->description) }}</textarea>
+                            <textarea id="description" name="description" rows="4" class="mt-1 block w-full rounded-lg shadow-sm">{{ old('description', $kendaraan->description) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('description')" />
                         </div>
                         <div class="md:col-span-2 flex items-center">

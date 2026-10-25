@@ -26,13 +26,13 @@
             </label>
 
             @if (Route::has('password.request'))
-                <a class="text-sm underline text-[var(--navy-900)] rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]" href="{{ route('password.request') }}">
+                <a class="text-sm underline text-[var(--navy-900)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)]" href="{{ route('password.request') }}">
                     Lupa kata sandi?
                 </a>
             @endif
         </div>
 
-        <button type="submit" class="btn-primary-edu w-full px-6 py-3 text-sm">Masuk</button>
+        <button type="submit" class="btn-primary-edu w-full px-5 py-2.5 text-sm">Masuk</button>
 
         <p class="text-sm text-center">
             Belum punya akun?

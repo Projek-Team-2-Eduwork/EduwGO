@@ -14,6 +14,6 @@
             <x-input-error :messages="$errors->get('password')" class="mt-2 !text-red-600 dark:!text-red-400" />
         </div>
 
-        <button type="submit" class="btn-primary-edu w-full px-6 py-3 text-sm">Konfirmasi</button>
+        <button type="submit" class="btn-primary-edu w-full px-5 py-2.5 text-sm">Konfirmasi</button>
     </form>
 </x-guest-layout>

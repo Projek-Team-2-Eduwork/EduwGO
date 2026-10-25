@@ -15,7 +15,7 @@
 
             <!-- Alpine.js Countdown (Berdasarkan waktu server, tahan reload) -->
             <div x-data="countdown('{{ $payment->expires_at->toIso8601String() }}', '{{ route('booking.failed', $booking->code) }}')" 
-                 class="mb-6 rounded-xl p-4 text-center" style="background-color: var(--bg);">
+                 class="mb-6 rounded-lg p-4 text-center" style="background-color: var(--bg);">
                 <p class="mb-1 text-sm">Sisa Waktu</p>
                 <div class="text-3xl font-bold text-red-600 dark:text-red-500 font-mono tracking-wider">
                     <span x-text="hours"></span>:<span x-text="minutes"></span>:<span x-text="seconds"></span>

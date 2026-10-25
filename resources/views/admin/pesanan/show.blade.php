@@ -6,10 +6,10 @@
             </h2>
             <div class="flex gap-3">
                 @if(Route::has('admin.pesanan.update') && in_array($booking->status->value, ['pending', 'paid', 'rented']))
-                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">Update Status</button>
+                    <button type="button" x-data @click="$dispatch('open-modal', 'update-{{ $booking->code }}')" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">Update Status</button>
                 @endif
                 @if($booking->status === App\Enums\BookingStatus::Pending)
-                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="btn-secondary-edu inline-flex items-center px-4 py-2 text-sm">
+                    <button type="button" x-data @click="$dispatch('open-modal', 'cash-{{ $booking->code }}')" class="btn-secondary-edu inline-flex items-center px-5 py-2.5 text-sm">
                         Catat Bayar Tunai
                     </button>
                 @endif
@@ -71,7 +71,7 @@
                                         $wa = '62' . substr($wa, 1);
                                     }
                                 @endphp
-                                <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-4 py-2 text-sm sm:w-auto">
+                                <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener" class="btn-wa-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm sm:w-auto">
                                     Chat Penyewa (WA)
                                 </a>
                             </div>
@@ -96,7 +96,7 @@
                                 <div>
                                     <div class="text-lg font-bold text-[var(--navy-900)]">{{ $booking->vehicle?->name ?? 'Kendaraan Dihapus' }}</div>
                                     <div class="text-sm">{{ $booking->vehicle?->type?->name ?? '-' }}</div>
-                                    <div class="mt-2 inline-block rounded bg-[var(--bg)] px-2 py-1 font-mono text-sm">{{ $booking->vehicle?->plate_number ?? '-' }}</div>
+                                    <div class="mt-2 inline-block rounded-md bg-[var(--bg)] px-2 py-1 font-mono text-sm">{{ $booking->vehicle?->plate_number ?? '-' }}</div>
                                 </div>
                             </div>
                             
@@ -181,7 +181,7 @@
                         <form action="{{ route('admin.pesanan.notes', $booking->code) }}" method="POST" class="border-t border-[var(--border)] pt-6">
                             @csrf
                             <label for="notes" class="mb-2 block text-sm font-semibold text-[var(--navy-900)]">Catatan Internal Admin (Tidak terlihat oleh penyewa)</label>
-                            <textarea id="notes" name="notes" rows="4" class="w-full rounded-md shadow-sm" placeholder="Tuliskan catatan terkait pesanan ini...">{{ old('notes', $booking->notes) }}</textarea>
+                            <textarea id="notes" name="notes" rows="4" class="w-full rounded-lg shadow-sm" placeholder="Tuliskan catatan terkait pesanan ini...">{{ old('notes', $booking->notes) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('notes')" />
                             <div class="mt-3 flex justify-end">
                                 <x-primary-button>Simpan Catatan</x-primary-button>

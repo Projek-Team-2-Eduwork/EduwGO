@@ -219,14 +219,14 @@ class VehicleCrudTest extends TestCase
             ->getContent();
 
         // Badge "Disewa" (merah) hanya untuk booking paid/rented — pending tidak dihitung.
-        $this->assertSame(1, preg_match_all('/rounded bg-red-100[^>]*">\s*Disewa\s*</', $html));
+        $this->assertSame(1, preg_match_all('/rounded-full[^>]*bg-red-100[^>]*">\s*Disewa\s*</', $html));
         // Dua unit aktif tanpa booking berjalan → Tersedia.
-        $this->assertSame(2, preg_match_all('/rounded bg-green-100[^>]*">\s*Tersedia\s*</', $html));
-        $this->assertSame(1, preg_match_all('/rounded bg-gray-100[^>]*">\s*Nonaktif\s*</', $html));
+        $this->assertSame(2, preg_match_all('/rounded-full[^>]*bg-emerald-100[^>]*">\s*Tersedia\s*</', $html));
+        $this->assertSame(1, preg_match_all('/rounded-full[^>]*bg-slate-200[^>]*">\s*Nonaktif\s*</', $html));
 
         // Badge merah menempel pada kartu "Unit Disewa" (bukan kartu lain).
         $this->assertMatchesRegularExpression(
-            '/rounded bg-red-100[^>]*">\s*Disewa\s*<\/span>.*?Unit Disewa/s',
+            '/rounded-full[^>]*bg-red-100[^>]*">\s*Disewa\s*<\/span>.*?Unit Disewa/s',
             $html
         );
     }

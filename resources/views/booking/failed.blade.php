@@ -11,7 +11,7 @@
                 
                 <h2 class="mb-4 text-2xl font-bold text-[var(--navy-900)]">Ups, Waktunya Habis!</h2>
                 <p class="mb-2">Pesanan Anda tidak dibayar dalam batas waktu dan telah dibatalkan.</p>
-                <p class="mb-8 inline-block rounded bg-[var(--bg)] px-4 py-2 text-lg font-mono font-semibold text-[var(--navy-900)]">{{ $booking->code }}</p>
+                <p class="mb-8 inline-block rounded-md bg-[var(--bg)] px-4 py-2 text-lg font-mono font-semibold text-[var(--navy-900)]">{{ $booking->code }}</p>
                 
                 <div class="mt-4 flex flex-col justify-center gap-4 sm:flex-row">
                     <a href="{{ route('booking.rebook', $booking->code) }}" class="btn-primary-edu px-6 py-3 text-center text-sm">

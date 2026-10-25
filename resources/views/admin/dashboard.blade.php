@@ -50,7 +50,7 @@
                 <div class="card-surface col-span-1 p-6 lg:col-span-2">
                     <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <h3 class="font-bold">Pendapatan</h3>
-                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-primary-edu inline-flex items-center px-4 py-2 text-sm">
+                        <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">
                             Export Excel
                         </a>
                     </div>
@@ -67,7 +67,7 @@
                         </div>
                         <div>
                             <x-input-label for="tipe" value="Tipe Kendaraan" />
-                            <select id="tipe" name="tipe" class="w-full mt-1 rounded-md shadow-sm text-sm">
+                            <select id="tipe" name="tipe" class="w-full mt-1 rounded-lg shadow-sm text-sm">
                                 <option value="">Semua Tipe</option>
                                 @foreach($vehicleTypes as $id => $name)
                                     <option value="{{ $id }}" {{ $tipe == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -77,7 +77,7 @@
                         <div>
                             <x-input-label for="metode" value="Metode Bayar" />
                             <div class="flex gap-2 items-start mt-1">
-                                <select id="metode" name="metode" class="w-full rounded-md shadow-sm text-sm">
+                                <select id="metode" name="metode" class="w-full rounded-lg shadow-sm text-sm">
                                     <option value="">Semua Metode</option>
                                     <option value="cash" {{ $metode === 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
                                     <option value="xendit_invoice" {{ $metode === 'xendit_invoice' ? 'selected' : '' }}>Xendit</option>
@@ -110,9 +110,9 @@
                                     <li class="p-4 transition hover:bg-[var(--bg)]">
                                         <div class="flex items-center gap-4">
                                             @if($b->vehicle_image)
-                                                <img src="{{ asset($b->vehicle_image) }}" class="w-12 h-12 rounded object-cover flex-shrink-0" alt="">
+                                                <img src="{{ asset($b->vehicle_image) }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" alt="">
                                             @else
-                                                <div class="w-12 h-12 rounded bg-[var(--bg)] flex items-center justify-center flex-shrink-0">
+                                                <div class="w-12 h-12 rounded-lg bg-[var(--bg)] flex items-center justify-center flex-shrink-0">
                                                     <svg class="w-6 h-6 text-[var(--border)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                                 </div>
                                             @endif

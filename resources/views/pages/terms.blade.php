@@ -2,20 +2,16 @@
     <x-slot:title>Syarat &amp; Ketentuan</x-slot:title>
     @section('meta_description', 'Syarat dan ketentuan penyewaan motor di '.setting('brand.name', 'EduwGo').'.')
 
-    <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-        <h1 class="font-serif text-4xl sm:text-5xl">Syarat &amp; Ketentuan</h1>
-        <p class="mt-3 text-sm sm:text-base">Harap baca ketentuan berikut sebelum menyewa motor.</p>
-
-        {{-- Satu poin satu kartu, senada dengan seksi S&K di beranda --}}
-        <ol class="mt-8 grid gap-4 sm:grid-cols-2">
-            @foreach ($points as $point)
-                <li class="card-surface card-lift flex flex-col gap-3 p-5 sm:p-6">
-                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-[#0A0F1D]" style="background-image: var(--accent-gradient);" aria-hidden="true">{{ $loop->iteration }}</span>
-                    <span class="text-sm leading-relaxed sm:text-base">{{ $point }}</span>
-                </li>
-            @endforeach
-        </ol>
-
-        <a href="{{ url('/') }}" class="btn-primary-edu mt-8 inline-flex items-center px-6 py-2.5 text-sm">Kembali ke Home</a>
-    </div>
+    {{-- Bentuk sama dengan seksi S&K di beranda; di sini judul jadi h1 dan aksi mengarah ke langkah berikutnya --}}
+    <section aria-labelledby="judul-syarat-ketentuan" class="mx-auto max-w-[1320px] px-4 pt-6 sm:px-6 lg:pt-10 xl:px-0">
+        <x-terms-panel heading="h1" :items="$points" title="Syarat & Ketentuan" intro="Harap baca ketentuan berikut sebelum menyewa motor.">
+            <x-slot:actions>
+                <a href="{{ route('kendaraan.index') }}" class="hero-kartu__tombol hero-kartu__tombol--utama focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C6F659] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0f1d]">
+                    Lihat Motor
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                </a>
+                <a href="{{ url('/') }}" class="hero-kartu__tombol hero-kartu__tombol--sekunder focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60">Kembali ke Home</a>
+            </x-slot:actions>
+        </x-terms-panel>
+    </section>
 </x-app-layout>
