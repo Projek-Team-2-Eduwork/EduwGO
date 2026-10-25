@@ -114,7 +114,7 @@ class CheckoutTest extends TestCase
         // Detail memakai slug (EG-25); modal durasi hanya dirender untuk user login.
         $responseDetail = $this->actingAs($user)->get(route('kendaraan.detail', $vehicle));
         $responseDetail->assertOk();
-        $responseDetail->assertSee('Pilih Durasi Sewa');
+        $responseDetail->assertSee('Pilih tanggal sewa');
 
         $start = now()->addDays(2)->toISOString();
         $responseCheckout = $this->actingAs($user)->get(route('checkout.show', [

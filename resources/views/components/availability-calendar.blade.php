@@ -1,10 +1,10 @@
-@props(['vehicle'])
+@props(['vehicle', 'bare' => false]) {{-- bare: tanpa kartu & padding, ikut tepi kolom induk --}}
 
 {{-- Kalender ketersediaan bulanan per unit (EG-41). Data: GET /api/kendaraan/{id}/jadwal?month= --}}
-<section x-data="availabilityCalendar('{{ route('kendaraan.jadwal', $vehicle) }}')" x-init="load()" class="card-surface mt-4 w-full max-w-md p-5 sm:p-6" aria-labelledby="kalender-heading">
+<section x-data="availabilityCalendar('{{ route('kendaraan.jadwal', $vehicle) }}')" x-init="load()" {{ $attributes->class(['w-full max-w-md', 'section-plain mt-4 p-5 sm:p-6' => ! $bare]) }} aria-labelledby="kalender-heading">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h2 id="kalender-heading" class="text-lg text-[var(--navy-900)]">Ketersediaan Unit</h2>
+            <h2 id="kalender-heading" class="text-lg text-[var(--ink)]">Ketersediaan Unit</h2>
             <p class="mt-1 text-xs">Hari berarsir sudah dipesan (termasuk jeda <span x-text="buffer"></span> menit antar sewa).</p>
         </div>
 
@@ -12,7 +12,7 @@
             <button type="button" @click="move(-1)" :disabled="!canGoPrev" class="calendar-nav" aria-label="Bulan sebelumnya">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             </button>
-            <span class="min-w-[8.5rem] text-center text-sm font-semibold text-[var(--navy-900)]" x-text="title" aria-live="polite"></span>
+            <span class="min-w-[8.5rem] text-center text-sm font-semibold text-[var(--ink)]" x-text="title" aria-live="polite"></span>
             <button type="button" @click="move(1)" class="calendar-nav" aria-label="Bulan berikutnya">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
@@ -51,27 +51,27 @@
         </template>
     </div>
 
-    <p class="mt-3 text-xs text-red-700 dark:text-red-300" x-show="error" x-cloak style="display: none" x-text="error" role="alert"></p>
+    <p class="mt-3 text-xs text-[var(--danger)] dark:text-[var(--danger)]" x-show="error" x-cloak style="display: none" x-text="error" role="alert"></p>
 
     <div class="mt-4 flex flex-wrap items-center gap-4 text-xs">
-        <span class="inline-flex items-center gap-1.5"><span class="calendar-swatch" aria-hidden="true"></span> Tersedia</span>
-        <span class="inline-flex items-center gap-1.5"><span class="calendar-swatch calendar-swatch-booked" aria-hidden="true"></span> Ada booking</span>
+        <span class="inline-flex items-center gap-2"><span class="calendar-swatch" aria-hidden="true"></span> Tersedia</span>
+        <span class="inline-flex items-center gap-2"><span class="calendar-swatch calendar-swatch-booked" aria-hidden="true"></span> Ada booking (sebagian/penuh)</span>
     </div>
 </section>
 
 @once
     <style>
-        .calendar-nav { display: inline-flex; height: 2rem; width: 2rem; align-items: center; justify-content: center; border-radius: 0.5rem; border: 1px solid var(--border); color: var(--navy-900); transition: background-color .15s; }
+        .calendar-nav { display: inline-flex; height: 2rem; width: 2rem; align-items: center; justify-content: center; border-radius: 0.5rem; border: 1px solid var(--line); color: var(--ink); transition: background-color .15s; }
         .calendar-nav:hover:not(:disabled) { background: var(--bg); }
         .calendar-nav:disabled { opacity: .4; cursor: not-allowed; }
-        .calendar-day { display: flex; width: 100%; aspect-ratio: 1 / 1; align-items: center; justify-content: center; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--surface); font-size: 0.8125rem; color: var(--navy-900); }
+        .calendar-day { display: flex; width: 100%; aspect-ratio: 1 / 1; align-items: center; justify-content: center; border-radius: 0.5rem; border: 1px solid var(--line); background: var(--surface); font-size: 0.8125rem; color: var(--ink); }
         .calendar-day-past { opacity: .45; }
-        .calendar-day-today { outline: 2px solid var(--orange-500); outline-offset: -2px; font-weight: 700; }
+        .calendar-day-today { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 700; }
         .calendar-day-booked,
-        .calendar-swatch-booked { border-color: var(--orange-500); background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--orange-500) 28%, transparent) 0 4px, transparent 4px 8px), var(--surface); }
-        .calendar-day:focus-visible { outline: 2px solid var(--navy-900); outline-offset: 2px; }
-        .calendar-swatch { display: inline-block; height: 0.875rem; width: 0.875rem; border-radius: 0.25rem; border: 1px solid var(--border); background: var(--surface); }
-        .calendar-tip { position: absolute; top: calc(100% + 4px); z-index: 20; min-width: 7.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--surface); padding: 0.5rem 0.625rem; font-size: 0.75rem; color: var(--navy-900); box-shadow: 0 6px 18px rgb(0 0 0 / .18); white-space: nowrap; }
+        .calendar-swatch.calendar-swatch-booked { border-color: var(--accent); background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--accent) 28%, transparent) 0 4px, transparent 4px 8px), var(--surface); }
+        .calendar-day:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+        .calendar-swatch { display: inline-block; height: 1rem; width: 1.75rem; border-radius: 0.375rem; border: 1px solid var(--line); background-color: var(--surface); }
+        .calendar-tip { position: absolute; top: calc(100% + 4px); z-index: 20; min-width: 7.5rem; border-radius: 0.5rem; border: 1px solid var(--line); background: var(--surface); padding: 0.5rem 0.625rem; font-size: 0.75rem; color: var(--ink); box-shadow: 0 6px 18px rgb(0 0 0 / .18); white-space: nowrap; }
         @media (prefers-reduced-motion: no-preference) { .calendar-day { transition: background-color .15s, border-color .15s; } }
     </style>
 @endonce

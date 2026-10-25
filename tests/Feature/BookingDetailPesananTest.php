@@ -74,7 +74,7 @@ class BookingDetailPesananTest extends TestCase
         $response->assertOk();
         $response->assertDontSee(route('booking.waiting', $booking->code));
         $response->assertDontSee('Batalkan pesanan');
-        $response->assertSee('Chat Admin');
+        $response->assertSee('Hubungi admin');
     }
 
     public function test_banner_overdue_tampil_jika_rented_dan_lewat_batas_waktu()
@@ -141,6 +141,6 @@ class BookingDetailPesananTest extends TestCase
         $response = $this->actingAs($user)->get(route('booking.show', $booking->code));
 
         $response->assertOk();
-        $response->assertSee('Chat Admin');
+        $response->assertSee('Hubungi admin');
     }
 }

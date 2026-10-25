@@ -128,7 +128,7 @@ class VehicleCatalogTest extends TestCase
         // Tanpa toggle: kedua motor tampil, yang disewa berbadge "Disewa".
         $this->get('/kendaraan')
             ->assertSee('Honda Vario 160')
-            ->assertSee('Disewa')
+            ->assertSee('Sedang disewa')
             ->assertSee('Yamaha NMAX 155');
 
         $this->get('/kendaraan?available=1')
@@ -153,7 +153,7 @@ class VehicleCatalogTest extends TestCase
         $this->get('/kendaraan')
             ->assertOk()
             ->assertSee('value="'.$query['start_at'].'"', false)
-            ->assertSee('Menampilkan motor yang tersedia mulai');
+            ->assertSee('tersedia mulai');
     }
 
     public function test_reset_menghapus_filter_tersimpan(): void
@@ -406,5 +406,91 @@ class VehicleCatalogTest extends TestCase
             ->assertOk()
             ->assertSee('Motor Beta')
             ->assertDontSee('Motor Alpha');
+    }
+
+    public function test_waktu_mulai_tanpa_durasi_ditolak_berpasangan(): void
+    {
+        $this->from('/kendaraan')
+            ->get('/kendaraan?'.http_build_query(['start_at' => $this->futureStart()->format('Y-m-d\TH:i')]))
+            ->assertSessionHasErrors('days');
+    }
+
+    public function test_chip_filter_aktif_bisa_dihapus_per_kelompok(): void
+    {
+        $start = $this->futureStart()->format('Y-m-d\TH:i');
+        $this->vehicle('Honda Vario 160', null, ['price_per_day' => 80000]);
+
+        $response = $this->get('/kendaraan?'.http_build_query(['q' => 'vario', 'start_at' => $start, 'days' => 2, 'harga_min' => 50000, 'harga' => 'termurah']))
+            ->assertOk()
+            ->assertSee('“vario”')
+            ->assertSee('Mulai Rp50.000/hari')
+            ->assertSee('Filter (3)')
+            ->assertSee(e(route('kendaraan.reset')), false);
+
+        // Hapus jadwal membuang start_at + days bersama; kata kunci, harga, urutan tetap.
+        $response->assertSee(e(route('kendaraan.index', ['q' => 'vario', 'harga' => 'termurah', 'harga_min' => 50000])), false);
+        // Hapus kata kunci mempertahankan jadwal.
+        $response->assertSee(e(route('kendaraan.index', ['start_at' => $start, 'days' => 2, 'harga' => 'termurah', 'harga_min' => 50000])), false);
+    }
+
+    public function test_filter_harga_saja_dihitung_aktif_dan_chip_terakhir_memakai_reset(): void
+    {
+        $this->vehicle('Honda Vario 160', null, ['price_per_day' => 80000]);
+
+        $this->get('/kendaraan?harga_max=100000')
+            ->assertOk()
+            ->assertSee('Maks. Rp100.000/hari')
+            ->assertSee('Filter (1)')
+            ->assertSee('Reset filter')
+            // Satu-satunya chip: hapus = reset (session ikut bersih, tidak dipulihkan lagi).
+            ->assertSee('href="'.e(route('kendaraan.reset')).'" class="inline-flex min-h-11 items-center gap-2 rounded-full', false);
+    }
+
+    public function test_jumlah_hasil_pakai_total_paginator(): void
+    {
+        $type = VehicleType::factory()->create();
+        foreach (range(1, 13) as $i) {
+            Vehicle::create([
+                'branch_id' => $this->defaultBranch()->id,
+                'vehicle_type_id' => $type->id,
+                'name' => 'Unit Hitung '.$i,
+                'slug' => 'unit-hitung-'.$i,
+                'brand' => 'Honda',
+                'plate_number' => 'B '.(3000 + $i).' EDU',
+                'price_per_day' => 100000,
+                'is_active' => true,
+            ]);
+        }
+
+        $this->get('/kendaraan')->assertOk()->assertSee('13 motor');
+    }
+
+    public function test_kartu_tanpa_plat_menampilkan_cabang_dan_total_sesuai_jadwal(): void
+    {
+        $motor = $this->vehicle('Honda Genio', null, ['plate_number' => 'B 6274 SQW', 'price_per_day' => 70000]);
+        $branch = $motor->branch->name;
+
+        $this->get('/kendaraan')
+            ->assertOk()
+            ->assertDontSee('B 6274 SQW')
+            ->assertSee('Ambil di '.$branch)
+            ->assertSee('Pilih jadwal untuk cek');
+
+        $this->get('/kendaraan?'.http_build_query(['start_at' => $this->futureStart()->format('Y-m-d\TH:i'), 'days' => 3]))
+            ->assertOk()
+            ->assertSee('Tersedia untuk jadwal Anda')
+            ->assertSee('Rp210.000 untuk 3 hari')
+            ->assertDontSee('B 6274 SQW');
+    }
+
+    public function test_empty_state_kata_kunci_menawarkan_hapus_kata_kunci(): void
+    {
+        $this->vehicle('Honda Vario 160');
+
+        $this->get('/kendaraan?q=zzzzzz')
+            ->assertOk()
+            ->assertSee('Tidak ada motor cocok untuk “zzzzzz”')
+            ->assertSee('Hapus kata kunci')
+            ->assertSee('0 motor');
     }
 }

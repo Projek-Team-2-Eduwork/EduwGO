@@ -23,6 +23,8 @@ class CheckoutController extends Controller
         $days = (int) $request->days;
         $end = $start->copy()->addDays($days);
 
+        $vehicle->loadMissing('branch');
+
         return view('checkout.show', compact('vehicle', 'start', 'end', 'days'));
     }
 

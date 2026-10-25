@@ -125,7 +125,7 @@ class PembayaranTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('booking.show', $this->booking->code))
             ->assertOk()
-            ->assertSee('Pembayaran berhasil!');
+            ->assertSee('Pembayaran sudah kami terima.');
     }
 
     public function test_pembukaan_pertama_membuat_qris_dan_menampilkan_instruksi()
