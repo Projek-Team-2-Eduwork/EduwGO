@@ -79,6 +79,10 @@ if (! app()->isProduction()) {
 
 // Dashboard Pengguna Umum
 Route::get('/dashboard', function () {
+    if (auth()->user()->isStaff()) {
+        return redirect()->route('admin.dashboard');
+    }
+
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 

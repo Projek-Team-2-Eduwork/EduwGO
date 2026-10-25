@@ -9,6 +9,7 @@
             <tr>
                 <th class="px-4 py-3">Nama</th>
                 <th class="px-4 py-3">Kontak</th>
+                <th class="px-4 py-3">Role</th>
                 <th class="px-4 py-3">Terdaftar</th>
                 <th class="px-4 py-3 text-center">Booking</th>
                 <th class="px-4 py-3">Status</th>
@@ -20,6 +21,7 @@
                 <tr>
                     <td class="px-4 py-2"><a href="{{ route('admin.pengguna.show', $user) }}" class="font-semibold text-[var(--ink)] hover:underline">{{ $user->name }}</a></td>
                     <td class="px-4 py-2 text-xs">{{ $user->email }}<br>{{ $user->phone ?? '-' }}</td>
+                    <td class="px-4 py-2">@include('admin.pengguna.partials.role-badge', ['user' => $user])</td>
                     <td class="px-4 py-2 text-xs">{{ $user->created_at->translatedFormat('d M Y') }}</td>
                     <td class="px-4 py-2 text-center font-bold">{{ $user->bookings_count }}</td>
                     <td class="px-4 py-2">{!! $statusBadge($user) !!}</td>
@@ -44,7 +46,7 @@
             <a href="{{ route('admin.pengguna.show', $user) }}" class="block min-w-0 flex-1">
                 <span class="block truncate font-semibold text-[var(--ink)]">{{ $user->name }}</span>
                 <span class="block truncate text-xs">{{ $user->phone ?? $user->email }} · {{ $user->bookings_count }} booking</span>
-                <span class="mt-1 inline-flex">{!! $statusBadge($user) !!}</span>
+                <span class="mt-1 inline-flex flex-wrap items-center gap-1">@include('admin.pengguna.partials.role-badge', ['user' => $user]) {!! $statusBadge($user) !!}</span>
             </a>
             <form action="{{ route('admin.pengguna.toggle', $user->id) }}" method="POST" class="shrink-0">
                 @csrf
