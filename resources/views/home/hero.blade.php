@@ -9,7 +9,12 @@
         <div class="hero-road__shade absolute inset-0" aria-hidden="true"></div>
         <div class="anim-masuk relative w-full px-5 pb-10 pt-24 sm:px-8 lg:px-[5vw] lg:pb-24">
             <h1 class="hero-road__title max-w-[20ch] font-medium">Sewa motor harian,<br>ambil di cabang</h1>
-            <p class="hero-road__subtitle mt-4 text-lg leading-7">Pilih jadwal Anda. {{ $branchAvailability }}.</p>
+            @php $tagline = setting('brand.tagline'); @endphp
+            @if($tagline)
+                <p class="hero-road__subtitle mt-4 text-lg leading-7">{{ $tagline }}</p>
+            @else
+                <p class="hero-road__subtitle mt-4 text-lg leading-7">Pilih jadwal Anda. {{ $branchAvailability }}.</p>
+            @endif
         </div>
     </div>
 
