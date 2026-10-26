@@ -29,6 +29,7 @@
                 <button type="button" class="-mr-2 -mt-2 min-h-11 min-w-11 text-2xl lg:hidden" x-on:click="$dispatch('close')" aria-label="Tutup">&times;</button>
             </div>
 
+            <div class="hidden lg:block">
             {{-- Kalender rentang --}}
             <div class="mt-3 flex items-center justify-between lg:mt-2">
                 <button type="button" class="bk-nav" @click="move(-1)" :disabled="!canPrev" aria-label="Bulan sebelumnya">
@@ -40,45 +41,16 @@
                 </button>
             </div>
 
-            <div role="grid" class="mt-2" :aria-label="`Tanggal sewa, ${monthTitle}`" @keydown="onKey($event)" @mouseleave="hoverKey = null" :class="{ 'opacity-60': calLoading }">
-                <div role="row" class="grid grid-cols-7 text-center text-[11px] font-semibold uppercase tracking-wide">
-                    <template x-for="d in ['Sen','Sel','Rab','Kam','Jum','Sab','Min']" :key="d">
-                        <span role="columnheader" class="py-1" x-text="d"></span>
-                    </template>
-                </div>
-                <template x-for="(week, wi) in weeks" :key="`${monthKey}-${wi}`">
-                    <div role="row" class="grid grid-cols-7">
-                        <template x-for="cell in week" :key="cell.key">
-                            <div role="gridcell" class="relative flex h-12 items-center justify-center lg:h-[2.125rem]" :aria-selected="cell.day ? String(isEdge(cell.key) || band(cell.key) === 'mid') : null">
-                                <template x-if="cell.day">
-                                    <div class="contents">
-                                        <span class="bk-band" :class="`bk-band-${band(cell.key)}`" x-show="band(cell.key)" aria-hidden="true"></span>
-                                        <button type="button" class="bk-day"
-                                            :class="{ 'bk-day-edge': isEdge(cell.key), 'bk-day-off': isOff(cell.key), 'bk-day-today': cell.key === today }"
-                                            :data-date="cell.key"
-                                            :tabindex="cell.key === tabKey ? 0 : -1"
-                                            :aria-disabled="isOff(cell.key) ? 'true' : 'false'"
-                                            :aria-label="label(cell.key)"
-                                            :title="partialText(cell.key)"
-                                            @click="pick(cell.key)"
-                                            @mouseenter="hoverKey = cell.key"
-                                            @focus="focusKey = cell.key; hoverKey = cell.key">
-                                            <span x-text="cell.day"></span>
-                                            <span class="bk-dot" x-show="isPartial(cell.key)" aria-hidden="true"></span>
-                                        </button>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
-                    </div>
-                </template>
-            </div>
+            <div x-data="{ get calendarMonth() { return cursor } }">@include('components.booking-calendar-grid')</div>
 
             <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 text-xs">
                 <span class="inline-flex items-center gap-1.5"><span class="bk-dot-legend" aria-hidden="true"></span> Sebagian terpesan</span>
                 <button type="button" class="inline-flex min-h-11 items-center font-semibold text-[var(--ink)] underline lg:min-h-0 lg:py-1" x-show="startDate" x-cloak @click="clearDates">Hapus tanggal</button>
             </div>
             <p class="text-xs text-[var(--danger)]" x-show="calError" x-cloak x-text="calError" role="alert"></p>
+
+            </div>
+            <button type="button" class="my-4 min-h-11 font-semibold text-[var(--ink)] underline lg:hidden" @click="editDates">Ubah tanggal</button>
 
             {{-- Jam mulai: muncul setelah rentang dipilih; jam selesai = jam mulai (1 hari = 24 jam) --}}
             <div class="mt-2" x-show="days" x-cloak>
@@ -117,6 +89,36 @@
         </div>
     </x-modal>
 
+    <x-modal name="booking-calendar-{{ $vehicle->id }}" max-width="lg" panel-class="booking-calendar-sheet" aria-label="Ubah tanggal">
+        <div class="flex h-full min-h-0 flex-col">
+            <header class="flex shrink-0 items-start justify-between gap-2 px-5 pb-4 pt-6">
+                <div>
+                    <h2 class="text-2xl text-[var(--ink)]">Ubah tanggal</h2>
+                    <p class="mt-2 text-sm" aria-live="polite" x-text="days ? `${fmtShort(startDate)} – ${fmtShort(endDate)} · ${days} hari` : (startDate ? 'Pilih tanggal selesai' : 'Pilih tanggal mulai, lalu tanggal selesai')"></p>
+                </div>
+                <button type="button" class="min-h-11 min-w-11 text-2xl text-[var(--ink)]" @click="$dispatch('close')" aria-label="Tutup kalender">&times;</button>
+            </header>
+            <div class="grid shrink-0 grid-cols-7 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-3 text-center text-xs font-semibold" aria-hidden="true">
+                @foreach (['S', 'S', 'R', 'K', 'J', 'S', 'M'] as $day)<span>{{ $day }}</span>@endforeach
+            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5">
+                <p class="text-xs text-[var(--danger)]" x-show="calError" x-cloak x-text="calError" role="alert"></p>
+                <button type="button" class="min-h-11 text-sm font-semibold underline" x-show="calError" x-cloak @click="mobileMonths.forEach(month => loadMonth(month))">Coba lagi</button>
+                <template x-for="calendarMonth in mobileMonths" :key="calendarMonth">
+                    <section class="py-5" :aria-label="titleFor(calendarMonth)">
+                        <h3 class="mb-3 text-base" x-text="titleFor(calendarMonth)"></h3>
+                        @include('components.booking-calendar-grid', ['mobile' => true])
+                    </section>
+                </template>
+                <button type="button" class="mb-5 min-h-11 w-full font-semibold underline" @click="moreMonths">Muat bulan berikutnya</button>
+            </div>
+            <footer data-calendar-footer class="flex shrink-0 items-center justify-between gap-4 border-t border-[var(--line)] bg-[var(--surface)] px-5 pt-4" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+                <button type="button" class="min-h-11 font-semibold text-[var(--ink)] underline" @click="clearDates">Hapus tanggal</button>
+                <x-primary-button type="button" @click="saveDates" x-bind:disabled="!validRange">Simpan</x-primary-button>
+            </footer>
+        </div>
+    </x-modal>
+
     {{-- Mobile: bar bawah tetap membuka sheet yang sama --}}
     <div class="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[var(--surface)] px-4 pt-3 lg:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
         <div class="mx-auto flex max-w-[1320px] items-center justify-between gap-3">
@@ -124,7 +126,7 @@
                 <span x-show="!days"><span class="text-lg font-bold text-[var(--ink)]">{{ $price }}</span>/hari</span>
                 <span x-show="days" x-cloak><span class="text-lg font-bold text-[var(--ink)]" x-text="formatPrice(pricePerDay * days)"></span> · <span x-text="`${days} hari`"></span></span>
             </p>
-            <x-primary-button type="button" class="shrink-0" @click="openModal"><span x-text="status === 'ok' ? 'Lanjut' : 'Pilih tanggal'">Pilih tanggal</span></x-primary-button>
+            <x-primary-button type="button" class="shrink-0" x-ref="bookingTrigger" @click="openModal"><span x-text="status === 'ok' ? 'Lanjut' : 'Pilih tanggal'">Pilih tanggal</span></x-primary-button>
         </div>
     </div>
 </div>
@@ -165,12 +167,15 @@
             pricePerDay: pricePerDay,
             autoOpen: autoOpen,
             maxDays: 5,
+            mobileMonths: [],
+            datesSaved: false,
             jadwalUrl: '',
             today: wib({ year: 'numeric', month: '2-digit', day: '2-digit' }),
             cursor: '',          // 'YYYY-MM' bulan yang tampil
             booked: {},          // { 'YYYY-MM-DD': ['08:00–12:00', ...] } dari endpoint jadwal (sudah termasuk buffer)
             loadedMonths: {},
-            calLoading: false,
+            pendingMonths: 0,
+            get calLoading() { return this.pendingMonths > 0; },
             calError: null,
             startDate: null,
             endDate: null,
@@ -201,26 +206,50 @@
 
             get days() { return this.startDate && this.endDate ? diffDays(this.startDate, this.endDate) : 0; },
             get monthKey() { return this.cursor; },
-            get monthTitle() { return fmt(`${this.cursor}-01`, { month: 'long', year: 'numeric' }); },
+            titleFor(month) { return fmt(`${month}-01`, { month: 'long', year: 'numeric' }); },
+            get monthTitle() { return this.titleFor(this.cursor); },
+            get validRange() {
+                if (!this.days || this.startDate < this.today || this.isFull(this.startDate) || !this.canEnd(this.endDate)) return false;
+                for (let k = this.startDate; k <= this.endDate; k = addDays(k, 1)) if (this.loadedMonths[k.slice(0, 7)] !== 'ready') return false;
+                return true;
+            },
+            moreMonths() {
+                let month = this.mobileMonths.length ? this.nextMonth(this.mobileMonths.at(-1)) : this.today.slice(0, 7);
+                for (let i = 0; i < 6; i++) { this.mobileMonths.push(month); this.loadMonth(month); month = this.nextMonth(month); }
+            },
+            editDates() {
+                this.$refs.bookingTrigger?.focus();
+                this.$dispatch('close-modal', `booking-modal-${vehicleId}`);
+                if (!this.mobileMonths.length) { this.moreMonths(); this.moreMonths(); }
+                else this.mobileMonths.forEach(month => this.loadMonth(month));
+                this.$dispatch('open-modal', `booking-calendar-${vehicleId}`);
+            },
+            saveDates() {
+                if (!this.validRange) return;
+                this.$refs.bookingTrigger?.focus();
+                this.datesSaved = true;
+                this.$dispatch('close-modal', `booking-calendar-${vehicleId}`);
+                this.$dispatch('open-modal', `booking-modal-${vehicleId}`);
+            },
             get canPrev() { return this.cursor > this.today.slice(0, 7); },
 
-            get weeks() {
-                const first = `${this.cursor}-01`;
+            weeksFor(month) {
+                const first = `${month}-01`;
                 const offset = (new Date(toUtc(first)).getUTCDay() + 6) % 7; // Senin = 0
-                const total = diffDays(first, addDays(`${this.nextMonth(this.cursor)}-01`, 0));
+                const total = diffDays(first, addDays(`${this.nextMonth(month)}-01`, 0));
                 const cells = [];
-                for (let i = 0; i < offset; i++) cells.push({ key: `e${this.cursor}${i}`, day: null });
+                for (let i = 0; i < offset; i++) cells.push({ key: `e${month}${i}`, day: null });
                 for (let d = 0; d < total; d++) { const key = addDays(first, d); cells.push({ key, day: d + 1 }); }
-                while (cells.length % 7) cells.push({ key: `t${this.cursor}${cells.length}`, day: null });
+                while (cells.length % 7) cells.push({ key: `t${month}${cells.length}`, day: null });
                 const weeks = [];
                 for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
                 return weeks;
             },
 
             // Tanggal yang menerima Tab (roving tabindex): fokus terakhir / mulai / hari ini / tanggal 1.
-            get tabKey() {
-                for (const k of [this.focusKey, this.startDate, this.today]) if (k && k.startsWith(this.cursor)) return k;
-                return `${this.cursor}-01`;
+            tabKeyFor(month) {
+                for (const k of [this.focusKey, this.startDate, this.today]) if (k && k.startsWith(month)) return k;
+                return `${month}-01`;
             },
 
             get timeOptions() {
@@ -241,18 +270,19 @@
             async loadMonth(mk) {
                 if (this.loadedMonths[mk]) return;
                 this.loadedMonths[mk] = true;
-                this.calLoading = true;
+                this.pendingMonths++;
                 try {
                     const response = await fetch(`${this.jadwalUrl}?month=${mk}`, { headers: { Accept: 'application/json' } });
                     if (!response.ok) throw new Error();
                     const data = await response.json();
                     this.booked = { ...this.booked, ...data.days };
+                    this.loadedMonths[mk] = 'ready';
                     this.calError = null;
                 } catch (e) {
                     this.loadedMonths[mk] = false;
                     this.calError = 'Jadwal kalender belum bisa dimuat. Ketersediaan tetap dicek saat memilih jam.';
                 } finally {
-                    this.calLoading = false;
+                    this.pendingMonths--;
                 }
             },
 
@@ -332,8 +362,9 @@
                 const next = addDays(k, step);
                 if (next.slice(0, 7) < this.today.slice(0, 7)) return;
                 if (!next.startsWith(this.cursor)) { this.cursor = next.slice(0, 7); this.loadAround(); }
+                if (this.mobileMonths.length && next.slice(0, 7) > this.mobileMonths.at(-1)) this.moreMonths();
                 this.focusKey = next;
-                this.$nextTick(() => this.$el.querySelector(`[data-date="${next}"]`)?.focus());
+                this.$nextTick(() => [...this.$el.querySelectorAll(`[data-date="${next}"]`)].find(el => el.getClientRects().length)?.focus());
             },
 
             // Validasi akhir lewat endpoint durasi yang sama dengan checkout (days = selisih hari).
@@ -364,7 +395,8 @@
             formatPrice(price) { return window.formatRupiah(price); },
 
             openModal() {
-                this.$dispatch('open-modal', `booking-modal-${vehicleId}`);
+                if (this.datesSaved && this.days) this.$dispatch('open-modal', `booking-modal-${vehicleId}`);
+                else this.editDates();
             },
 
             proceed() {
