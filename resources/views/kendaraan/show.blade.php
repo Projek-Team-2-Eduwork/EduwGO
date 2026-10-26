@@ -21,16 +21,15 @@
     <div class="mx-auto max-w-[1320px] px-4 pt-6 sm:px-6 lg:pt-10 xl:px-0">
         <div class="flex flex-wrap items-center justify-between gap-x-4">
             <nav aria-label="Breadcrumb" class="flex min-w-0 items-center gap-2 text-sm">
-                <a href="{{ route('home') }}" class="hidden min-h-11 items-center hover:underline sm:inline-flex">Beranda</a>
-                <span class="hidden sm:inline" aria-hidden="true">/</span>
+                <a href="{{ route('home') }}" class="hidden min-h-11 items-center hover:underline lg:inline-flex">Beranda</a>
+                <span class="hidden lg:inline" aria-hidden="true">/</span>
                 <a href="{{ $backUrl }}" class="inline-flex min-h-11 shrink-0 items-center gap-1 hover:underline">
-                    <svg class="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    <span class="lg:hidden" aria-hidden="true">←</span>
                     Pilih motor
                 </a>
-                <span aria-hidden="true">/</span>
-                <span aria-current="page" class="truncate text-[var(--ink)]">{{ $vehicle->name }}</span>
+                <span class="hidden lg:inline" aria-hidden="true">/</span>
+                <span aria-current="page" class="hidden truncate text-[var(--ink)] lg:inline">{{ $vehicle->name }}</span>
             </nav>
-            <a href="{{ $backUrl }}" class="btn-secondary-edu btn-sm hidden min-h-11 items-center sm:inline-flex">Kembali ke hasil</a>
         </div>
 
         <h1 class="reveal mt-2 text-2xl text-[var(--ink)] lg:text-3xl">{{ $vehicle->name }}</h1>
