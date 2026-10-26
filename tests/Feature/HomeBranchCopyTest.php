@@ -100,7 +100,7 @@ class HomeBranchCopyTest extends TestCase
     {
         $branch = Branch::factory()->create();
         $vehicle = Vehicle::factory()->create(['branch_id' => $branch->id]);
-        Vehicle::factory()->create(['branch_id' => $branch->id, 'vehicle_type_id' => VehicleType::create(['name' => 'Sport', 'slug' => 'sport'])->id]);
+        Vehicle::factory()->create(['branch_id' => $branch->id, 'vehicle_type_id' => VehicleType::create(['name' => 'Tipe Uji', 'slug' => 'tipe-uji'])->id]);
         $html = $this->withCookie('branch', $branch->slug)->get('/')->assertOk()->getContent();
         $document = new \DOMDocument;
         $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
