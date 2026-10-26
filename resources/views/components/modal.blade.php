@@ -18,7 +18,7 @@
     x-on:keydown.escape.window="if (show && !$event.defaultPrevented && [...document.querySelectorAll('[data-modal-open]')].at(-1) === $el) { $event.preventDefault(); show = false; }"
     x-on:keydown.tab="trap($event)"
     x-show="show || desktop" x-cloak
-    class="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6 {{ $placement === 'navbar' ? 'modal-from-navbar' : '' }} {{ $inlineDesktop ? 'lg:static lg:z-auto '.$desktopDisplay.' lg:p-0' : '' }}"
+    class="fixed inset-0 z-50 flex items-end justify-center lg:items-center {{ $inlineDesktop ? 'lg:static lg:z-auto '.$desktopDisplay.' lg:p-0' : 'lg:p-6' }} {{ $placement === 'navbar' ? 'modal-from-navbar' : '' }}"
     style="display: {{ $show ? 'flex' : 'none' }};">
     <div x-show="show && !desktop" class="scrim absolute inset-0" x-on:click="show = false" x-transition:enter="scrim-enter" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="scrim-leave" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" aria-hidden="true"></div>
     <div x-show="show || desktop" x-ref="dialog" role="dialog" aria-modal="true" :role="desktop ? null : 'dialog'" :aria-modal="desktop ? null : 'true'" aria-label="{{ $attributes->get('aria-label', 'Dialog konfirmasi') }}" tabindex="-1"

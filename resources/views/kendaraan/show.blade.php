@@ -35,13 +35,13 @@
         <h1 class="reveal mt-2 text-2xl text-[var(--ink)] lg:text-3xl">{{ $vehicle->name }}</h1>
         <p class="mt-1 text-sm">{{ $meta }}</p>
 
-        <div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div id="pesan" style="scroll-margin-top: 6rem" class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
             <div class="min-w-0 space-y-8">
-                {{-- Satu foto unit asli, utuh; tanpa galeri tiruan --}}
-                <div @class(['relative flex min-h-48 items-center justify-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)]', 'aspect-[4/3]' => ! $vehicle->image])>
+                {{-- Satu foto unit asli, utuh; tanpa galeri tiruan. Rasio tetap supaya foto mengisi kartu. --}}
+                <div class="relative flex aspect-[4/3] min-h-48 items-center justify-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--bg)]">
                     <x-illustration name="vehicles" class="absolute" />
                     @if ($vehicle->image)
-                        <x-picture :src="$vehicle->image" alt="Foto {{ $vehicle->name }}" onerror="this.remove()" class="relative max-h-[520px] w-full object-contain" />
+                        <x-picture :src="$vehicle->image" alt="Foto {{ $vehicle->name }}" onerror="this.remove()" class="relative h-full w-full object-contain" />
                     @endif
                 </div>
 
@@ -95,7 +95,7 @@
             </div>
 
             {{-- Sticky dengan tinggi natural (tanpa scroll internal); layar terlalu pendek: ikut menggulir biasa --}}
-            <aside class="lg:sticky lg:top-20 lg:[@media(max-height:719px)]:static" aria-label="Pesan motor">
+            <aside class="lg:sticky lg:[@media(max-height:719px)]:static" style="top: 6rem" aria-label="Pesan motor">
                 @auth
                     <x-booking-duration-modal :vehicle="$vehicle" />
                 @else

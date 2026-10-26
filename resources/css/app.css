@@ -391,18 +391,78 @@ textarea:focus {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Navbar: route-aware floating pill. The 88px wrapper never changes height. */
-.navbar-edu { display: flow-root; height: 88px; flex-shrink: 0; background: transparent; border: 0; }
-.navbar-edu-inner { width: 100%; max-width: 100%; height: 64px; margin: 0 auto; transition: max-width 280ms ease, width 280ms ease, margin-top 280ms ease; }
-.navbar-edu-bar { height: 64px; padding-inline: clamp(1rem, 3vw, 3rem); border: 1px solid transparent; border-radius: 0; background: transparent; transition: padding-inline 280ms ease, border-radius 280ms ease, background-color 280ms ease, border-color 280ms ease, box-shadow 280ms ease, backdrop-filter 280ms ease; }
+/* Navbar: latar putih penuh di atas, lalu mengecil jadi pill kaca saat halaman digulir. */
+.navbar-edu { display: flow-root; height: 80px; flex-shrink: 0; background: transparent; border: 0; transition: background-color 280ms ease; }
+.navbar-edu:not(.is-scrolled) { background-color: var(--surface); }
+.navbar-edu-inner { width: 100%; max-width: 100%; height: 60px; margin: 0 auto; transition: max-width 280ms ease, width 280ms ease, margin-top 280ms ease; }
+.navbar-edu-bar { height: 60px; padding-inline: clamp(1rem, 3vw, 3rem); border: 1px solid transparent; border-radius: 0; background: transparent; transition: height 280ms ease, padding-inline 280ms ease, border-radius 280ms ease, background-color 280ms ease, border-color 280ms ease, box-shadow 280ms ease, backdrop-filter 280ms ease; }
 .navbar-brand .brand-logo { height: 2rem; width: auto; }
-html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 3rem); max-width: 1280px; margin-top: 12px; }
-html[data-nav-pill] .navbar-edu-bar { padding-inline: 1rem; border-color: var(--line); border-radius: 999px; background-color: var(--surface); background-color: color-mix(in srgb, var(--surface) 98%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 4px 18px color-mix(in srgb, var(--photo-ink) 8%, transparent); }
+html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 2rem); margin-top: 12px; }
+html[data-nav-pill] .navbar-edu-bar { height: 60px; padding-inline: .75rem; border-color: transparent; border-radius: 999px; background-color: transparent; backdrop-filter: none; box-shadow: none; }
 html:not([data-nav-ready]) .navbar-edu-inner, html:not([data-nav-ready]) .navbar-edu-bar { transition: none; }
 .navbar-edu-panel { position: absolute; top: 84px; inset-inline: 8px; max-height: calc(100dvh - 100px); overflow-y: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); box-shadow: 0 4px 18px color-mix(in srgb, var(--photo-ink) 8%, transparent); }
+
+.navbar-edu .hero-nav-link { padding: .55rem .85rem; border-radius: 999px; }
+.navbar-edu .hero-nav-link:hover { background-color: var(--bg); }
+.navbar-edu .hero-nav-control { border-radius: 999px; }
+.navbar-edu .btn-primary-edu { border-radius: 999px; }
+
+@media (min-width: 640px) and (max-width: 767px) {
+    .navbar-brand .brand-logo { height: 1.5rem; }
+    .navbar-edu .hero-nav-link { padding: .45rem .55rem; font-size: .8125rem; }
+    .navbar-edu .btn-primary-edu { padding-inline: 1rem; }
+    .navbar-edu-bar { gap: .5rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navbar-edu { height: 92px; }
+    .navbar-edu-inner { height: 72px; }
+    html[data-nav-pill] .navbar-edu-inner { margin-top: 12px; }
+    html[data-nav-pill] .navbar-edu-bar { height: 72px; padding-inline: 1rem; }
+    .navbar-brand .brand-logo { height: 1.75rem; }
+    .navbar-edu .hero-nav-link { padding: .5rem .7rem; font-size: .875rem; }
+}
+
+@media (min-width: 1024px) {
+    .navbar-edu { height: 96px; }
+    .navbar-edu-inner { height: 76px; }
+    html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 2rem); margin-top: 16px; }
+    html[data-nav-pill] .navbar-edu-bar { height: 76px; padding-inline: 1.25rem; }
+}
+
 @media (max-width: 639px) {
-    html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 1rem); }
-    html[data-nav-pill] .navbar-edu-bar { padding-inline: .5rem; }
+    .navbar-edu { height: 76px; }
+    .navbar-edu-inner { height: 60px; }
+    html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 1rem); margin-top: 8px; }
+    html[data-nav-pill] .navbar-edu-bar { height: 60px; padding-inline: .5rem; }
+    .navbar-edu-bar { gap: .5rem; }
+    .navbar-brand .brand-logo { height: 1.5rem; width: auto; max-width: 100%; }
+    .navbar-edu button[aria-controls='mobile-menu'] { min-width: 44px; }
+}
+
+/* Saat halaman digulir: navbar mengecil jadi pill kaca yang mengambang. */
+.navbar-edu.is-scrolled .navbar-edu-inner { max-width: 1120px; }
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .navbar-edu.is-scrolled .navbar-edu-inner { max-width: 980px; }
+}
+.navbar-edu.is-scrolled .navbar-edu-bar {
+    border-color: var(--line);
+    background-color: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px -20px color-mix(in srgb, var(--photo-ink) 30%, transparent);
+}
+
+@media (min-width: 1024px) {
+    .navbar-edu.is-scrolled .navbar-edu-bar { height: 64px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navbar-edu.is-scrolled .navbar-edu-bar { height: 64px; }
+}
+
+@media (max-width: 767px) {
+    .navbar-edu.is-scrolled .navbar-edu-bar { height: 56px; }
 }
 
 /*
