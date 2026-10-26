@@ -68,7 +68,8 @@ class UiReviewTest extends TestCase
         $html = $this->withCookie('branch', $branch->slug)->get('/')->assertOk()->getContent();
 
         $this->assertStringContainsString('Rp65.000', $html);
-        $this->assertStringContainsString('Tersedia sampai', $html);
+        $this->assertStringContainsString('Pilih jadwal untuk cek', $html);
+        $this->assertStringContainsString('Dipesan berikutnya', $html);
         $card = Blade::render('<x-vehicle-card :vehicle="$vehicle" :available="false" />', ['vehicle' => $vehicle]);
         $this->assertSame(1, substr_count($card, '<a '));
         $this->assertStringContainsString('Lihat detail', $card);

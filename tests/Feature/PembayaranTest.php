@@ -150,6 +150,21 @@ class PembayaranTest extends TestCase
         ]);
     }
 
+    public function test_sukses_pembayaran_memakai_dialog_kustom_bukan_confirm_browser()
+    {
+        Http::fake(['api.xendit.co/*' => Http::response($this->fakeQrisResponse())]);
+
+        $response = $this->actingAs($this->user)->get('/pembayaran/BOOK-PBR-001');
+
+        $response->assertOk()
+            ->assertSee('payment-success', false)
+            ->assertSee('role="dialog"', false)
+            ->assertSee('Pembayaran Berhasil')
+            ->assertSee('Lihat detail pesanan lunas')
+            ->assertSee('Dialihkan otomatis ke detail pesanan')
+            ->assertDontSee('confirm(');
+    }
+
     public function test_pilih_metode_va_menampilkan_nomor_rekening()
     {
         Http::fake(['api.xendit.co/*' => Http::response($this->fakeVaResponse())]);

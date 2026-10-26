@@ -39,8 +39,10 @@ class HomeTest extends TestCase
         $this->assertCount(8, $response->viewData('vehicles'));
         $this->assertSame(9, $response->viewData('activeVehicleCount'));
         $response->assertSee('9 motor aktif');
-        $response->assertSee('Tersedia');
+        $response->assertSee('Pilih jadwal untuk cek');
         $response->assertSee('Lihat semua');
+        $response->assertSee('Pesan');
+        $response->assertSee(route('kendaraan.detail', $response->viewData('vehicles')->first()).'#pesan', false);
     }
 
     public function test_motor_dengan_booking_aktif_sekarang_berbadge_disewa(): void

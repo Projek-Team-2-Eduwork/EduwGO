@@ -1,4 +1,103 @@
 <x-app-layout title="Bayar pesanan">
+    <style>
+        /* Dialog sukses pembayaran: modal UI sendiri di tengah layar. */
+        .payment-success {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .payment-success__scrim {
+            position: absolute;
+            inset: 0;
+            background: var(--scrim);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        .payment-success__panel {
+            position: relative;
+            width: 100%;
+            max-width: 26rem;
+            max-height: calc(100dvh - 2rem);
+            overflow-y: auto;
+            padding: 2rem 1.5rem 1.5rem;
+            border: 1px solid var(--line);
+            border-radius: 1rem;
+            background: var(--surface);
+            color: var(--ink-muted);
+            text-align: center;
+            box-shadow: 0 28px 70px -28px color-mix(in srgb, var(--photo-ink) 55%, transparent);
+        }
+
+        .payment-success__panel:focus {
+            outline: none;
+        }
+
+        .payment-success__icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.5rem;
+            height: 3.5rem;
+            margin: 0 auto;
+            border-radius: 999px;
+            background: var(--success-soft);
+            color: var(--success);
+        }
+
+        .payment-success__icon svg {
+            width: 1.75rem;
+            height: 1.75rem;
+        }
+
+        .payment-success__bar {
+            height: .25rem;
+            margin-top: 1.25rem;
+            overflow: hidden;
+            border-radius: 999px;
+            background: var(--line);
+        }
+
+        .payment-success__bar > span {
+            display: block;
+            height: 100%;
+            background: var(--success);
+            transition: width 1s linear;
+        }
+
+        .payment-success-enter {
+            transition: opacity 180ms ease, transform 180ms ease;
+        }
+
+        .payment-success-enter-start {
+            opacity: 0;
+            transform: translateY(8px) scale(.98);
+        }
+
+        .payment-success-enter-end {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        @media (max-width: 639px) {
+            .payment-success__panel {
+                padding: 1.75rem 1.25rem 1.25rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .payment-success-enter,
+            .payment-success__bar > span {
+                transition: none;
+            }
+        }
+    </style>
+
     <div class="mx-auto w-full max-w-lg px-4 py-8">
         <x-rental-stepper :step="3" />
         {{-- Header --}}
@@ -148,6 +247,42 @@
                         @endif
                     @endif
                 </div>
+
+                {{-- Popup sukses: dialog UI sendiri, bukan confirm bawaan browser. --}}
+                <div x-show="paid" x-cloak class="payment-success"
+                     x-transition:enter="payment-success-enter"
+                     x-transition:enter-start="payment-success-enter-start"
+                     x-transition:enter-end="payment-success-enter-end"
+                     x-on:keydown.tab="window.trapPanelFocus($event, $refs.successDialog)">
+                    <div class="payment-success__scrim" aria-hidden="true"></div>
+
+                    <div x-ref="successDialog" class="payment-success__panel" role="dialog" aria-modal="true"
+                         aria-labelledby="payment-success-title" aria-describedby="payment-success-desc" tabindex="-1">
+                        <div class="payment-success__icon" aria-hidden="true">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+
+                        <h2 id="payment-success-title" class="mt-5 text-2xl font-bold text-[var(--ink)]">Pembayaran Berhasil</h2>
+                        <p id="payment-success-desc" class="mt-2 text-sm">
+                            Pesanan <strong class="text-[var(--ink)]">{{ $booking->code }}</strong> sudah lunas. Terima kasih sudah menyelesaikan pembayaran.
+                        </p>
+
+                        <div class="payment-success__bar" aria-hidden="true">
+                            <span :style="{ width: (countdown / redirectSeconds * 100) + '%' }"></span>
+                        </div>
+                        <p class="mt-3 text-xs text-[var(--ink-muted)]">
+                            Dialihkan otomatis ke detail pesanan dalam
+                            <strong class="text-[var(--ink)]" x-text="countdown"></strong> detik.
+                        </p>
+
+                        <a :href="successUrl" x-ref="successAction" x-on:click.prevent="goToDetail()"
+                           class="btn-primary-edu mt-6 flex w-full items-center justify-center py-3 text-sm">
+                            Lihat detail pesanan lunas
+                        </a>
+                    </div>
+                </div>
             </div>
         @endif
     </div>
@@ -203,41 +338,91 @@
             }));
 
             Alpine.data('bayarPembayaran', (statusUrl, successUrl) => ({
+                statusUrl,
+                successUrl,
                 checking: false,
                 message: '',
                 pollTimer: null,
+                paid: false,
+                redirectSeconds: 5,
+                countdown: 5,
+                redirectTimer: null,
 
                 async sudahBayar() {
-                    if (this.checking) {
+                    if (this.checking || this.paid) {
                         return;
                     }
 
                     this.checking = true;
 
-                    // 1. Ambil status dulu (bo bisa lambat, biar nge-triggger polling)
+                    // 1. Ambil status dulu (bisa lambat, biar nge-trigger polling)
                     let dataPaid = false;
                     try {
-                        const res = await fetch(statusUrl, { headers: { Accept: 'application/json' } });
+                        const res = await fetch(this.statusUrl, { headers: { Accept: 'application/json' } });
                         const data = await res.json();
-                        if (data.paid) dataPaid = true;
+                        dataPaid = data.paid === true;
                     } catch (e) {
-                        // gagal koneksi — biarin aja, tetap lanjut proses bawah
+                        // Gagal koneksi: tetap tampilkan pesan verifikasi di bawah.
                     }
 
-                    // 2. Kalau udah dibayar → tampil pop up sukses + redirect
+                    // 2. Kalau sudah dibayar: tampilkan dialog sukses sendiri.
                     if (dataPaid) {
-                        if (confirm('Pembayaran Berhasil ✓\n\nHalaman akan dialihkan ke detail pesanan lunas.')) {
-                            window.location.href = successUrl;
-                        }
+                        this.showSuccess();
                         return;
                     }
 
-                    // 3. Kalau belum dibayar → pesan + mulai polling 5 detik
+                    // 3. Kalau belum dibayar: pesan + polling tiap 5 detik.
                     this.message = 'Pembayaran sedang diverifikasi (max 5 detik). Silakan tunggu notifikasi.';
                     if (!this.pollTimer) {
                         this.pollTimer = setInterval(() => this.sudahBayar(), 5000);
                     }
                     this.checking = false;
+                },
+
+                showSuccess() {
+                    if (this.paid) {
+                        return;
+                    }
+
+                    this.checking = false;
+                    this.message = '';
+                    this.paid = true;
+                    this.countdown = this.redirectSeconds;
+
+                    if (this.pollTimer) {
+                        clearInterval(this.pollTimer);
+                        this.pollTimer = null;
+                    }
+
+                    window.setPanelScrollLock?.(this.$el, true);
+                    this.$nextTick(() => this.$refs.successAction?.focus());
+
+                    this.redirectTimer = setInterval(() => {
+                        this.countdown -= 1;
+                        if (this.countdown <= 0) {
+                            this.goToDetail();
+                        }
+                    }, 1000);
+                },
+
+                goToDetail() {
+                    if (this.redirectTimer) {
+                        clearInterval(this.redirectTimer);
+                        this.redirectTimer = null;
+                    }
+
+                    window.location.href = this.successUrl;
+                },
+
+                destroy() {
+                    if (this.pollTimer) {
+                        clearInterval(this.pollTimer);
+                    }
+                    if (this.redirectTimer) {
+                        clearInterval(this.redirectTimer);
+                    }
+
+                    window.setPanelScrollLock?.(this.$el, false);
                 }
             }))
         });
