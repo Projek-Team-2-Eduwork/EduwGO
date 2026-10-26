@@ -52,6 +52,22 @@ class VehicleDetailTest extends TestCase
             ->assertSee('Lanjut ke checkout');
     }
 
+    public function test_kalender_mobile_memiliki_bulan_vertikal_dan_footer_simpan(): void
+    {
+        $vehicle = Vehicle::factory()->create();
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('kendaraan.detail', $vehicle))
+            ->assertOk()
+            ->assertSee('booking-calendar-sheet', false)
+            ->assertSee('calendarMonth in mobileMonths', false)
+            ->assertSee('data-calendar-footer', false)
+            ->assertSee('Hapus tanggal')
+            ->assertSee('Simpan')
+            ->assertSee('x-bind:disabled="!validRange"', false)
+            ->assertSee('panel-away', false);
+    }
+
     public function test_guest_klik_booking_menuju_login_lalu_kembali_ke_detail(): void
     {
         $vehicle = Vehicle::factory()->create();
@@ -149,8 +165,8 @@ class VehicleDetailTest extends TestCase
             ->assertSee('Ambil di '.$branch)
             ->assertSee('Lokasi pengambilan')
             ->assertSee('Rp70.000')
-            ->assertSee('Kembali ke hasil')
-            ->assertSee(e(url('/kendaraan?harga=termurah&q=a')), false)
+            ->assertDontSee('Kembali ke hasil')
+            ->assertSee('<a href="'.e(url('/kendaraan?harga=termurah&q=a')).'" class="inline-flex min-h-11 shrink-0 items-center gap-1 hover:underline">', false)
             ->assertSee('Baca seluruh ketentuan')
             ->assertSeeInOrder(['<h1', 'Ambil di '.$branch, 'Foto '.$vehicle->name], false);
     }

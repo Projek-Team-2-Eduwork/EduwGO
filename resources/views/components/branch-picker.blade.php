@@ -1,4 +1,4 @@
-@props(['align' => 'right'])
+@props(['align' => 'right', 'mobileSheet' => true])
 
 @php
     $ctx = app(\App\Services\BranchContext::class);
@@ -7,7 +7,7 @@
 @endphp
 
 @if ($current)
-    <x-dropdown :align="$align" width="w-64">
+    <x-dropdown :align="$align" width="w-64" :mobile-sheet="$mobileSheet">
         <x-slot name="trigger">
             <button type="button" {{ $attributes->class(['inline-flex max-w-full items-center gap-2 rounded-lg border border-[var(--line)] px-3 py-2 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]']) }} style="background-color: var(--surface);" aria-haspopup="listbox" aria-label="Pilih cabang, saat ini {{ $current->name }}">
                 <svg class="h-4 w-4 shrink-0 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10zm0-8a2 2 0 100-4 2 2 0 000 4z"/></svg>

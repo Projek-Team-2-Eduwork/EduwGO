@@ -22,7 +22,7 @@ class RemindBookings extends Command
         // Pengingat Pengambilan (Pickup)
         $pickups = Booking::where('status', BookingStatus::Paid)
             ->whereDate('start_at', $besok)
-            ->with(['user', 'vehicle'])
+            ->with(['user', 'vehicle.branch'])
             ->get();
 
         foreach ($pickups as $booking) {
@@ -32,7 +32,7 @@ class RemindBookings extends Command
         // Pengingat Pengembalian (Return)
         $returns = Booking::where('status', BookingStatus::Rented)
             ->whereDate('end_at', $besok)
-            ->with(['user', 'vehicle'])
+            ->with(['user', 'vehicle.branch'])
             ->get();
 
         foreach ($returns as $booking) {

@@ -26,8 +26,8 @@
      x-init="sync(true); $watch('open', () => sync())"
      x-on:scroll.window.passive="sync()"
      x-on:pageshow.window="open = false; sync(true)"
-     x-on:resize.window.debounce.100ms="if (window.innerWidth >= 1280) open = false; sync()"
-     x-on:keydown.escape.window="open = false"
+     x-on:resize.window.debounce.100ms="if (window.innerWidth >= 1280) { open = false; $dispatch('close-modal', 'mobile-menu'); } sync()"
+     x-on:modal-state.window="if ($event.detail.name === 'mobile-menu') { open = $event.detail.show; sync(); }"
      :class="{ 'is-over-hero': home && !pill && !open }"
      class="navbar-edu sticky top-0 z-40"
      aria-label="Navigasi utama">
@@ -46,7 +46,7 @@
             </div>
 
             <div class="hidden items-center gap-3 xl:flex">
-                @unless($homeHero)<x-branch-picker class="hero-nav-control max-w-[10rem]" />@endunless
+                @unless($homeHero)<x-branch-picker :mobile-sheet="false" class="hero-nav-control max-w-[10rem]" />@endunless
 
                 <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="hero-nav-control inline-flex items-center gap-2 rounded-lg border border-[var(--line)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--bg)]" style="background-color: var(--surface);">
                     <svg class="h-4 w-4 text-[var(--accent)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2a9.9 9.9 0 00-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1012.04 2zm5.8 14.06c-.24.68-1.42 1.3-1.96 1.35-.5.05-1.13.07-1.83-.12a16.5 16.5 0 01-1.66-.61c-2.92-1.26-4.82-4.2-4.97-4.4-.14-.2-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.26-.3.58-.37.77-.37h.55c.18 0 .42-.07.65.5.24.58.82 2 .89 2.15.07.14.12.31.02.5-.1.2-.14.31-.29.48-.14.17-.3.38-.43.5-.14.15-.29.3-.12.6.17.29.74 1.22 1.6 1.98 1.1.98 2.03 1.28 2.32 1.42.29.15.46.12.63-.07.17-.2.72-.84.92-1.13.19-.29.39-.24.65-.14.27.1 1.7.8 1.99.95.29.14.48.22.55.34.07.12.07.7-.17 1.38z"/></svg>
@@ -96,7 +96,7 @@
             <!-- Hamburger (mobile & tablet) -->
             <div class="flex items-center gap-2 xl:hidden">
 
-                <button type="button" @click="open = ! open" class="inline-flex items-center justify-center p-2 text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]" :aria-expanded="open.toString()" aria-controls="mobile-menu" aria-label="Buka menu">
+                <button type="button" @click="$dispatch('open-modal', 'mobile-menu')" class="inline-flex items-center justify-center p-2 text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]" :aria-expanded="open.toString()" aria-controls="mobile-menu" aria-label="Buka menu">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <path x-show="! open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path x-show="open" style="display: none;" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -107,8 +107,9 @@
     </div>
 
     <!-- Menu mobile -->
-    <div id="mobile-menu" x-show="open" x-transition style="display: none;"
-         class="navbar-edu-panel xl:hidden">
+    <x-modal name="mobile-menu" placement="navbar" aria-label="Menu navigasi">
+        <div id="mobile-menu" class="p-3">
+        <div class="flex items-center justify-between px-4 pt-2"><h2 class="text-lg text-[var(--ink)]">Menu</h2><button type="button" class="min-h-11 min-w-11 text-2xl" @click="$dispatch('close')" aria-label="Tutup menu">&times;</button></div>
         <div class="space-y-1 pb-3 pt-2">
             @foreach ($menu as $item)
                 <x-responsive-nav-link :href="$item['href']" :active="$item['active']">{{ $item['label'] }}</x-responsive-nav-link>
@@ -116,7 +117,7 @@
         </div>
 
         <div class="px-4 pb-3">
-            @unless($homeHero)<x-branch-picker align="left" class="mb-3 w-full justify-between" />@endunless
+            @unless($homeHero)<x-branch-picker :mobile-sheet="false" align="left" class="mb-3 w-full justify-between" />@endunless
 
             <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn-secondary-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm">
                 Butuh bantuan?
@@ -151,5 +152,6 @@
                 </div>
             @endauth
         </div>
-    </div>
+        </div>
+    </x-modal>
 </nav>
