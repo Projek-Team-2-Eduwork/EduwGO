@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-6" x-data="{ tab: @js($errors->isNotEmpty() ? (collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'booking_') || $key === 'content_terms') ? 'aturan' : (collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'contact_') || str_starts_with($key, 'social_')) ? 'kontak' : 'brand')) : old('active_tab', 'brand')) }">
+    <div class="py-2 sm:py-6" x-data="{ tab: @js($errors->isNotEmpty() ? (collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'booking_') || $key === 'content_terms') ? 'aturan' : (collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'contact_') || str_starts_with($key, 'social_')) ? 'kontak' : 'brand')) : old('active_tab', 'brand')) }">
         <div class="max-w-7xl mx-auto space-y-6">
             @if(session('success'))
                 <x-alert type="success">

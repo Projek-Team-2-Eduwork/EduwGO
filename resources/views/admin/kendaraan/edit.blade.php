@@ -1,11 +1,11 @@
 <x-admin-layout title="Ubah kendaraan:">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight">
+        <h2 class="truncate text-xl font-semibold leading-tight">
             Ubah kendaraan: {{ $kendaraan->name }}
         </h2>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-2 sm:py-6">
         <div class="max-w-3xl mx-auto">
             <div class="section-plain p-6">
                 <form action="{{ route('admin.kendaraan.update', $kendaraan->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">

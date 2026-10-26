@@ -3,7 +3,7 @@
         <h2 class="text-xl font-semibold leading-tight">Daftar Pengguna</h2>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-2 sm:py-6">
         <div class="max-w-7xl mx-auto space-y-6">
             @if(session('success')) <x-alert type="success">{{ session('success') }}</x-alert> @endif
             @if(session('error')) <x-alert type="error">{{ session('error') }}</x-alert> @endif

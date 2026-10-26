@@ -15,13 +15,13 @@
         ];
     @endphp
 
-    <div class="mx-auto max-w-7xl space-y-8 py-2">
+    <div class="mx-auto max-w-7xl space-y-5 py-2 sm:space-y-8">
         @if(session('success')) <x-alert type="success">{{ session('success') }}</x-alert> @endif
         @if(session('error')) <x-alert type="error">{{ session('error') }}</x-alert> @endif
 
         @if($branches->isNotEmpty())
             {{-- Cakupan cabang superadmin berlaku untuk seluruh dashboard --}}
-            <form method="GET" action="{{ route('admin.dashboard') }}" class="flex flex-wrap items-end gap-3">
+            <form method="GET" action="{{ route('admin.dashboard') }}" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
                 @foreach(['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode] as $key => $val)
                     @if($val) <input type="hidden" name="{{ $key }}" value="{{ $val }}"> @endif
                 @endforeach
@@ -31,29 +31,29 @@
         @endif
 
         {{-- Kartu statistik: klik ke daftar terfilter --}}
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             @foreach($statCards as $card)
-                <a href="{{ $card['href'] }}" class="dash-stat card-surface flex flex-col justify-between p-4 transition hover:border-[var(--accent)]">
-                    <span class="text-sm font-medium">{{ $card['label'] }}</span>
-                    <span class="mt-2 text-3xl font-bold text-[var(--{{ $card['tone'] }})]">{{ $card['value'] }}</span>
+                <a href="{{ $card['href'] }}" class="dash-stat card-surface flex min-w-0 flex-col justify-between p-4 transition hover:border-[var(--accent)] sm:p-5">
+                    <span class="text-sm font-medium leading-snug">{{ $card['label'] }}</span>
+                    <span class="mt-2 text-2xl font-bold leading-none text-[var(--{{ $card['tone'] }})] sm:text-3xl">{{ $card['value'] }}</span>
                 </a>
             @endforeach
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-3">
+        <div class="grid gap-5 sm:gap-6 lg:grid-cols-3">
             {{-- Jadwal hari ini --}}
             <section class="card-surface lg:col-span-2" aria-labelledby="jadwal-hari-ini">
-                <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--line)] px-4 py-4 sm:px-5">
                     <h3 id="jadwal-hari-ini" class="font-bold">Jadwal hari ini</h3>
-                    <span class="text-xs">{{ now()->translatedFormat('l, d M Y') }}</span>
+                    <span class="shrink-0 text-[11px] sm:text-xs">{{ now()->translatedFormat('l, d M Y') }}</span>
                 </div>
                 @if($schedule->isEmpty())
-                    <p class="px-5 py-8 text-center text-sm">Tidak ada unit diambil atau dikembalikan hari ini.</p>
+                    <p class="px-4 py-8 sm:px-5 text-center text-sm">Tidak ada unit diambil atau dikembalikan hari ini.</p>
                 @else
                     <ul class="divide-y divide-[var(--line)]">
                         @foreach($schedule as $item)
                             @php($b = $item['booking'])
-                            <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
+                            <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
                                 <div class="w-14 shrink-0">
                                     <div class="font-mono text-base font-bold text-[var(--ink)]">{{ $item['at']->format('H:i') }}</div>
                                     <div class="text-xs font-semibold {{ $item['type'] === 'ambil' ? 'text-[var(--success)]' : 'text-[var(--warning)]' }}">{{ $item['type'] === 'ambil' ? 'Ambil' : 'Kembali' }}</div>
@@ -80,16 +80,16 @@
 
             {{-- Perlu tindakan: refund manual --}}
             <section class="card-surface" aria-labelledby="perlu-refund">
-                <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--line)] px-4 py-4 sm:px-5">
                     <h3 id="perlu-refund" class="font-bold">Perlu refund</h3>
                     <a href="{{ route('admin.refund.index') }}" class="text-sm font-medium text-[var(--accent)] hover:underline">Lihat semua</a>
                 </div>
                 @if($refunds->isEmpty())
-                    <p class="px-5 py-8 text-center text-sm">Tidak ada refund tertunda.</p>
+                    <p class="px-4 py-8 sm:px-5 text-center text-sm">Tidak ada refund tertunda.</p>
                 @else
                     <ul class="divide-y divide-[var(--line)]">
                         @foreach($refunds->take(4) as $p)
-                            <li class="flex items-center justify-between gap-3 px-5 py-3">
+                            <li class="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
                                 <div class="min-w-0">
                                     <a href="{{ route('admin.pesanan.show', $p->booking->code) }}" class="font-mono text-sm font-semibold text-[var(--ink)] hover:underline">{{ $p->booking->code }}</a>
                                     <div class="truncate text-xs">{{ $p->booking->customer_name }}</div>
@@ -105,13 +105,13 @@
         {{-- Unit terlambat: daftar actionable --}}
         @if($overdue->isNotEmpty())
             <section class="card-surface border-[var(--danger)]" aria-labelledby="unit-terlambat">
-                <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--line)] px-4 py-4 sm:px-5">
                     <h3 id="unit-terlambat" class="font-bold text-[var(--danger)]">{{ $stats['overdue_vehicles'] }} unit terlambat</h3>
                     <a href="{{ route('admin.pesanan.index', $scope + ['status' => 'terlambat']) }}" class="text-sm font-medium text-[var(--accent)] hover:underline">Lihat semua</a>
                 </div>
                 <ul class="divide-y divide-[var(--line)]">
                     @foreach($overdue as $b)
-                        <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
+                        <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
                             <div class="min-w-0 flex-1">
                                 <a href="{{ route('admin.pesanan.show', $b->code) }}" class="font-semibold text-[var(--ink)] hover:underline">{{ $b->vehicle?->name ?? 'Kendaraan dihapus' }}</a>
                                 <span class="ms-1 rounded bg-[var(--bg)] px-1.5 py-0.5 font-mono text-xs">{{ $b->vehicle?->plate_number ?? '-' }}</span>
@@ -134,16 +134,16 @@
             </section>
         @endif
 
-        <div class="grid gap-6 lg:grid-cols-3">
+        <div class="grid gap-5 sm:gap-6 lg:grid-cols-3">
             {{-- Pendapatan --}}
-            <section class="card-surface p-5 lg:col-span-2" aria-labelledby="pendapatan">
-                <div class="mb-4 flex flex-wrap items-start justify-between gap-4">
-                    <div>
+            <section class="card-surface p-4 sm:p-5 lg:col-span-2" aria-labelledby="pendapatan">
+                <div class="mb-4 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+                    <div class="min-w-0">
                         <h3 id="pendapatan" class="font-bold">Pendapatan</h3>
                         <div class="mt-1 text-sm">Total Pendapatan</div>
-                        <div class="text-3xl font-bold text-[var(--accent)]">{{ rupiah($revenue) }}</div>
+                        <div class="break-words text-2xl font-bold leading-tight text-[var(--accent)] sm:text-3xl">{{ rupiah($revenue) }}</div>
                     </div>
-                    <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-secondary-edu inline-flex items-center px-4 text-sm">
+                    <a href="{{ route('admin.dashboard.export', ['dari' => $dari, 'sampai' => $sampai, 'tipe' => $tipe, 'metode' => $metode, 'branch' => request('branch')]) }}" class="btn-secondary-edu inline-flex w-full items-center justify-center px-4 text-sm sm:w-auto">
                         Export Excel
                     </a>
                 </div>
@@ -179,9 +179,9 @@
             </section>
 
             {{-- Motor terlaris --}}
-            <section class="card-surface p-5" aria-labelledby="terlaris">
+            <section class="card-surface p-4 sm:p-5" aria-labelledby="terlaris">
                 <h3 id="terlaris" class="mb-4 font-bold">Motor terlaris</h3>
-                <div class="relative flex h-64 w-full items-center justify-center">
+                <div class="relative flex h-60 w-full items-center justify-center sm:h-64">
                     @if($topVehicles->isEmpty())
                         <div class="text-sm">Belum ada data rental.</div>
                     @else
@@ -193,7 +193,7 @@
 
         {{-- Pesanan terakhir: 5 teratas, tanpa scroll internal --}}
         <section class="card-surface" aria-labelledby="pesanan-terakhir">
-            <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--line)] px-4 py-4 sm:px-5">
                 <h3 id="pesanan-terakhir" class="font-bold">Pesanan Terakhir</h3>
                 <a href="{{ route('admin.pesanan.index', $scope) }}" class="text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline">Lihat semua</a>
             </div>
@@ -203,7 +203,7 @@
                 <ul class="divide-y divide-[var(--line)]">
                     @foreach($recentBookings as $b)
                         <li>
-                            <a href="{{ route('admin.pesanan.show', $b->code) }}" class="flex items-center gap-4 px-5 py-3 transition hover:bg-[var(--bg)]">
+                            <a href="{{ route('admin.pesanan.show', $b->code) }}" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition hover:bg-[var(--bg)] sm:gap-4 sm:px-5">
                                 @if($b->vehicle_image)
                                     <x-picture :src="$b->vehicle_image" class="h-10 w-10 shrink-0 rounded-lg object-cover" alt="" />
                                 @else
@@ -213,7 +213,7 @@
                                     <p class="truncate text-sm font-bold text-[var(--ink)]">{{ $b->customer_name }} <span class="font-normal">({{ $b->vehicle_name }})</span></p>
                                     <p class="mt-0.5 truncate text-xs"><span class="font-mono">{{ $b->code }}</span> · {{ \Carbon\Carbon::parse($b->start_at)->translatedFormat('d M Y H:i') }}</p>
                                 </div>
-                                <div class="flex shrink-0 flex-col items-end gap-1">
+                                <div class="flex w-full items-center justify-between gap-3 border-t border-[var(--line)] pt-2 sm:w-auto sm:shrink-0 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
                                     <span class="text-sm font-bold text-[var(--ink)]">{{ rupiah($b->total_amount) }}</span>
                                     <x-badge-status :status="$b->status" />
                                 </div>

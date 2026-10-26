@@ -3,7 +3,7 @@
         <h2 class="text-xl font-semibold leading-tight">Pengaturan Cabang</h2>
     </x-slot>
 
-    <div class="py-6 sm:py-6">
+    <div class="py-2 sm:py-6">
         <div class="mx-auto max-w-3xl space-y-6">
             @if(session('success')) <x-alert type="success">{{ session('success') }}</x-alert> @endif
             @if($errors->any()) <x-alert type="error">{{ $errors->first() }}</x-alert> @endif

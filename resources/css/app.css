@@ -695,6 +695,14 @@ html .flatpickr-clear-btn:hover {
     }
 }
 
+/* Drawer admin: kunci gulir halaman selama menu mobile terbuka. */
+@media (max-width: 1023px) {
+    body.admin-drawer-open { overflow: hidden; }
+}
+
+/* Tabel admin yang digeser horizontal tetap nyaman di layar sentuh. */
+.admin-content .overflow-x-auto { overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+
 /* Menu aktif sidebar admin: aksen lembut + teks ink + garis aksen, selaras navbar publik. */
 .admin-nav-link.is-active { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 .admin-nav-link.is-active svg { color: var(--accent); }
@@ -753,7 +761,7 @@ body { background-image: none; }
 input, select, textarea { box-shadow: none; }
 
 .admin-content a { min-height: 44px; }
-.admin-content a:not(.flex):not(.block) { display: inline-flex; align-items: center; }
+.admin-content a:not(.flex):not(.block):not(.grid) { display: inline-flex; align-items: center; }
 
 /* Photo hero: full bleed; dark overlay only protects overlaid text. */
 .hero-road__visual { height: 60svh; min-height: 22rem; background: var(--surface); }
