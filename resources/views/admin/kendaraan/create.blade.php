@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-2 sm:py-6">
         <div class="max-w-3xl mx-auto">
             <div class="section-plain p-6">
                 <form action="{{ route('admin.kendaraan.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">

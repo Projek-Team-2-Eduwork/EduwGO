@@ -1,14 +1,14 @@
 <x-admin-layout title="Kelola kendaraan">
     <x-slot name="header">
         <div class="flex items-center justify-between gap-3">
-            <h2 class="truncate text-xl font-semibold leading-tight">Kelola Kendaraan</h2>
+            <h2 class="min-w-0 truncate text-xl font-semibold leading-tight">Kelola Kendaraan</h2>
             <a href="{{ route('admin.kendaraan.create') }}" class="btn-primary-edu inline-flex shrink-0 items-center px-4 text-sm">
                 + Tambah<span class="hidden sm:inline">&nbsp;Kendaraan</span>
             </a>
         </div>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-2 sm:py-6">
         <div class="max-w-7xl mx-auto space-y-6">
 
             @if(session('success'))
