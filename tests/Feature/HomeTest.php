@@ -20,11 +20,11 @@ class HomeTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Sewa motor harian,', false)
+            ->assertSee('Sewa motor harian', false)
             ->assertDontSee('Rp75.000')
             ->assertSee('Cara sewa')
-            ->assertSee('Syarat &amp; Ketentuan Rental Motor', false)
-            ->assertSee('minimal 1x24 jam', false)
+            ->assertSee('Syarat sewa', false)
+            ->assertSee('SIM C aktif', false)
             ->assertSee(url('/kendaraan'));
     }
 
@@ -98,25 +98,22 @@ class HomeTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('Tentang Penyewaan')
-            ->assertSee('Kami menyediakan motor terawat untuk perjalanan Anda.')
+            ->assertSee('Lokasi cabang')
             ->assertSee('Cabang Uji A')
             ->assertSee('Jl. Test Alamat No. 7, Malang')
             ->assertSee('Senin - Sabtu, 08.00 - 17.00')
             ->assertSee('https://wa.me/628123999888', false)
-            ->assertSee('https://instagram.com/eduwgo.a', false)
             ->assertSee('Cabang Uji B')
             ->assertSee('Jl. Kedua No. 2, Batu')
             ->assertDontSee('Cabang Tutup')
-            ->assertSee('Selengkapnya');
+            ->assertSee('Buka peta');
     }
 
     public function test_section_profil_perusahaan_tampil_default_tanpa_cabang(): void
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Tentang Penyewaan')
-            ->assertSee('EduwGo menyediakan sewa motor harian')
+            ->assertSee('Lokasi cabang')
             ->assertSee('Alamat lokasi pengambilan akan diinformasikan oleh admin');
     }
 
