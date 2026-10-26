@@ -1,0 +1,6 @@
+x-transition:enter="panel-enter"
+x-transition:enter-start="panel-away"
+x-transition:enter-end="panel-present"
+x-transition:leave="panel-leave"
+x-transition:leave-start="panel-present"
+x-transition:leave-end="panel-away"

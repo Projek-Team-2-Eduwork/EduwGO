@@ -846,3 +846,25 @@ html:not([data-nav-pill]) .navbar-edu.is-over-hero .theme-toggle { background: t
 @media (min-width: 1024px) {
     .hero-search { translate: 0 50%; }
 }
+
+/* Satu gerak untuk modal, sheet, dropdown dan panel navigasi. */
+.panel-enter, .scrim-enter { transition-duration: 300ms; transition-timing-function: cubic-bezier(.22, 1, .36, 1); }
+.panel-leave, .scrim-leave { transition-duration: 200ms; transition-timing-function: ease-in; }
+.panel-enter, .panel-leave { transition-property: transform, opacity; }
+.scrim-enter, .scrim-leave { transition-property: opacity; }
+.panel-away { opacity: 0; transform: translateY(100%); }
+.panel-present { opacity: 1; transform: translateY(0); }
+.booking-calendar-sheet { height: 94dvh; max-height: 94dvh; overflow: hidden; }
+@media (min-width: 1024px) {
+    .panel-away { transform: translateY(0) scale(.96); }
+    .panel-present { transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .panel-enter, .panel-leave, .scrim-enter, .scrim-leave { transition-duration: 0ms; }
+}
+
+/* Navigasi turun dari navbar; sheet konten tetap naik dari bawah. */
+.dropdown-panel.panel-away { transform: translateY(-12px); }
+.modal-from-navbar { align-items: flex-start; padding: 84px 8px 0; }
+.modal-from-navbar > [role="dialog"] { max-height: calc(100dvh - 100px); border-radius: 1rem; }
+.modal-from-navbar > .panel-away { transform: translateY(-24px); }
