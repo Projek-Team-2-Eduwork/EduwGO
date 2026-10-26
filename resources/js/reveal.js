@@ -37,7 +37,7 @@ export function initReveal(root = document, viewport = window) {
             items.forEach(finish);
         }
     });
-    if (viewport.CSS?.supports('animation-timeline: view()') && viewport.CSS.supports('animation-range: entry 0% entry 100%')) {
+    if (!root.querySelector('.home-landing') && viewport.CSS?.supports('animation-timeline: view()') && viewport.CSS.supports('animation-range: entry 0% entry 100%')) {
         return;
     }
     if (!viewport.IntersectionObserver) return;

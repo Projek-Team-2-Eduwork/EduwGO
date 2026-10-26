@@ -396,7 +396,7 @@ textarea:focus {
 .navbar-edu-inner { width: 100%; max-width: 100%; height: 64px; margin: 0 auto; transition: max-width 280ms ease, width 280ms ease, margin-top 280ms ease; }
 .navbar-edu-bar { height: 64px; padding-inline: clamp(1rem, 3vw, 3rem); border: 1px solid transparent; border-radius: 0; background: transparent; transition: padding-inline 280ms ease, border-radius 280ms ease, background-color 280ms ease, border-color 280ms ease, box-shadow 280ms ease, backdrop-filter 280ms ease; }
 .navbar-brand .brand-logo { height: 2rem; width: auto; }
-html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 3rem); max-width: 1320px; margin-top: 12px; }
+html[data-nav-pill] .navbar-edu-inner { width: calc(100% - 3rem); max-width: 1280px; margin-top: 12px; }
 html[data-nav-pill] .navbar-edu-bar { padding-inline: 1rem; border-color: var(--line); border-radius: 999px; background-color: var(--surface); background-color: color-mix(in srgb, var(--surface) 98%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 4px 18px color-mix(in srgb, var(--photo-ink) 8%, transparent); }
 html:not([data-nav-ready]) .navbar-edu-inner, html:not([data-nav-ready]) .navbar-edu-bar { transition: none; }
 .navbar-edu-panel { position: absolute; top: 84px; inset-inline: 8px; max-height: calc(100dvh - 100px); overflow-y: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); box-shadow: 0 4px 18px color-mix(in srgb, var(--photo-ink) 8%, transparent); }
@@ -846,3 +846,25 @@ html:not([data-nav-pill]) .navbar-edu.is-over-hero .theme-toggle { background: t
 @media (min-width: 1024px) {
     .hero-search { translate: 0 50%; }
 }
+
+/* Satu gerak untuk modal, sheet, dropdown dan panel navigasi. */
+.panel-enter, .scrim-enter { transition-duration: 300ms; transition-timing-function: cubic-bezier(.22, 1, .36, 1); }
+.panel-leave, .scrim-leave { transition-duration: 200ms; transition-timing-function: ease-in; }
+.panel-enter, .panel-leave { transition-property: transform, opacity; }
+.scrim-enter, .scrim-leave { transition-property: opacity; }
+.panel-away { opacity: 0; transform: translateY(100%); }
+.panel-present { opacity: 1; transform: translateY(0); }
+.booking-calendar-sheet { height: 94dvh; max-height: 94dvh; overflow: hidden; }
+@media (min-width: 1024px) {
+    .panel-away { transform: translateY(0) scale(.96); }
+    .panel-present { transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .panel-enter, .panel-leave, .scrim-enter, .scrim-leave { transition-duration: 0ms; }
+}
+
+/* Navigasi turun dari navbar; sheet konten tetap naik dari bawah. */
+.dropdown-panel.panel-away { transform: translateY(-12px); }
+.modal-from-navbar { align-items: flex-start; padding: 84px 8px 0; }
+.modal-from-navbar > [role="dialog"] { max-height: calc(100dvh - 100px); border-radius: 1rem; }
+.modal-from-navbar > .panel-away { transform: translateY(-24px); }
