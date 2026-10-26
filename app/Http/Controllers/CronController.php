@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CronRunRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class CronController extends Controller
 {
@@ -14,6 +16,19 @@ class CronController extends Controller
     public function run(CronRunRequest $request): JsonResponse
     {
         $task = $request->task();
+
+        // schedule:run menelan error tiap command; cek DB dulu supaya cron eksternal
+        // melihat status gagal (dan mengirim notifikasi) saat database mati.
+        try {
+            DB::select('select 1');
+        } catch (Throwable) {
+            return response()->json([
+                'status' => 'error',
+                'task' => $task,
+                'output' => 'Database tidak dapat dihubungi',
+            ], 503);
+        }
+
         $exitCode = Artisan::call($task);
 
         return response()->json([

@@ -54,6 +54,21 @@ class CronEndpointTest extends TestCase
             ->assertJson(['status' => 'ok', 'task' => 'schedule:run']);
     }
 
+    public function test_database_mati_mengembalikan_503()
+    {
+        config([
+            'database.connections.putus' => ['driver' => 'sqlite', 'database' => '/tidak/ada/eduwgo.sqlite'],
+            'database.default' => 'putus',
+        ]);
+
+        $this->withToken(self::TOKEN)
+            ->postJson('/cron/run')
+            ->assertStatus(503)
+            ->assertJson(['status' => 'error', 'task' => 'schedule:run']);
+
+        config(['database.default' => 'mysql']);
+    }
+
     public function test_token_salah_ditolak()
     {
         $booking = $this->bookingPendingKedaluwarsa();
