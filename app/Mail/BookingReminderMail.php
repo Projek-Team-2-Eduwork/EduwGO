@@ -16,7 +16,9 @@ class BookingReminderMail extends Mailable
     public function __construct(
         public Booking $booking,
         public string $type // 'pickup' atau 'return'
-    ) {}
+    ) {
+        $this->booking->loadMissing('vehicle.branch');
+    }
 
     public function envelope(): Envelope
     {

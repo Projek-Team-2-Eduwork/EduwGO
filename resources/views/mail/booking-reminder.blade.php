@@ -26,6 +26,7 @@
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; color: {{ App\Support\BrandTokens::value('--mail-muted') }};">Kendaraan</td>
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; font-weight: bold;">{{ $booking->vehicle->name ?? '-' }}</td>
             </tr>
+            @include('mail.partials.location-row', ['branch' => $booking->vehicle?->branch, 'label' => $type === 'pickup' ? 'Lokasi ambil' : 'Lokasi pengembalian'])
             <tr>
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; color: {{ App\Support\BrandTokens::value('--mail-muted') }};">Waktu</td>
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; font-weight: bold;">
@@ -44,10 +45,7 @@
             </a>
         </div>
 
-        <div style="margin-top: 40px; text-align: center; border-top: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; padding-top: 20px;">
-            <p style="font-size: 14px; color: {{ App\Support\BrandTokens::value('--mail-faint') }}; margin: 0;">{{ setting('contact.address', 'Alamat belum diatur') }}</p>
-            <p style="font-size: 14px; color: {{ App\Support\BrandTokens::value('--mail-faint') }}; margin: 5px 0 0;">Jam Operasional: {{ setting('contact.hours', '-') }}</p>
-        </div>
+        @include('mail.partials.footer', ['branch' => $booking->vehicle?->branch])
     </div>
 </body>
 </html>

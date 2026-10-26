@@ -16,7 +16,9 @@ class BookingStatusMail extends Mailable
     public function __construct(
         public Booking $booking,
         public string $subjectText
-    ) {}
+    ) {
+        $this->booking->loadMissing(['vehicle.branch', 'latestPayment', 'payments']);
+    }
 
     public function envelope(): Envelope
     {

@@ -10,9 +10,13 @@
         @include('mail.partials.header')
 
         <h2 style="color: {{ App\Support\BrandTokens::value('--mail-heading') }}; margin-top: 0;">Halo, {{ $booking->customer_name }}!</h2>
-        <p style="font-size: 16px; line-height: 1.5;">Status untuk pesanan <strong>{{ $booking->code }}</strong> Anda saat ini adalah: <strong >{{ $booking->status->label() }}</strong>.</p>
+        <p style="font-size: 16px; line-height: 1.5;">Status untuk pesanan <strong>{{ $booking->code }}</strong> Anda saat ini adalah: <strong>{{ $booking->status->label() }}</strong>.</p>
 
-        @if($booking->status === App\Enums\BookingStatus::Pending)
+        @php($isCod = $booking->latestPayment?->payment_channel === App\Services\XenditService::COD)
+        @if($booking->status === App\Enums\BookingStatus::Pending && $isCod)
+            <p style="font-size: 16px; line-height: 1.5;">Pesanan Anda tercatat dengan metode bayar di tempat (COD). Siapkan pembayaran tunai saat mengambil kendaraan di cabang.</p>
+            <p style="font-size: 14px; color: {{ App\Support\BrandTokens::value('--mail-muted') }}; text-align: center;">Batas bayar: {{ $booking->paymentDeadline()->translatedFormat('D, d M Y H:i') }}</p>
+        @elseif($booking->status === App\Enums\BookingStatus::Pending)
             <p style="font-size: 16px; line-height: 1.5; color: {{ App\Support\BrandTokens::value('--mail-danger') }};">Pesanan Anda sedang menunggu pembayaran. Mohon selesaikan pembayaran sebelum batas waktu berakhir.</p>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -24,12 +28,11 @@
             @if($booking->latestPayment?->expires_at)
                 <p style="font-size: 14px; color: {{ App\Support\BrandTokens::value('--mail-muted') }}; text-align: center;">Batas waktu: {{ $booking->latestPayment->expires_at->translatedFormat('D, d M Y H:i') }}</p>
             @endif
-        @elseif($booking->status === App\Enums\BookingStatus::Paid)
-            <p style="font-size: 16px; line-height: 1.5;">Pembayaran Anda telah berhasil kami terima. Silakan persiapkan diri Anda untuk jadwal pengambilan.</p>
-        @elseif($booking->status === App\Enums\BookingStatus::Expired)
-            <p style="font-size: 16px; line-height: 1.5;">Batas waktu pembayaran pesanan Anda telah habis.</p>
-        @elseif($booking->status === App\Enums\BookingStatus::Cancelled)
-            <p style="font-size: 16px; line-height: 1.5;">Pesanan Anda telah dibatalkan.</p>
+        @else
+            <p style="font-size: 16px; line-height: 1.5;">{{ $booking->status->description() }}</p>
+            @if($booking->payments->contains('needs_refund', true))
+                <p style="font-size: 16px; line-height: 1.5;">Dana yang sudah Anda bayarkan akan dikembalikan oleh tim kami. Hubungi cabang di bawah bila ada pertanyaan.</p>
+            @endif
         @endif
 
         <table style="width: 100%; margin-top: 20px; border-collapse: collapse; text-align: left;">
@@ -37,6 +40,7 @@
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; color: {{ App\Support\BrandTokens::value('--mail-muted') }};">Kendaraan</td>
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; font-weight: bold;">{{ $booking->vehicle->name ?? '-' }}</td>
             </tr>
+            @include('mail.partials.location-row', ['branch' => $booking->vehicle?->branch])
             <tr>
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; color: {{ App\Support\BrandTokens::value('--mail-muted') }};">Jadwal Sewa</td>
                 <td style="padding: 10px; border-bottom: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; font-weight: bold;">{{ $booking->start_at->translatedFormat('d M Y H:i') }} - {{ $booking->end_at->translatedFormat('d M Y H:i') }}</td>
@@ -47,10 +51,7 @@
             </tr>
         </table>
 
-        <div style="margin-top: 40px; text-align: center; border-top: 1px solid {{ App\Support\BrandTokens::value('--mail-line') }}; padding-top: 20px;">
-            <p style="font-size: 14px; color: {{ App\Support\BrandTokens::value('--mail-faint') }}; margin: 0;">{{ setting('contact.address', 'Alamat belum diatur') }}</p>
-            <p style="font-size: 14px; color: {{ App\Support\BrandTokens::value('--mail-faint') }}; margin: 5px 0 0;">Jam Operasional: {{ setting('contact.hours', '-') }}</p>
-        </div>
+        @include('mail.partials.footer', ['branch' => $booking->vehicle?->branch])
     </div>
 </body>
 </html>

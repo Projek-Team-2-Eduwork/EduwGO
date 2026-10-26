@@ -86,4 +86,28 @@ class Branch extends Model
 
         return 'https://wa.me/'.$digits.($text ? '?text='.rawurlencode($text) : '');
     }
+
+    public function mapsUrl(): ?string
+    {
+        return filled($this->address)
+            ? 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($this->name.', '.$this->address)
+            : null;
+    }
+
+    /**
+     * Kontak untuk email: data cabang, tiap field kosong jatuh ke setting global,
+     * dua-duanya kosong = field dibuang supaya baris disembunyikan.
+     */
+    public static function mailContact(?self $branch = null): array
+    {
+        $phone = $branch?->phone ?: setting('contact.whatsapp');
+
+        return array_filter([
+            'name' => $branch?->name ?: setting('brand.name', config('app.name')),
+            'address' => $branch?->address ?: setting('contact.address'),
+            'hours' => $branch?->operating_hours ?: setting('contact.hours'),
+            'phone' => $phone,
+            'whatsapp' => (new self(['phone' => $phone]))->whatsappUrl(),
+        ]);
+    }
 }
