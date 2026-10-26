@@ -52,6 +52,48 @@
 @endphp
 
 <x-app-layout title="Pilih motor">
+    <style>
+        /* Filter katalog: satu panel, grid 12 kolom di desktop, tumpuk di mobile. */
+        .catalog-filter {
+            display: grid;
+            gap: .75rem;
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: .75rem;
+            background: var(--surface);
+        }
+
+        .catalog-filter .cf-fields { padding: 1.25rem; }
+        .catalog-filter .cf-fields > * + * { margin-top: 1.25rem; }
+        .catalog-filter .cf-mobile-actions { display: flex; gap: .5rem; }
+
+        @media (min-width: 1024px) {
+            .catalog-filter {
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+                align-items: end;
+                gap: 1rem;
+            }
+
+            .catalog-filter .cf-branch { grid-column: 1 / span 3; grid-row: 1; }
+            .catalog-filter .cf-start { grid-column: 4 / span 5; grid-row: 1; }
+            .catalog-filter .cf-days { grid-column: 9 / span 2; grid-row: 1; }
+            .catalog-filter .cf-submit { grid-column: 11 / span 2; grid-row: 1; width: 100%; }
+            .catalog-filter .cf-q { grid-column: 1 / span 3; grid-row: 2; }
+            .catalog-filter .cf-types { grid-column: 4 / span 6; grid-row: 2; }
+            .catalog-filter .cf-more { grid-column: 10 / span 3; grid-row: 2; display: flex; justify-content: flex-end; }
+            .catalog-filter .cf-error { grid-column: 1 / span 12; grid-row: 3; }
+
+            .catalog-filter .cf-fields { display: contents; padding: 0; }
+            .catalog-filter .cf-fields > * + * { margin-top: 0; }
+            .catalog-filter .cf-more > button { width: auto; min-width: 10.5rem; }
+            .catalog-filter .cf-mobile-actions { display: none; }
+        }
+
+        @media (max-width: 639px) {
+            .catalog-filter { padding: .75rem; }
+        }
+    </style>
+
     <div class="mx-auto max-w-[1320px] space-y-5 px-4 pt-6 sm:px-6 lg:pt-10 xl:px-0" x-data="{ loading: false, pairError: null }" x-on:pageshow.window="loading = false">
         <div>
             <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-sm">
@@ -64,7 +106,7 @@
 
         {{-- Satu form GET. Desktop: bar perjalanan + baris filter (grid). Mobile: jadwal & filter di bottom sheet. --}}
         <form id="catalog-form" method="GET" action="{{ route('kendaraan.index') }}"
-            class="section-plain grid gap-3 p-4 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,11rem)_auto] lg:items-end lg:gap-4"
+            class="catalog-filter"
             x-on:submit="
                 const s = $el.elements.start_at.value, d = $el.elements.days.value;
                 if (!s !== !d) {
@@ -75,7 +117,7 @@
                 }
                 pairError = null; loading = true; $dispatch('close-modal', 'catalog-filters');
             ">
-            <div class="min-w-0 lg:col-start-1 lg:row-start-1">
+            <div class="cf-branch min-w-0">
                 <span class="block text-sm font-medium text-[var(--ink)]">Ambil di</span>
                 <x-branch-picker align="left" class="mt-1 min-h-11 w-full" />
             </div>
@@ -96,23 +138,24 @@
                     <button type="button" class="min-h-11 min-w-11 text-2xl" x-on:click="$dispatch('close')" aria-label="Tutup filter">&times;</button>
                 </div>
 
-                <div class="space-y-5 p-5 lg:contents">
-                    <div class="lg:col-start-2 lg:row-start-1">
+                <div class="cf-fields">
+                    <div class="cf-start">
                         <x-form.datetime name="start_at" label="Mulai sewa" :value="$filter['start_at']" :min="$minStart->format('Y-m-d\TH:i')" step="3600" :picker="true" />
                     </div>
 
-                    <div class="lg:col-start-3 lg:row-start-1">
+                    <div class="cf-days">
                         <x-form.select name="days" label="Durasi" placeholder="Pilih durasi" :options="collect(range(1, $maxDays))->mapWithKeys(fn ($d) => [$d => $d.' hari'])->all()" :value="$filter['days']" />
                     </div>
 
-                    <p x-show="pairError" x-text="pairError" x-cloak role="alert" class="text-sm text-[var(--danger)] lg:col-span-4 lg:col-start-1 lg:row-start-3"></p>
+                    <p x-show="pairError" x-text="pairError" x-cloak role="alert" class="cf-error text-sm text-[var(--danger)]"></p>
 
-                    <x-form.chips name="type" label="Tipe" placeholder="Semua" :options="$types" :value="$filter['type']"
-                        class="lg:col-span-2 lg:col-start-2 lg:row-start-2"
-                        x-on:change="if ({{ $desktop }}) $el.form.requestSubmit()" />
+                    <div class="cf-types">
+                        <x-form.chips name="type" label="Tipe" placeholder="Semua" :options="$types" :value="$filter['type']"
+                            x-on:change="if ({{ $desktop }}) $el.form.requestSubmit()" />
+                    </div>
 
                     {{-- Filter lainnya: popover di desktop, langsung terlihat di sheet mobile --}}
-                    <div class="relative lg:col-start-4 lg:row-start-2"
+                    <div class="cf-more relative"
                         x-data="{ more: false, desktop: {{ $desktop }} }"
                         x-init="window.matchMedia('(min-width: 1024px)').addEventListener('change', e => desktop = e.matches)"
                         x-on:click.outside="more = false"
@@ -154,13 +197,13 @@
                 </div>
             </x-modal>
 
-            <button type="submit" class="btn-primary-edu hidden min-h-11 items-center justify-center lg:col-start-4 lg:row-start-1 lg:inline-flex">Cari motor</button>
+            <button type="submit" class="cf-submit btn-primary-edu hidden min-h-11 items-center justify-center lg:inline-flex">Cari motor</button>
 
-            <div class="lg:col-start-1 lg:row-start-2">
+            <div class="cf-q">
                 <x-form.input name="q" type="search" label="Cari nama motor" placeholder="Nama motor" :value="$filter['q']" maxlength="100" />
             </div>
 
-            <div class="flex gap-2 lg:hidden">
+            <div class="cf-mobile-actions lg:hidden">
                 <button type="button" class="btn-secondary-edu inline-flex flex-1 items-center justify-center" x-on:click="$dispatch('open-modal', 'catalog-filters')" aria-haspopup="dialog">
                     Filter{{ $activeCount ? ' ('.$activeCount.')' : '' }}
                 </button>

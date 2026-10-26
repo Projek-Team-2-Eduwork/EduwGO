@@ -36,7 +36,13 @@
         {{ $statusText }}
     </p>
     @if (! $scheduled && $nextStart?->isFuture())
-        <p class="mt-1 text-xs">Dipesan berikutnya {{ $nextStart->translatedFormat('d M, H:i') }}</p>
+        <p class="mt-1 flex items-center gap-1.5 text-xs">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path stroke-linecap="round" d="M12 7v5l3 2"></path>
+            </svg>
+            <span>Dipesan berikutnya {{ $nextStart->translatedFormat('d M, H:i') }}</span>
+        </p>
     @endif
 
     <div class="mt-auto flex items-end justify-between gap-3 pt-4">

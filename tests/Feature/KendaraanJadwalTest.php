@@ -75,9 +75,12 @@ class KendaraanJadwalTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create(['is_active' => true]);
 
-        $this->get(route('kendaraan.detail', $vehicle))
+        $response = $this->get(route('kendaraan.detail', $vehicle))
             ->assertOk()
             ->assertSee('Ketersediaan Unit')
             ->assertSee(route('kendaraan.jadwal', $vehicle), false);
+
+        // Target CTA "Pesan" dari beranda harus unik.
+        $this->assertSame(1, substr_count($response->getContent(), 'id="pesan"'));
     }
 }

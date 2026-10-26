@@ -17,23 +17,17 @@
         @else
             <div class="home-motors" style="--motor-count: {{ $vehicles->count() <= 3 ? 3 : 4 }}">
                 @foreach ($vehicles as $vehicle)
-                    <a href="{{ route('kendaraan.detail', $vehicle) }}" class="home-motor reveal">
-                        <div class="home-motor-photo">
-                            @if ($vehicle->image)
-                                <x-picture :src="$vehicle->image" :alt="$vehicle->name" width="640" height="480" loading="lazy" class="h-full w-full object-cover object-center" />
-                            @else
-                                <span class="text-sm">Foto belum tersedia</span>
-                            @endif
-                        </div>
-                        <h3>{{ $vehicle->name }}</h3>
-                        <p class="home-motor-type">{{ $vehicle->type?->name }}</p>
-                        <p class="home-price"><strong>{{ rupiah((float) $vehicle->price_per_day) }}</strong><span>/hari</span></p>
-                        @if(in_array($vehicle->id, $availableIds))
-                            <p class="home-status is-available">{{ $vehicle->next_booking_start?->isFuture() ? 'Tersedia sampai '.$vehicle->next_booking_start->translatedFormat('d M, H:i') : 'Tersedia' }}</p>
-                        @else
-                            <p class="home-status">Sedang disewa</p>
-                        @endif
-                    </a>
+                    @php
+                        $bookingUrl = route('kendaraan.detail', $vehicle).'#pesan';
+                        $isAvailable = in_array($vehicle->id, $availableIds, true);
+                    @endphp
+                    {{-- Kartu yang sama dengan katalog; CTA Pesan tetap membawa pengguna ke form booking. --}}
+                    <x-vehicle-card
+                        :vehicle="$vehicle"
+                        :available="$isAvailable"
+                        :href="$bookingUrl"
+                        cta="Pesan"
+                    />
                 @endforeach
             </div>
         @endif
