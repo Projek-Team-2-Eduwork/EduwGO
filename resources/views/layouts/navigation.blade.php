@@ -6,16 +6,15 @@
     $homeHero = request()->routeIs('home');
 
     $menu = [
-        ['label' => 'Beranda', 'href' => url('/'), 'active' => request()->is('/')],
-        ['label' => 'Pilih Kendaraan', 'href' => url('/kendaraan'), 'active' => request()->is('kendaraan*')],
+        ['label' => 'Pilih motor', 'href' => url('/kendaraan'), 'active' => request()->is('kendaraan*')],
         ['label' => 'Pesanan saya', 'href' => url('/pesanan'), 'active' => request()->is('pesanan*')],
     ];
 @endphp
 
 <nav x-data="{
         open: false,
-        home: @js($homeHero),
-        pill: @js(!$homeHero),
+        home: false,
+        pill: true,
         sync(initial = false) {
             const root = document.documentElement;
             if (initial) root.removeAttribute('data-nav-ready');
@@ -30,7 +29,7 @@
      x-on:resize.window.debounce.100ms="if (window.innerWidth >= 1280) open = false; sync()"
      x-on:keydown.escape.window="open = false"
      :class="{ 'is-over-hero': home && !pill && !open }"
-     class="navbar-edu {{ $homeHero ? 'navbar-edu--hero is-over-hero fixed inset-x-0 top-0' : 'sticky top-0' }} z-40"
+     class="navbar-edu sticky top-0 z-40"
      aria-label="Navigasi utama">
     <div class="navbar-edu-inner">
         <div class="navbar-edu-bar flex items-center justify-between gap-4">
@@ -54,7 +53,6 @@
                     Butuh bantuan?
                 </a>
 
-                <x-theme-toggle />
 
                 @auth
                     <x-dropdown align="right" width="48">
@@ -90,13 +88,13 @@
                         </x-slot>
                     </x-dropdown>
                 @else
+                    <a href="{{ route('register') }}" class="inline-flex items-center px-3 py-2.5 text-sm font-medium text-[var(--ink)] hover:text-[var(--accent)]">Daftar</a>
                     <a href="{{ route('login') }}" class="btn-primary-edu inline-flex items-center px-5 py-2.5 text-sm">Masuk</a>
                 @endauth
             </div>
 
             <!-- Hamburger (mobile & tablet) -->
             <div class="flex items-center gap-2 xl:hidden">
-                <x-theme-toggle />
 
                 <button type="button" @click="open = ! open" class="inline-flex items-center justify-center p-2 text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]" :aria-expanded="open.toString()" aria-controls="mobile-menu" aria-label="Buka menu">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -147,8 +145,9 @@
                     </form>
                 </div>
             @else
-                <div class="px-4">
+                <div class="grid gap-2 px-4">
                     <a href="{{ route('login') }}" class="btn-primary-edu inline-flex w-full items-center justify-center px-5 py-2.5 text-sm">Masuk</a>
+                    <a href="{{ route('register') }}" class="inline-flex w-full items-center justify-center border border-[var(--line)] px-5 py-2.5 text-sm font-medium text-[var(--ink)]">Daftar</a>
                 </div>
             @endauth
         </div>
