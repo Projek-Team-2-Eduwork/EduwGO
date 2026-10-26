@@ -31,10 +31,10 @@ class NavbarInitialStateTest extends TestCase
         $this->assertGreaterThan(0, $xpath->query('//nav[@aria-label="Navigasi utama"]//div[contains(@class,"dropdown-panel")]')->length);
     }
 
-    public function test_home_server_render_starts_with_transparent_header(): void
+    public function test_home_server_render_starts_with_solid_header(): void
     {
         $document = new \DOMDocument;
         $document->loadHTML($this->get('/')->assertOk()->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
-        $this->assertFalse($document->documentElement->hasAttribute('data-nav-pill'));
+        $this->assertTrue($document->documentElement->hasAttribute('data-nav-pill'));
     }
 }

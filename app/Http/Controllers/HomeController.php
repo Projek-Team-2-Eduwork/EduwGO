@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\VehicleFilterRequest;
 use App\Models\Vehicle;
+use App\Models\VehicleType;
 use App\Services\AvailabilityService;
 use App\Services\BranchContext;
 use App\Support\RentalTerms;
@@ -32,6 +33,8 @@ class HomeController extends Controller
             : $availability->availableVehicles(now(), 0)
                 ->whereIn('id', $vehicles->pluck('id'))
                 ->pluck('id');
+        // Motor yang bisa disewa sekarang tampil lebih dulu
+        $vehicles = $vehicles->sortBy(fn ($vehicle) => $availableIds->contains($vehicle->id) ? 0 : 1)->values();
 
         $minimum = $summary->minimum;
         $activeBranches = $branches->active();
@@ -40,6 +43,7 @@ class HomeController extends Controller
             'minimumPrice' => $minimum,
             'terms' => RentalTerms::list(),
             'vehicles' => $vehicles,
+            'types' => VehicleType::query()->whereHas('vehicles', fn ($query) => $query->where('is_active', true)->where('branch_id', $branches->currentId()))->orderBy('name')->pluck('name', 'id'),
             'activeVehicleCount' => $activeVehicleCount,
             'availableIds' => $availableIds->all(),
             'maxDays' => $availability->maxDays(),

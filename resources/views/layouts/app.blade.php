@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if(!request()->routeIs('home')) data-nav-pill @endif>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-nav-pill>
     <head>
         @include('layouts.partials.head', ['title' => $title ?? null])
     </head>

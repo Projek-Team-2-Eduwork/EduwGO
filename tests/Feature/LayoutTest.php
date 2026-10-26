@@ -25,7 +25,7 @@ class LayoutTest extends TestCase
     {
         $html = Blade::render('<x-app-layout><p>konten</p></x-app-layout>');
 
-        foreach (['EduwGo', 'konten', 'Pilih Kendaraan', 'Pesanan saya', 'Butuh bantuan?', 'Masuk', 'Cabang', 'wa.me'] as $text) {
+        foreach (['EduwGo', 'konten', 'Pilih motor', 'Pesanan saya', 'Butuh bantuan?', 'Masuk', 'Lokasi cabang', 'wa.me'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
     }

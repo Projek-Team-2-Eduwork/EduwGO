@@ -14,7 +14,7 @@
 <!-- Anti-flash: set class dark sebelum render (SPEC bagian 8) -->
 <script>
     (function () {
-        document.documentElement.toggleAttribute('data-nav-pill', @json(!request()->routeIs('home')) || window.scrollY > 24);
+        document.documentElement.toggleAttribute('data-nav-pill', true);
         var preference = @json(auth()->check() ? auth()->user()->preferredTheme() : null);
         var stored = null;
 
@@ -23,7 +23,7 @@
         } catch (e) {}
 
         // Prioritas: preferensi user login > localStorage > prefers-color-scheme
-        var choice = preference || stored || 'system';
+        var choice = preference || stored || 'light';
         var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         var dark = choice === 'dark' || (choice === 'system' && systemDark);
 

@@ -1,8 +1,20 @@
-<section id="tentang-penyewaan" class="landing-section landing-section--key">
+<section id="tentang-penyewaan" class="landing-section">
     <div class="landing-inner">
-        <h2 class="reveal text-2xl">Tentang Penyewaan</h2>
-        <p class="mt-4 max-w-3xl text-sm leading-7">{{ $profil['deskripsi'] }}</p>
-        @if($branches->isEmpty())<p class="mt-4 text-sm">Alamat lokasi pengambilan akan diinformasikan oleh admin.</p>@endif
-        <a href="{{ route('about') }}" class="link-underline mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--ink)] underline underline-offset-4">Selengkapnya tentang penyewaan</a>
+        <h2>Lokasi cabang</h2>
+        <div class="home-branches">
+            @forelse($branches as $branch)
+                <article>
+                    <h3>{{ $branch->name }}</h3>
+                    <p>{{ $branch->address ?: 'Alamat lokasi pengambilan akan diinformasikan oleh admin.' }}</p>
+                    <p>{{ $branch->operating_hours ?: 'Konfirmasi jam layanan melalui WhatsApp.' }}</p>
+                    <div class="home-branch-actions">
+                        @if($branch->address)<a href="https://www.google.com/maps/search/?api=1&amp;query={{ rawurlencode($branch->address) }}" target="_blank" rel="noopener" class="home-outline-link">Buka peta</a>@endif
+                        @if($branch->whatsappUrl())<a href="{{ $branch->whatsappUrl() }}" target="_blank" rel="noopener" class="home-outline-link">WhatsApp</a>@endif
+                    </div>
+                </article>
+            @empty
+                <p>Alamat lokasi pengambilan akan diinformasikan oleh admin.</p>
+            @endforelse
+        </div>
     </div>
 </section>
