@@ -28,7 +28,7 @@
      x-on:resize.window.debounce.100ms="if (window.innerWidth >= 640) { open = false; $dispatch('close-modal', 'mobile-menu'); }"
      x-on:modal-state.window="if ($event.detail.name === 'mobile-menu') { open = $event.detail.show; }"
      :class="{ 'is-scrolled': scrolled }"
-     class="navbar-edu sticky top-0 z-40"
+     class="navbar-edu sticky top-0 z-40 {{ $homeHero ? 'navbar-edu--hero' : '' }}"
      aria-label="Navigasi utama">
     <div class="navbar-edu-inner">
         <div class="navbar-edu-bar flex items-center justify-between gap-3">
