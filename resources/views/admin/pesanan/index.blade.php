@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-2 sm:py-6">
         <div class="max-w-7xl mx-auto space-y-6">
 
             @if(session('success'))
@@ -48,11 +48,11 @@
                     ? request()->fullUrlWithQuery(['status' => null])
                     : request()->fullUrlWithQuery(['status' => $key]);
             @endphp
-            <div class="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-[var(--line)] py-5 sm:grid-cols-3 xl:grid-cols-6">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-4 border-y border-[var(--line)] py-4 sm:grid-cols-3 sm:gap-x-6 sm:py-5 xl:grid-cols-6">
                 @foreach(App\Enums\BookingStatus::cases() as $status)
                     <a href="{{ $statusHref($status->value) }}" class="inline-flex min-h-11 flex-col justify-center {{ request('status') === $status->value ? 'font-bold text-[var(--accent)]' : '' }}" @if(request('status') === $status->value) aria-current="true" @endif>
-                        <div class="text-sm font-medium">{{ $status->label() }}</div>
-                        <div class="mt-2 text-3xl font-bold text-[var(--ink)]">{{ $summary[$status->value] }}</div>
+                        <div class="text-xs font-medium leading-snug sm:text-sm">{{ $status->label() }}</div>
+                        <div class="mt-1.5 text-2xl font-bold leading-none text-[var(--ink)] sm:mt-2 sm:text-3xl">{{ $summary[$status->value] }}</div>
                     </a>
                 @endforeach
             </div>
@@ -123,31 +123,31 @@
                     <div class="md:hidden">
                         @foreach($bookings as $b)
                             <a href="{{ route('admin.pesanan.show', $b->code) }}" class="block border-b border-[var(--line)] p-4 {{ $b->isOverdue() ? 'bg-[var(--danger-soft)] dark:bg-[var(--danger-soft)]' : '' }}">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="font-mono font-bold text-sm text-[var(--ink)]">{{ $b->code }}</div>
-                                    <div class="flex flex-col items-end gap-1">
+                                <div class="mb-2 flex items-start justify-between gap-2">
+                                    <div class="min-w-0 font-mono text-sm font-bold text-[var(--ink)]">{{ $b->code }}</div>
+                                    <div class="flex shrink-0 flex-col items-end gap-1">
                                         <x-badge-status :status="$b->status" />
                                         @if($b->isOverdue())
                                             <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200">Terlambat {{ $b->end_at->diffForHumans() }}</span>
                                         @endif
                                     </div>
                                 </div>
-                                <div class="flex gap-3 mb-3">
+                                <div class="mb-3 flex gap-3">
                                     @if($b->vehicle?->image)
-                                        <x-picture :src="$b->vehicle->image" class="w-16 h-16 rounded-lg object-cover" />
+                                        <x-picture :src="$b->vehicle->image" class="h-16 w-16 shrink-0 rounded-lg object-cover" />
                                     @else
-                                        <div class="w-16 h-16 rounded-lg bg-[var(--bg)] flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                        <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-[var(--bg)]">
+                                            <svg class="h-8 w-8 text-[var(--ink-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                             </svg>
                                         </div>
                                     @endif
-                                    <div>
-                                        <div class="font-bold text-[var(--ink)]">{{ $b->vehicle?->name ?? 'Dihapus' }}</div>
-                                        <div class="text-sm text-[var(--ink-muted)]">{{ $b->customer_name }}</div>
-                                        <div class="text-xs text-[var(--ink-muted)] mt-1">{{ $b->start_at->translatedFormat('d M Y H:i') }} ({{ $b->duration_days }} hr)</div>
+                                    <div class="min-w-0">
+                                        <div class="break-words font-bold text-[var(--ink)]">{{ $b->vehicle?->name ?? 'Dihapus' }}</div>
+                                        <div class="break-words text-sm text-[var(--ink-muted)]">{{ $b->customer_name }}</div>
+                                        <div class="mt-1 text-xs text-[var(--ink-muted)]">{{ $b->start_at->translatedFormat('d M Y H:i') }} ({{ $b->duration_days }} hr)</div>
                                     </div>
                                 </div>
-                                <div class="flex justify-between items-center mt-2">
+                                <div class="mt-2 flex items-center justify-between gap-3">
                                     <div class="font-bold text-[var(--ink)]">{{ rupiah($b->total_amount) }}</div>
                                     @if(Route::has('admin.pesanan.update') && in_array($b->status->value, ['pending', 'paid', 'rented']))
                                         <span role="button" tabindex="0" x-data @click.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" @keydown.enter.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" @keydown.space.prevent.stop="$dispatch('open-modal', 'update-{{ $b->code }}')" class="inline-flex min-h-11 items-center cursor-pointer text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">Ubah</span>

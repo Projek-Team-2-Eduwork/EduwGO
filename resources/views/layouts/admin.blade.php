@@ -36,22 +36,35 @@
         <div
             x-data="{
                 drawer: false,
+                mobile: window.matchMedia('(max-width: 1023px)').matches,
                 rail: document.documentElement.hasAttribute('data-admin-rail'),
+                init() {
+                    const media = window.matchMedia('(max-width: 1023px)');
+                    this.mobile = media.matches;
+                    media.addEventListener('change', event => {
+                        this.mobile = event.matches;
+                        if (! event.matches) this.drawer = false;
+                    });
+                },
                 toggleRail() {
                     this.rail = ! this.rail;
                     document.documentElement.toggleAttribute('data-admin-rail', this.rail);
                     try { localStorage.setItem('admin-rail', this.rail ? '1' : '0'); } catch (e) {}
                 },
             }"
-            @keydown.escape.window="drawer = false"
+            @keydown.escape.window="if (drawer) { drawer = false; $nextTick(() => $refs.adminMenuButton?.focus()) }"
+            x-effect="document.body.classList.toggle('admin-drawer-open', drawer)"
             class="min-h-screen lg:flex"
         >
             {{-- Backdrop drawer (mobile) --}}
-            <div x-show="drawer" x-transition.opacity @click="drawer = false" style="display: none;" class="fixed inset-0 z-40 scrim lg:hidden" aria-hidden="true"></div>
+            <div x-show="drawer" x-transition.opacity @click="drawer = false; $nextTick(() => $refs.adminMenuButton?.focus())" style="display: none;" class="fixed inset-0 z-40 scrim lg:hidden" aria-hidden="true"></div>
 
             {{-- Sidebar: rail di desktop, drawer di mobile --}}
             <aside
                 id="admin-sidebar"
+                x-ref="adminSidebar"
+                x-on:keydown.tab="if (drawer) window.trapPanelFocus($event, $el)"
+                :inert="mobile && ! drawer"
                 class="fixed inset-y-0 start-0 z-50 flex w-64 -translate-x-full flex-col border-e border-[var(--line)] transition-[width,transform] duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 rtl:translate-x-full lg:rtl:translate-x-0"
                 :class="drawer ? '!translate-x-0' : ''"
                 style="background-color: var(--surface);"
@@ -64,12 +77,12 @@
                         <x-brand-logo class="admin-brand-text h-8 w-auto" />
                     </a>
 
-                    <button type="button" @click="drawer = false" class="p-2 text-[var(--ink-muted)] hover:text-[var(--ink)] lg:hidden" aria-label="Tutup menu">
+                    <button type="button" x-ref="adminDrawerClose" @click="drawer = false; $nextTick(() => $refs.adminMenuButton?.focus())" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)] lg:hidden" aria-label="Tutup menu">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
-                <nav class=" flex-1 space-y-1 overflow-y-auto px-3 py-4">
+                <nav class="flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-4">
                     @foreach ($menu as $item)
                         <a href="{{ $item['href'] }}"
                            @if ($item['active']) aria-current="page" @endif
@@ -86,6 +99,18 @@
                 </nav>
 
                 <div class="border-t border-[var(--line)] px-3 py-4">
+                    @auth
+                        <div class="mb-3 flex items-center gap-3 rounded-lg border border-[var(--line)] px-3 py-2.5 sm:hidden">
+                            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-[var(--ink)]" style="background-color: var(--accent-soft);" aria-hidden="true">
+                                {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-[var(--ink)]">{{ Auth::user()->name }}</p>
+                                <p class="truncate text-xs">{{ auth()->user()->isSuperadmin() ? 'Superadmin' : 'Admin' }} &middot; {{ $adminBranch }}</p>
+                            </div>
+                        </div>
+                    @endauth
+
                     <div class="mb-3 flex items-center justify-between gap-2 px-3 sm:hidden">
                         <span class="text-sm font-medium">Tema</span>
                         <x-theme-toggle />
@@ -121,7 +146,7 @@
                         </button>
 
                         {{-- Tombol drawer (mobile) --}}
-                        <button type="button" @click="drawer = true" class="min-h-11 min-w-11 rounded-lg p-2 text-[var(--ink-muted)] hover:bg-[var(--bg)] hover:text-[var(--ink)] lg:hidden" :aria-expanded="drawer.toString()" aria-controls="admin-sidebar" aria-label="Buka menu">
+                        <button type="button" x-ref="adminMenuButton" @click="drawer = true; $nextTick(() => $refs.adminDrawerClose?.focus())" class="min-h-11 min-w-11 rounded-lg p-2 text-[var(--ink-muted)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)] lg:hidden" :aria-expanded="drawer.toString()" aria-controls="admin-sidebar" aria-label="Buka menu">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
 
@@ -146,7 +171,7 @@
                     </div>
                 </header>
 
-                <main class="admin-content flex-1 px-4 py-6 sm:px-6 lg:px-8">
+                <main class="admin-content flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
                     {{ $slot }}
                 </main>
             </div>
